@@ -8,21 +8,26 @@ on:
       - main
 
 jobs:
+  build:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+      - run: bun install
+      - run: bun build index.ts > /dev/null
+
   test:
     name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-
       - run: bun install
-      - run: bun build index.ts > /dev/null
       - run: bun test
 
   complete:
-    permissions:
-      contents: none
     runs-on: ubuntu-latest
-    needs: [test]
+    needs: [build, test]
     steps:
       - run: echo "Done!"
