@@ -1,32 +1,32 @@
 import colors from "colors";
 
-export const LogLevels = [
-  "trace",
-  "debug",
-  "info",
-  "warn",
-  "error",
-  "fatal",
-] as const;
-export type LogLevel = (typeof LogLevels)[number];
+import { LogLevels, type LogLevel, type LoggerStream } from "../types/LogLevel";
+import type { configLogger } from "../config/logger";
 
-const JSONObjectParsePadding = 4;
-
+/**
+ * The Logger Class.  I write to stdout or stderr, and can be colorized.
+ */
 export class Logger {
   level: LogLevel;
   colorize: boolean;
   includeTimestamps: boolean;
+  stream: LoggerStream;
+  jSONObjectParsePadding: number;
 
-  constructor(level: LogLevel, colorize: boolean, includeTimestamps: boolean) {
-    this.level = level;
-    this.colorize = colorize;
-    this.includeTimestamps = includeTimestamps;
+  constructor(config: typeof configLogger) {
+    this.level = config.level;
+    this.colorize = config.colorize;
+    this.includeTimestamps = config.includeTimestamps;
+    this.stream = config.stream;
+    this.jSONObjectParsePadding = config.jSONObjectParsePadding;
   }
 
   log(level: LogLevel, message: string, object?: any) {
     if (LogLevels.indexOf(level) < LogLevels.indexOf(this.level)) {
       return;
     }
+
+    const outputStream = this.stream === "stdout" ? console.log : console.error;
 
     let timestamp = this.includeTimestamps ? `${new Date().toISOString()}` : "";
     if (this.colorize && timestamp.length > 0) {
@@ -40,13 +40,13 @@ export class Logger {
 
     let prettyObject =
       object !== undefined
-        ? JSON.stringify(object, null, JSONObjectParsePadding)
+        ? JSON.stringify(object, null, this.jSONObjectParsePadding)
         : "";
     if (this.colorize && prettyObject.length > 0) {
       prettyObject = colors.cyan(prettyObject);
     }
 
-    console.log(`${timestamp} ${formattedLevel} ${message} ${prettyObject}`);
+    outputStream(`${timestamp} ${formattedLevel} ${message} ${prettyObject}`);
   }
 
   trace(message: string, object?: any) {
@@ -78,7 +78,7 @@ export class Logger {
       case "trace":
         return colors.gray;
       case "debug":
-        return colors.green;
+        return colors.blue;
       case "info":
         return colors.green;
       case "warn":
