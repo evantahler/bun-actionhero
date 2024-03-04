@@ -1,5 +1,7 @@
 # bun-api-template
 
+[![Test](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml)
+
 To install dependencies:
 
 ```bash
