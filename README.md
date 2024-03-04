@@ -20,7 +20,7 @@ To test:
 bun test
 ```
 
-To Lint:
+To tint:
 
 ```bash
 # To test

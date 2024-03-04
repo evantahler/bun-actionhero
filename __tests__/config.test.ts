@@ -19,6 +19,11 @@ test("config can have sub-parts", () => {
   expect(config.server.web.port).toEqual(8080);
 });
 
+test("config maintains types", () => {
+  expect(typeof config.server.web.port).toBe("number");
+  expect(typeof config.server.web.host).toBe("string");
+});
+
 describe("updating config", () => {
   let originalPort: number;
   beforeAll(() => {
