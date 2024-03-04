@@ -1,4 +1,12 @@
-name: test
+name: Test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
 jobs:
   test:
     name: test
@@ -10,3 +18,11 @@ jobs:
       - run: bun install
       - run: bun build index.ts > /dev/null
       - run: bun test
+
+  complete:
+    permissions:
+      contents: none
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - run: echo "Done!"
