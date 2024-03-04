@@ -40,4 +40,26 @@ describe("updating config", () => {
     Bun.env["servers.web.port"] = "8081";
     expect(loadFromEnvIfSet("servers.web.port", 8080)).toEqual(8081);
   });
+
+  test("parsing works for various types", () => {
+    const scenarios = [
+      1,
+      0,
+      -1,
+      1.1,
+      -1.1,
+      "a",
+      "1",
+      true,
+      false,
+      "true",
+      "false",
+    ];
+
+    for (const v of scenarios) {
+      Bun.env["foo"] = v.toString();
+      const output = loadFromEnvIfSet("foo", v);
+      expect(output).toEqual(v);
+    }
+  });
 });
