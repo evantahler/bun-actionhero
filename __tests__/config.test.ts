@@ -30,8 +30,6 @@ describe("updating config", () => {
     originalPort = config.server.web.port;
   });
 
-  beforeEach(() => {});
-
   afterAll(() => {
     config.server.web.port = originalPort;
   });
