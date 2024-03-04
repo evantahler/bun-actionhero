@@ -9,7 +9,6 @@ on:
 
 jobs:
   build:
-    name: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,7 +17,6 @@ jobs:
       - run: bun build index.ts > /dev/null
 
   lint:
-    name: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +25,6 @@ jobs:
       - run: bun run prettier --check **/*.ts
 
   test:
-    name: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
