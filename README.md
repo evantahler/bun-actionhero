@@ -14,4 +14,19 @@ To run:
 bun run index.ts
 ```
 
+To test:
+
+```bash
+bun test
+```
+
+To Lint:
+
+```bash
+# To test
+bun run prettier --check .
+# To Fix
+bun run prettier --write .
+```
+
 This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.

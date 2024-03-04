@@ -7,10 +7,10 @@ export function loadFromEnvIfSet<T>(envString: string, defaultValue: T) {
       typeof defaultValue === "boolean"
         ? valFromEnv.trim().toUpperCase() === "TRUE"
         : typeof defaultValue === "number"
-        ? valFromEnv.includes(".")
-          ? parseFloat(valFromEnv)
-          : parseInt(valFromEnv)
-        : valFromEnv
+          ? valFromEnv.includes(".")
+            ? parseFloat(valFromEnv)
+            : parseInt(valFromEnv)
+          : valFromEnv
     ) as T;
   }
 
