@@ -23,17 +23,17 @@ export abstract class Initializer {
   /**
    * Method run as part of the `initialize` lifecycle of your process.  Usually sets api['YourNamespace']
    */
-  async initialize?(): Promise<void>;
+  async initialize?(): Promise<any>;
 
   /**
    * Method run as part of the `start` lifecycle of your process.  Usually connects to remote servers or processes.
    */
-  async start?(): Promise<void>;
+  async start?(): Promise<any>;
 
   /**
    * Method run as part of the `initialize` lifecycle of your process.  Usually disconnects from remote servers or processes.
    */
-  async stop?(): Promise<void>;
+  async stop?(): Promise<any>;
 
   async validate() {
     if (!this.name) {
@@ -45,11 +45,11 @@ export abstract class Initializer {
 
       if (!p) {
         throw new Error(
-          `${priority} is a required property for the initializer \`${this.name}\``,
+          `${priority} is a required property for the initializer \`${this.name}\``
         );
       } else if (typeof p !== "number" || p < 0) {
         throw new Error(
-          `${priority} is not a positive integer for the initializer \`${this.name}\``,
+          `${priority} is not a positive integer for the initializer \`${this.name}\``
         );
       }
     }

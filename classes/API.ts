@@ -4,8 +4,6 @@ import { config } from "../config";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
 
-// type ExtendedInitializer extends Initializer= { }
-
 export class API {
   initialized: boolean;
   started: boolean;
@@ -13,6 +11,9 @@ export class API {
   bootTime: number;
   logger: Logger;
   initializers: Initializer[];
+
+  // allow arbitrary properties to be set on the API, to be added and typed later
+  [key: string]: any;
 
   constructor() {
     this.bootTime = new Date().getTime();
@@ -34,7 +35,8 @@ export class API {
     for (const initializer of this.initializers) {
       this.logger.debug(`Initializing initializer ${initializer.name}`);
       await initializer.validate();
-      await initializer.initialize?.();
+      const response = await initializer.initialize?.();
+      if (response) this[initializer.name] = response;
       this.logger.debug(`Initialized initializer ${initializer.name}`);
     }
 
@@ -47,12 +49,28 @@ export class API {
 
     this.logger.info("Starting process");
 
+    this.sortInitializers("startPriority");
+
+    for (const initializer of this.initializers) {
+      this.logger.debug(`Starting initializer ${initializer.name}`);
+      const response = await initializer.start?.();
+      this.logger.debug(`Started initializer ${initializer.name}`);
+    }
+
     this.started = true;
     this.logger.info("Starting complete");
   }
 
   async stop() {
     this.logger.info("Stopping process");
+
+    this.sortInitializers("stopPriority");
+
+    for (const initializer of this.initializers) {
+      this.logger.debug(`Stopping initializer ${initializer.name}`);
+      await initializer.start?.();
+      this.logger.debug(`Stopped initializer ${initializer.name}`);
+    }
 
     this.stopped = true;
     this.logger.info("Stopping complete");
