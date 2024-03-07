@@ -11,6 +11,10 @@ bun install
 To run:
 
 ```bash
+# one-time env setup
+cp .env.example .env
+
+# run the app
 bun run index.ts
 ```
 
