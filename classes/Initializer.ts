@@ -45,11 +45,11 @@ export abstract class Initializer {
 
       if (!p) {
         throw new Error(
-          `${priority} is a required property for the initializer \`${this.name}\``
+          `${priority} is a required property for the initializer \`${this.name}\``,
         );
       } else if (typeof p !== "number" || p < 0) {
         throw new Error(
-          `${priority} is not a positive integer for the initializer \`${this.name}\``
+          `${priority} is not a positive integer for the initializer \`${this.name}\``,
         );
       }
     }
