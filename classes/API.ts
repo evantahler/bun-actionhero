@@ -27,7 +27,7 @@ export class API {
   }
 
   async initialize() {
-    this.logger.info("Initializing process");
+    this.logger.warn("Initializing process");
 
     await this.findInitializers();
     this.sortInitializers("loadPriority");
@@ -41,13 +41,13 @@ export class API {
     }
 
     this.initialized = true;
-    this.logger.info("Initializing complete");
+    this.logger.warn("Initializing complete");
   }
 
   async start() {
     if (!this.initialized) await this.initialize();
 
-    this.logger.info("Starting process");
+    this.logger.warn("Starting process");
 
     this.sortInitializers("startPriority");
 
@@ -58,11 +58,11 @@ export class API {
     }
 
     this.started = true;
-    this.logger.info("Starting complete");
+    this.logger.warn("Starting complete");
   }
 
   async stop() {
-    this.logger.info("Stopping process");
+    this.logger.warn("Stopping process");
 
     this.sortInitializers("stopPriority");
 
@@ -73,7 +73,7 @@ export class API {
     }
 
     this.stopped = true;
-    this.logger.info("Stopping complete");
+    this.logger.warn("Stopping complete");
   }
 
   private buildLogger() {
