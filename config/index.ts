@@ -1,9 +1,9 @@
 import { configLogger } from "./logger";
-import { configName } from "./name";
+import { configProcess } from "./process";
 import { configServerWeb } from "./server/web";
 
 export const config = {
-  name: configName,
+  process: configProcess,
   logger: configLogger,
   server: { web: configServerWeb },
 };

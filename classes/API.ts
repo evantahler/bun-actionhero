@@ -62,13 +62,15 @@ export class API {
   }
 
   async stop() {
+    if (this.stopped) return;
+
     this.logger.warn("Stopping process");
 
     this.sortInitializers("stopPriority");
 
     for (const initializer of this.initializers) {
       this.logger.debug(`Stopping initializer ${initializer.name}`);
-      await initializer.start?.();
+      await initializer.stop?.();
       this.logger.debug(`Stopped initializer ${initializer.name}`);
     }
 

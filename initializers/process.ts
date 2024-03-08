@@ -2,22 +2,22 @@ import { logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 
-const namespace = "name";
+const namespace = "process";
 
 declare module "../classes/API" {
   export interface API {
-    [namespace]: Awaited<ReturnType<Name["initialize"]>>;
+    [namespace]: Awaited<ReturnType<Process["initialize"]>>;
   }
 }
 
-export class Name extends Initializer {
+export class Process extends Initializer {
   constructor() {
     super(namespace);
-    this.loadPriority = 1;
+    this.loadPriority = 2;
   }
 
   async initialize() {
-    const name = config.name.name;
+    const name = config.process.name;
     const pid = process.pid;
     logger.info(`Initializing process: ${name}, pid: ${pid}`);
     return { name, pid };
