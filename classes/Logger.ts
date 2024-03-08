@@ -1,7 +1,19 @@
 import colors from "colors";
 
-import { LogLevels, type LogLevel, type LoggerStream } from "../types/LogLevel";
 import type { configLogger } from "../config/logger";
+
+export const LogLevels = [
+  "trace",
+  "debug",
+  "info",
+  "warn",
+  "error",
+  "fatal",
+] as const;
+
+export type LogLevel = (typeof LogLevels)[number];
+
+export type LoggerStream = "stdout" | "stderr";
 
 /**
  * The Logger Class.  I write to stdout or stderr, and can be colorized.

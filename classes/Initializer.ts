@@ -1,4 +1,10 @@
-import { InitializerPriorities } from "../types/InitializerPriorities";
+export const InitializerPriorities = [
+  "loadPriority",
+  "startPriority",
+  "stopPriority",
+] as const;
+
+export type InitializerPriority = (typeof InitializerPriorities)[number];
 
 /**
  * Create a new Initializer. The required properties of an initializer. These can be defined statically (this.name) or as methods which return a value.
@@ -45,11 +51,11 @@ export abstract class Initializer {
 
       if (!p) {
         throw new Error(
-          `${priority} is a required property for the initializer \`${this.name}\``,
+          `${priority} is a required property for the initializer \`${this.name}\``
         );
       } else if (typeof p !== "number" || p < 0) {
         throw new Error(
-          `${priority} is not a positive integer for the initializer \`${this.name}\``,
+          `${priority} is not a positive integer for the initializer \`${this.name}\``
         );
       }
     }
