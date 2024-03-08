@@ -15,7 +15,7 @@ export class Connection {
     actionName: string,
     params: FormData,
     method: Request["method"] = "",
-    url: string = ""
+    url: string = "",
   ): Promise<{ response: Object; error?: Error }> {
     const reqStartTime = new Date().getTime();
     let response: "OK" | "ERROR" = "OK";
@@ -25,7 +25,7 @@ export class Connection {
     const duration = new Date().getTime() - reqStartTime;
     logger.info(
       `[${response}] ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress} -> ${actionName} ${url.length > 0 ? `(via ${url})` : ""} (${duration}ms)`,
-      params
+      params,
     );
 
     return { response: { ok: "yay" }, error: undefined };

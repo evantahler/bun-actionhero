@@ -14,6 +14,7 @@
   },
   "scripts": {
     "lint": "prettier --check .",
-    "pretty": "prettier --write ."
+    "pretty": "prettier --write .",
+    "ci": "bun run lint && bun test"
   }
 }

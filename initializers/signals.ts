@@ -39,7 +39,7 @@ export class Signals extends Initializer {
 
   async onTimeout() {
     logger.fatal(
-      `Shutdown timeout reached after ${config.process.shutdownTimeout}ms, force-exiting now`
+      `Shutdown timeout reached after ${config.process.shutdownTimeout}ms, force-exiting now`,
     );
     process.exit(errorExitCode);
   }
