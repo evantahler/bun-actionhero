@@ -1,4 +1,4 @@
-import type { Inputs, ParamsFrom } from "./Inputs";
+import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 
 const defaultName = "__action";
@@ -17,8 +17,8 @@ export abstract class Action {
    * The main "do something" method for this action.  It can be `async`.  Usually the goal of this run method is to return the data that you want to be sent to API consumers.  If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
    */
   abstract run(
-    params: ParamsFrom<this>,
-    connection: Connection,
+    params: ActionParams<this>,
+    connection: Connection
   ): Promise<Object>;
 
   async validate() {
@@ -26,3 +26,13 @@ export abstract class Action {
     if (!this.description) throw new Error("Action description is required");
   }
 }
+
+export type ActionParams<A extends Action> = {
+  [K in keyof A["inputs"]]: A["inputs"][K]["formatter"] extends (
+    ...p: any
+  ) => any
+    ? ReturnType<A["inputs"][K]["formatter"]>
+    : A["inputs"][K]["formatter"] extends (p: any) => any
+      ? ReturnType<A["inputs"][K]["formatter"]>
+      : string;
+};

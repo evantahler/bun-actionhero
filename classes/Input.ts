@@ -1,6 +1,7 @@
-export interface Input<T> {
-  default?: T | ((p?: T) => T);
+export interface Input {
   required?: boolean;
-  formatter?: (p: any) => T;
-  validator?: (p: T) => Boolean;
+  default?: ((p?: any) => any) | any;
+  // formatter: (p: any) => any;
+  formatter?: Function;
+  validator?: (p: any) => Boolean;
 }

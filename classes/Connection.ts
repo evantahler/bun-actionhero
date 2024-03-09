@@ -1,8 +1,7 @@
 import { api, logger } from "../api";
 import { config } from "../config";
 import colors from "colors";
-import type { ParamsFrom } from "./Inputs";
-import type { Action } from "./Action";
+import type { Action, ActionParams } from "./Action";
 
 export class Connection {
   type: string;
@@ -23,7 +22,7 @@ export class Connection {
     actionName: string,
     params: FormData, // note: params are not constant for all connections - some are long-lived, like websockets
     method: Request["method"] = "",
-    url: string = "",
+    url: string = ""
   ): Promise<{ response: Object; error?: Error }> {
     const reqStartTime = new Date().getTime();
     let loggerResponsePrefix: "OK" | "ERROR" = "OK";
@@ -54,7 +53,7 @@ export class Connection {
     const duration = new Date().getTime() - reqStartTime;
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`
     );
 
     return { response, error };
@@ -65,7 +64,7 @@ export class Connection {
   }
 
   async formatParams(params: FormData, action: Action) {
-    const formattedParams = {} as ParamsFrom<typeof action>;
+    const formattedParams = {} as ActionParams<Action>;
 
     for (const [key, paramDefinition] of Object.entries(action.inputs)) {
       let value = params.get(key); // TODO: handle getAll for multiple values
