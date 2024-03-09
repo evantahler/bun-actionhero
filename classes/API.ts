@@ -1,6 +1,5 @@
-import { Glob } from "bun";
-import path from "path";
 import { config } from "../config";
+import { globLoader } from "../util/glob";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
 
@@ -83,22 +82,9 @@ export class API {
   }
 
   private async findInitializers() {
-    const glob = new Glob("**/*.ts");
-    const dir = path.join(import.meta.path, "..", "..", "initializers");
-
-    for await (const file of glob.scan(dir)) {
-      const fullPath = path.join(dir, file);
-      const modules = (await import(fullPath)) as {
-        [key: string]: new () => Initializer;
-      };
-      for (const [name, klass] of Object.entries(modules)) {
-        try {
-          const instance = new klass();
-          this.initializers.push(instance);
-        } catch (error) {
-          throw new Error(`Error loading initializer ${name} - ${error}`);
-        }
-      }
+    const initializers = await globLoader<Initializer>("initializers");
+    for (const i of initializers) {
+      this.initializers.push(i);
     }
   }
 

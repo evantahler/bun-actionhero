@@ -1,7 +1,7 @@
 import { api } from "../api";
 import { Initializer } from "../classes/Initializer";
 import type { Server } from "../classes/Server";
-import { WebServer } from "../servers/web";
+import { globLoader } from "../util/glob";
 
 const namespace = "servers";
 
@@ -18,11 +18,7 @@ export class Servers extends Initializer {
   }
 
   async initialize() {
-    const servers: Server<any>[] = [];
-
-    const webServer = new WebServer();
-    servers.push(webServer);
-
+    const servers = await globLoader<Server<any>>("servers");
     return { servers };
   }
 
