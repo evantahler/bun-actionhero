@@ -23,7 +23,7 @@ export class Connection {
     actionName: string,
     params: FormData, // note: params are not constant for all connections - some are long-lived, like websockets
     method: Request["method"] = "",
-    url: string = ""
+    url: string = "",
   ): Promise<{ response: Object; error?: Error }> {
     const reqStartTime = new Date().getTime();
     let loggerResponsePrefix: "OK" | "ERROR" = "OK";
@@ -54,7 +54,7 @@ export class Connection {
     const duration = new Date().getTime() - reqStartTime;
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
     );
 
     return { response, error };

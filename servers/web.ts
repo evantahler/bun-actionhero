@@ -17,7 +17,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`
+      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
     );
 
     this.server = Bun.serve({
@@ -67,7 +67,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       "hello",
       params,
       request.method,
-      request.url
+      request.url,
     );
 
     return error ? this.buildError(error) : this.buildResponse(response);
@@ -89,7 +89,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       {
         status: 500,
         headers: commonHeaders,
-      }
+      },
     );
   }
 }

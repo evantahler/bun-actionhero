@@ -56,7 +56,7 @@ export function ensureObject(param: { [key: string]: any } | string) {
 
 export function ensureObjectOrArray<T extends Array<any> | Object>(
   param: { [key: string]: any } | string,
-  recursing = false
+  recursing = false,
 ): T extends Array<any> ? any[] : Record<string, any> {
   if (Array.isArray(param)) {
     try {
@@ -76,7 +76,7 @@ export function ensureObjectOrArray<T extends Array<any> | Object>(
           : Record<string, any>;
       } else {
         throw new Error(
-          `${param} cannot be converted to JSON object (${error})`
+          `${param} cannot be converted to JSON object (${error})`,
         );
       }
     }
