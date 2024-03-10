@@ -6,6 +6,7 @@ export class Hello extends Action {
     super();
 
     this.name = "hello";
+    this.apiRoute = "/hello";
     this.inputs = {
       name: { required: true },
       number: {

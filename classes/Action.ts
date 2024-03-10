@@ -9,9 +9,11 @@ export abstract class Action {
   name = defaultName;
   description = defaultDescription;
   inputs?: Inputs;
+  apiRoute?: RegExp | string;
 
   constructor() {
     if (this.description == defaultDescription) this.description = this.name;
+    // if (!this.apiRoute) this.apiRoute = new RegExp(`^/${this.name}$`);
   }
 
   /**
@@ -19,7 +21,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<this>,
-    connection: Connection,
+    connection: Connection
   ): Promise<Object>;
 
   async validate() {

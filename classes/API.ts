@@ -1,9 +1,11 @@
+import path from "path";
 import { config } from "../config";
 import { globLoader } from "../util/glob";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
 
 export class API {
+  rootDir: string;
   initialized: boolean;
   started: boolean;
   stopped: boolean;
@@ -16,6 +18,7 @@ export class API {
 
   constructor() {
     this.bootTime = new Date().getTime();
+    this.rootDir = path.join(import.meta.path, "..", "..");
     this.logger = this.buildLogger();
 
     this.initialized = false;

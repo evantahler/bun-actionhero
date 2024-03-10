@@ -1,7 +1,8 @@
 import { Server } from "../classes/Server";
 import { config } from "../config";
-import { logger } from "../api";
+import { logger, api } from "../api";
 import { Connection } from "../classes/Connection";
+import path from "path";
 
 const commonHeaders = {
   "Content-Type": "application/json",
@@ -17,7 +18,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
+      `starting web server @ ${config.server.web.host}:${config.server.web.port}`
     );
 
     this.server = Bun.serve({
@@ -38,20 +39,32 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         this.server.pendingRequests > 0 ||
         this.server.pendingWebSockets > 0
       ) {
-        await Bun.sleep(1000);
         logger.info(`waiting for web server shutdown...`, {
           pendingRequests: this.server.pendingRequests,
           pendingWebSockets: this.server.pendingWebSockets,
         });
+
+        await Bun.sleep(1000);
       }
     }
   }
 
   async fetch(request: Request): Promise<Response> {
+    let errorStatusCode = 500;
     if (!this.server) throw new Error("server not started");
 
+    // assets
+    const requestedAsset = await this.findAsset(request);
+    if (requestedAsset) return new Response(requestedAsset);
+
+    // pages (TODO)
+
+    // actions
     const ipAddress = this.server.requestIP(request)?.address || "unknown";
     // const contentType = request.headers.get("content-type") || "";
+    const connection = new Connection(this.name, ipAddress);
+    const actionName = await this.determineActionName(request);
+    if (!actionName) errorStatusCode = 404;
 
     let params: FormData;
     try {
@@ -60,17 +73,53 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       params = new FormData();
     }
 
-    const connection = new Connection(this.name, ipAddress);
-
     // TODO: fork for files vs actions
     const { response, error } = await connection.act(
-      "hello",
+      actionName,
       params,
       request.method,
-      request.url,
+      request.url
     );
 
-    return error ? this.buildError(error) : this.buildResponse(response);
+    return error
+      ? this.buildError(error, errorStatusCode)
+      : this.buildResponse(response);
+  }
+
+  async findAsset(request: Request) {
+    const url = new URL(request.url);
+    if (!url.pathname.startsWith(`${config.server.web.assetRoute}/`)) return;
+
+    const replacer = new RegExp(`^${config.server.web.assetRoute}/`, "g");
+    const localPath = path.join(
+      api.rootDir,
+      "assets",
+      url.pathname.replace(replacer, "")
+    );
+    const filePointer = Bun.file(localPath);
+    if (await filePointer.exists()) {
+      return filePointer;
+    } else {
+      return;
+    }
+  }
+
+  async determineActionName(request: Request) {
+    const url = new URL(request.url);
+    if (!url.pathname.startsWith(`${config.server.web.apiRoute}/`)) return;
+    const pathToMatch = url.pathname.replace(
+      new RegExp(`${config.server.web.apiRoute}`),
+      ""
+    );
+
+    for (const action of api.actions.actions) {
+      if (!action.apiRoute) continue;
+      const matcher =
+        action.apiRoute instanceof RegExp
+          ? action.apiRoute
+          : new RegExp(`^/${action.name}$`);
+      if (pathToMatch.match(matcher)) return action.name;
+    }
   }
 
   async buildResponse(response: Object, status = 200) {
@@ -80,16 +129,16 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     });
   }
 
-  async buildError(error: Error): Promise<Response> {
+  async buildError(error: Error, status = 500): Promise<Response> {
     return new Response(
       JSON.stringify({
         error: error.message,
         stack: error.stack,
       }) + "\n",
       {
-        status: 500,
+        status,
         headers: commonHeaders,
-      },
+      }
     );
   }
 }

@@ -1,5 +1,6 @@
 import path from "path";
 import { Glob } from "bun";
+import { api } from "../api";
 
 /**
  *
@@ -8,7 +9,7 @@ import { Glob } from "bun";
 export async function globLoader<T>(searchDir: string) {
   const results: T[] = [];
   const glob = new Glob("**/*.ts");
-  const dir = path.join(import.meta.path, "..", "..", searchDir);
+  const dir = path.join(api.rootDir, searchDir);
 
   for await (const file of glob.scan(dir)) {
     const fullPath = path.join(dir, file);
