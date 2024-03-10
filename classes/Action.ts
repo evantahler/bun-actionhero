@@ -1,5 +1,6 @@
 import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
+import type { Input } from "./Input";
 
 const defaultName = "__action";
 const defaultDescription = "__description";
@@ -7,7 +8,7 @@ const defaultDescription = "__description";
 export abstract class Action {
   name = defaultName;
   description = defaultDescription;
-  inputs: Inputs = {};
+  inputs?: Inputs;
 
   constructor() {
     if (this.description == defaultDescription) this.description = this.name;
@@ -18,7 +19,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<this>,
-    connection: Connection
+    connection: Connection,
   ): Promise<Object>;
 
   async validate() {
@@ -27,12 +28,13 @@ export abstract class Action {
   }
 }
 
-export type ActionParams<A extends Action> = {
-  [K in keyof A["inputs"]]: A["inputs"][K]["formatter"] extends (
-    ...p: any
-  ) => any
-    ? ReturnType<A["inputs"][K]["formatter"]>
-    : A["inputs"][K]["formatter"] extends (p: any) => any
-      ? ReturnType<A["inputs"][K]["formatter"]>
-      : string;
-};
+export type ActionParams<A extends Action> = A["inputs"] extends Inputs
+  ? {
+      [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
+    }
+  : Record<string, unknown>;
+type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
+  ...args: any
+) => any
+  ? ReturnType<I["formatter"]>
+  : string;
