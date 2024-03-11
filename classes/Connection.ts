@@ -31,7 +31,12 @@ export class Connection {
 
     try {
       const action = this.findAction(actionName);
-      if (!action) throw new Error(`Action not found: ${actionName}`);
+      if (!action) {
+        throw new Error(
+          `Action not found${actionName ? `: ${actionName}` : ""}`,
+        );
+      }
+
       const formattedParams = await this.formatParams(params, action);
       response = await action.run(formattedParams, this);
     } catch (e: any) {

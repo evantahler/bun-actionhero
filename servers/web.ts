@@ -18,7 +18,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
+      `starting web server @ ${config.server.web.host}:${config.server.web.port}`
     );
 
     this.server = Bun.serve({
@@ -73,12 +73,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       params = new FormData();
     }
 
-    // TODO: fork for files vs actions
+    // TODO: fork for files vs actions vs pages
     const { response, error } = await connection.act(
       actionName,
       params,
       request.method,
-      request.url,
+      request.url
     );
 
     return error
@@ -94,7 +94,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const localPath = path.join(
       api.rootDir,
       "assets",
-      url.pathname.replace(replacer, ""),
+      url.pathname.replace(replacer, "")
     );
     const filePointer = Bun.file(localPath);
     if (await filePointer.exists()) {
@@ -109,7 +109,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (!url.pathname.startsWith(`${config.server.web.apiRoute}/`)) return;
     const pathToMatch = url.pathname.replace(
       new RegExp(`${config.server.web.apiRoute}`),
-      "",
+      ""
     );
 
     for (const action of api.actions.actions) {
@@ -132,13 +132,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async buildError(error: Error, status = 500): Promise<Response> {
     return new Response(
       JSON.stringify({
-        error: error.message,
-        stack: error.stack,
+        error: { error: error.message, stack: error.stack },
       }) + "\n",
       {
         status,
         headers: commonHeaders,
-      },
+      }
     );
   }
 }

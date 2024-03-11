@@ -21,7 +21,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<this>,
-    connection: Connection,
+    connection: Connection
   ): Promise<Object>;
 
   async validate() {
@@ -40,3 +40,7 @@ type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
 ) => any
   ? ReturnType<I["formatter"]>
   : string;
+
+export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> & {
+  error?: { error: string; stack?: string };
+};

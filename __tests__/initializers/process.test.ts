@@ -10,6 +10,6 @@ afterAll(async () => {
 });
 
 test("the server process is set", async () => {
-  expect(api.process.name).toEqual("test-server");
+  expect(api.process.name).toContain("test-server");
   expect(api.process.pid).toBeGreaterThan(0);
 });

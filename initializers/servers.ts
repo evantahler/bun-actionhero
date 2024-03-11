@@ -29,4 +29,12 @@ export class Servers extends Initializer {
       await server.start();
     }
   }
+
+  async stop() {
+    const { servers } = api[namespace];
+
+    for (const server of servers) {
+      await server.stop();
+    }
+  }
 }

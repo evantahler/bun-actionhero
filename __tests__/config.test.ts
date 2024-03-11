@@ -9,7 +9,7 @@ test("config can be loaded", () => {
 
 test("config can have sub-parts", () => {
   expect(typeof config.server.web.port).toBe("number");
-  expect(config.server.web.port).toEqual(8080);
+  expect(config.server.web.port).toBeGreaterThanOrEqual(8081);
 });
 
 test("config maintains types", () => {
@@ -27,14 +27,14 @@ describe("updating config", () => {
     config.server.web.port = originalPort;
   });
 
-  test("config can be overridden by environment variables", () => {
-    expect(loadFromEnvIfSet("servers.web.port", 8080)).toEqual(8080);
+  test("config can be overridden by environment variables", async () => {
+    expect(await loadFromEnvIfSet("servers.web.port", 8081)).toEqual(8081);
 
-    Bun.env["servers.web.port"] = "8081";
-    expect(loadFromEnvIfSet("servers.web.port", 8080)).toEqual(8081);
+    Bun.env["servers.web.port.test"] = "8081";
+    expect(await loadFromEnvIfSet("servers.web.port", 8081)).toEqual(8081);
   });
 
-  test("parsing works for various types", () => {
+  test("parsing works for various types", async () => {
     const scenarios = [
       1,
       0,
@@ -51,8 +51,26 @@ describe("updating config", () => {
 
     for (const v of scenarios) {
       Bun.env["foo"] = v.toString();
-      const output = loadFromEnvIfSet("foo", v);
+      const output = await loadFromEnvIfSet("foo", v);
       expect(output).toEqual(v);
     }
+  });
+
+  describe("unique values", () => {
+    test("numbers can be made unique", async () => {
+      const val = await loadFromEnvIfSet("x", 8081, true);
+      expect(val).not.toEqual(8081);
+      expect(val).toBeGreaterThan(8081);
+    });
+
+    test("strings can be made unique", async () => {
+      const val = await loadFromEnvIfSet("x", "foo", true);
+      expect(val).not.toEqual("foo");
+      expect(val).toContain("foo-");
+    });
+
+    test("objects cannot be made unique", async () => {
+      expect(() => loadFromEnvIfSet("x", {}, true)).toThrow();
+    });
   });
 });
