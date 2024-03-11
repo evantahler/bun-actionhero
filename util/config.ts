@@ -8,7 +8,7 @@ ensureUnique will mutate this value to ensure it's unique, which is useful for t
 export async function loadFromEnvIfSet<T>(
   envString: string,
   defaultValue: T,
-  ensureUnique = false
+  ensureUnique = false,
 ) {
   let val = defaultValue;
   let valFromEnv = Bun.env[envString];
@@ -30,7 +30,7 @@ export async function loadFromEnvIfSet<T>(
   if (ensureUnique) {
     if (!["string", "number"].includes(typeof val)) {
       throw new Error(
-        "Only config values of number or string can be made unique."
+        "Only config values of number or string can be made unique.",
       );
     }
 

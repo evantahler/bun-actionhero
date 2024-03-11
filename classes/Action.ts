@@ -21,7 +21,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<this>,
-    connection: Connection
+    connection: Connection,
   ): Promise<Object>;
 
   async validate() {

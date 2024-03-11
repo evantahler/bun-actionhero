@@ -8,6 +8,6 @@ export const configLogger = {
   stream: await loadFromEnvIfSet<LoggerStream>("logger.stream", "stdout"),
   jSONObjectParsePadding: await loadFromEnvIfSet(
     "logger.jSONObjectParsePadding",
-    4
+    4,
   ),
 };
