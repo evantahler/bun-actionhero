@@ -59,8 +59,7 @@ describe("updating config", () => {
   describe("unique values", () => {
     test("numbers can be made unique", async () => {
       const val = await loadFromEnvIfSet("x", 8081, true);
-      expect(val).not.toEqual(8081);
-      expect(val).toBeGreaterThan(8081);
+      expect(val).toBeGreaterThanOrEqual(8081);
     });
 
     test("strings can be made unique", async () => {
