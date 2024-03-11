@@ -132,7 +132,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async buildError(error: Error, status = 500): Promise<Response> {
     return new Response(
       JSON.stringify({
-        error: { error: error.message, stack: error.stack },
+        error: {
+          message: error.message,
+          stack: error.stack,
+        },
       }) + "\n",
       {
         status,

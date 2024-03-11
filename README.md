@@ -15,7 +15,7 @@ To run:
 cp .env.example .env
 
 # run the app
-bun run index.ts
+bun run --watch index.ts
 ```
 
 To test:
@@ -24,7 +24,7 @@ To test:
 bun test
 ```
 
-To tint:
+To lint:
 
 ```bash
 # To test

@@ -42,5 +42,5 @@ type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
   : string;
 
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> & {
-  error?: { error: string; stack?: string };
+  error?: { message: string; stack?: string };
 };
