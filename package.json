@@ -5,7 +5,8 @@
   "type": "module",
   "devDependencies": {
     "@types/bun": "^1.0.8",
-    "prettier": "^3.2.5"
+    "prettier": "^3.2.5",
+    "typedoc": "^0.25.12"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -16,6 +17,7 @@
   "scripts": {
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
-    "ci": "bun run lint && bun test"
+    "ci": "bun run type_doc && bun run lint && bun test",
+    "type_doc": "bun run typedoc api.ts"
   }
 }

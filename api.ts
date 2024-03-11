@@ -2,7 +2,18 @@ import { API } from "./classes/API";
 import type { Logger } from "./classes/Logger";
 import { config as Config } from "./config";
 
-export { type ActionParams, type ActionResponse } from "./classes/Action";
+export {
+  type Action,
+  type ActionParams,
+  type ActionResponse,
+} from "./classes/Action";
+export { type API } from "./classes/API";
+export { type Connection } from "./classes/Connection";
+export { type Initializer } from "./classes/Initializer";
+export { type Input } from "./classes/Input";
+export { type Inputs } from "./classes/Inputs";
+export { type Logger } from "./classes/Logger";
+export { type Server } from "./classes/Server";
 
 declare module globalThis {
   let api: API;
