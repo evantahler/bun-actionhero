@@ -60,3 +60,33 @@ bun run prettier --write .
 ```
 
 This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+
+## Intentional changes from ActionHero
+
+**Process**
+
+- No more pifiles.
+
+**Logger**
+
+- simplified logger. No more winston - only STDOUT and STDERR remain
+
+**Config**
+
+- Config remains statically defined at boot. However, there's now per-env overwrites based on NODE_ENV (e.g. `logger.level.test` trumps `logger.level` when NDOE_ENV=test.)
+
+**Middleware**
+
+- TODO, but there will be some changes...
+
+**Routes**
+
+- Actions define their own routes as regular expression matchers (no `routes.ts`)
+
+**CLI**
+
+- CLI runs regular actions, not special CLI controllers.
+
+**Testing**
+
+- No mock server. Let's make real API requests. Now that bun has `fetch` included, it's easy.
