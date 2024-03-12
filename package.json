@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
+  "license": "MIT",
   "devDependencies": {
     "@types/bun": "^1.0.8",
     "prettier": "^3.2.5",

@@ -18,7 +18,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
+      `starting web server @ ${config.server.web.host}:${config.server.web.port}`
     );
 
     this.server = Bun.serve({
@@ -78,7 +78,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       actionName,
       params,
       request.method,
-      request.url,
+      request.url
     );
 
     return error
@@ -94,7 +94,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const localPath = path.join(
       api.rootDir,
       "assets",
-      url.pathname.replace(replacer, ""),
+      url.pathname.replace(replacer, "")
     );
     const filePointer = Bun.file(localPath);
     if (await filePointer.exists()) {
@@ -107,18 +107,26 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async determineActionName(request: Request) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith(`${config.server.web.apiRoute}/`)) return;
+
     const pathToMatch = url.pathname.replace(
       new RegExp(`${config.server.web.apiRoute}`),
-      "",
+      ""
     );
 
     for (const action of api.actions.actions) {
-      if (!action.apiRoute) continue;
+      if (!action.web.route) continue;
+
       const matcher =
-        action.apiRoute instanceof RegExp
-          ? action.apiRoute
+        action.web.route instanceof RegExp
+          ? action.web.route
           : new RegExp(`^/${action.name}$`);
-      if (pathToMatch.match(matcher)) return action.name;
+
+      if (
+        pathToMatch.match(matcher) &&
+        request.method.toUpperCase() === action.web.method
+      ) {
+        return action.name;
+      }
     }
   }
 
@@ -140,7 +148,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       {
         status,
         headers: commonHeaders,
-      },
+      }
     );
   }
 }

@@ -3,17 +3,18 @@ import type { Logger } from "./classes/Logger";
 import { config as Config } from "./config";
 
 export {
-  type Action,
+  Action,
   type ActionParams,
   type ActionResponse,
+  type ActionConstructorInputs,
 } from "./classes/Action";
-export { type API } from "./classes/API";
-export { type Connection } from "./classes/Connection";
-export { type Initializer } from "./classes/Initializer";
+export { API } from "./classes/API";
+export { Connection } from "./classes/Connection";
+export { Initializer } from "./classes/Initializer";
 export { type Input } from "./classes/Input";
 export { type Inputs } from "./classes/Inputs";
-export { type Logger } from "./classes/Logger";
-export { type Server } from "./classes/Server";
+export { Logger } from "./classes/Logger";
+export { Server } from "./classes/Server";
 
 declare module globalThis {
   let api: API;

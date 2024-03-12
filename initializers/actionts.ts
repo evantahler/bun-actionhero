@@ -19,7 +19,7 @@ export class Actions extends Initializer {
 
   async initialize() {
     const actions = await globLoader<Action>("actions");
-    logger.debug(`loaded ${Object.keys(actions).length} actions`);
+    logger.info(`loaded ${Object.keys(actions).length} actions`);
     return { actions };
   }
 }

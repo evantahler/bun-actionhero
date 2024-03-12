@@ -1,13 +1,12 @@
-import { api } from "../api";
-import { Action } from "../classes/Action";
+import { api, Action } from "../api";
 import packageJSON from "../package.json";
 
 export class Status extends Action {
   constructor() {
-    super();
-
-    this.name = "status";
-    this.apiRoute = "/status";
+    super({
+      name: "status",
+      web: { route: "/status", method: "GET" },
+    });
   }
 
   async run() {
