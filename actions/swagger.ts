@@ -1,7 +1,3 @@
-// import { Action, config, api, RouteType } from "./../index";
-import * as fs from "fs";
-import * as path from "path";
-
 import { Action, config, api } from "../api";
 import packageJSON from "../package.json";
 

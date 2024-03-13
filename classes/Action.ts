@@ -2,7 +2,7 @@ import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
 
-const HTTP_METHODS = [
+export const HTTP_METHODS = [
   "GET",
   "POST",
   "PUT",
@@ -41,12 +41,15 @@ export abstract class Action {
   }
 
   /**
-   * The main "do something" method for this action.  It can be `async`.  Usually the goal of this run method is to return the data that you want to be sent to API consumers.  If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
+   * The main "do something" method for this action.
+   * It can be `async`.
+   * Usually the goal of this run method is to return the data that you want to be sent to API consumers.
+   * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
    */
-  abstract run<T extends Action>(
-    params: ActionParams<T>,
-    connection: Connection
-  ): Promise<ActionResponse<T>>;
+  abstract run(
+    params: ActionParams<typeof this>,
+    connection: Connection // ): ActionResponse<typeof this>;
+  ): Promise<any>;
 
   async validate() {
     if (!this.name) throw new Error("Action name is required");
@@ -63,8 +66,9 @@ type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
   ...args: any
 ) => any
   ? ReturnType<I["formatter"]>
-  : string;
+  : unknown;
 
-export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> & {
-  error?: { message: string; stack?: string };
-};
+export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
+  Partial<{
+    error?: { message: string; stack?: string };
+  }>;
