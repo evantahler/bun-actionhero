@@ -57,13 +57,11 @@ export abstract class Action {
   }
 }
 
-export type ActionParams<A extends Action> = A["inputs"] extends Inputs
-  ? {
-      [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
-    }
-  : Record<string, unknown>;
+export type ActionParams<A extends Action> = {
+  [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
+};
 type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
-  ...args: any
+  a: any,
 ) => any
   ? ReturnType<I["formatter"]>
   : unknown;
