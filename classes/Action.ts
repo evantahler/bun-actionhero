@@ -48,7 +48,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<typeof this>,
-    connection: Connection // ): ActionResponse<typeof this>;
+    connection: Connection, // ): ActionResponse<typeof this>;
   ): Promise<any>;
 
   async validate() {
