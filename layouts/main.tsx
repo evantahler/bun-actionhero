@@ -1,6 +1,10 @@
-import React, { type ReactNode } from "react";
+import React from "react";
 
-export const MainLayout = (page: ReactNode) => {
+export type LayoutProps = {
+  title: string;
+};
+
+export const MainLayout = (props: React.PropsWithChildren<LayoutProps>) => {
   return (
     <React.StrictMode>
       <html lang="en">
@@ -10,9 +14,9 @@ export const MainLayout = (page: ReactNode) => {
             name="viewport"
             content="width=device-width, initial-scale=1.0"
           />
-          <title>Document</title>
+          <title>{props.title}</title>
         </head>
-        <body>{page}</body>
+        <body>{props.children}</body>
       </html>
     </React.StrictMode>
   );

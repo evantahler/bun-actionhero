@@ -6,7 +6,6 @@ import path from "path";
 import { type HTTP_METHOD } from "../classes/Action";
 import { renderToReadableStream } from "react-dom/server";
 import type { BunFile } from "bun";
-import { MainLayout } from "../layouts/main";
 
 type URLParsed = import("url").URL;
 
@@ -212,8 +211,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async renderReactPage(request: Request, url: URLParsed, assetPath: string) {
-    const { page } = await import(assetPath);
-    const outputStream = await renderToReadableStream(<MainLayout {...page} />);
+    const constructors = (await import(assetPath)) as Record<
+      string,
+      () => React.ReactNode
+    >;
+    const outputStream = await renderToReadableStream(
+      Object.values(constructors)[0]()
+    );
     return new Response(outputStream, {
       headers: { "Content-Type": "text/html" },
     });
