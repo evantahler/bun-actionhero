@@ -39,7 +39,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async stop() {
     if (this.server) {
-      this.server.stop();
+      this.server.stop(false);
+
       while (
         this.server.pendingRequests > 0 ||
         this.server.pendingWebSockets > 0
@@ -49,9 +50,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
           pendingWebSockets: this.server.pendingWebSockets,
         });
 
-        await Bun.sleep(1000);
+        await Bun.sleep(100);
       }
-      console.log("web server stopped");
     }
   }
 
