@@ -33,6 +33,35 @@ describe("actions", () => {
   });
 });
 
-describe("assets", () => {});
+describe("assets", () => {
+  test("the web server can serve a static asset", async () => {
+    const res = await fetch(url + "/assets/actionhero.png");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toEqual("image/png");
+    const body = await res.text();
+    expect(body).toContain("PNG"); // binary...
+  });
 
-describe("pages", () => {});
+  test("the web server can handle missing assets gracefully", async () => {
+    const res = await fetch(url + "/assets/missing.png");
+    expect(res.status).toBe(404);
+    expect(res.headers.get("Content-Type")).toEqual("application/json");
+  });
+});
+
+describe("pages", () => {
+  test("the web server can serve a react page", async () => {
+    const res = await fetch(url + "/");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toEqual("text/html");
+    const text = await res.text();
+    expect(text).toContain("<title>Hello World</title>"); // from the layout w/ props
+    expect(text).toContain("<h1>Hello World</h1>"); // from the child page
+  });
+
+  test("the web server can handle missing pages gracefully", async () => {
+    const res = await fetch(url + "/missing.html");
+    expect(res.status).toBe(404);
+    expect(res.headers.get("Content-Type")).toEqual("application/json");
+  });
+});
