@@ -49,7 +49,7 @@ export abstract class Action {
    */
   abstract run(
     params: ActionParams<typeof this>,
-    connection: Connection // ): ActionResponse<typeof this>;
+    connection: Connection, // ): ActionResponse<typeof this>;
   ): Promise<any>;
 
   async validate() {
@@ -62,7 +62,7 @@ export type ActionParams<A extends Action> = {
   [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
 };
 type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
-  a: any
+  a: any,
 ) => any
   ? ReturnType<I["formatter"]>
   : unknown;

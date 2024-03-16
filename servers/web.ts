@@ -23,7 +23,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`
+      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
     );
 
     this.server = Bun.serve({
@@ -74,7 +74,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const connection = new Connection(this.name, ipAddress);
     const actionName = await this.determineActionName(
       url,
-      request.method as HTTP_METHOD
+      request.method as HTTP_METHOD,
     );
     if (!actionName) errorStatusCode = 404;
 
@@ -90,7 +90,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       actionName,
       params,
       request.method,
-      request.url
+      request.url,
     );
 
     return error
@@ -121,7 +121,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const localPath = path.join(
       api.rootDir,
       "assets",
-      url.pathname.replace(replacer, "")
+      url.pathname.replace(replacer, ""),
     );
     const filePointer = Bun.file(localPath);
     if (await filePointer.exists()) {
@@ -132,13 +132,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async findPage(
-    url: URLParsed
+    url: URLParsed,
   ): Promise<[BunFile | undefined, string | undefined, boolean | undefined]> {
     const replacer = new RegExp(`^${config.server.web.pageRoute}/`, "g");
     const localPath = path.join(
       api.rootDir,
       "pages",
-      url.pathname.replace(replacer, "")
+      url.pathname.replace(replacer, ""),
     );
 
     const possiblePaths: [P: string, isReact: boolean][] = [
@@ -168,7 +168,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async determineActionName(url: URLParsed, method: HTTP_METHOD) {
     const pathToMatch = url.pathname.replace(
       new RegExp(`${config.server.web.apiRoute}`),
-      ""
+      "",
     );
 
     for (const action of api.actions.actions) {
@@ -206,7 +206,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       {
         status,
         headers: commonHeaders,
-      }
+      },
     );
   }
 
@@ -216,7 +216,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       () => React.ReactNode
     >;
     const outputStream = await renderToReadableStream(
-      Object.values(constructors)[0]()
+      Object.values(constructors)[0](),
     );
     return new Response(outputStream, {
       headers: { "Content-Type": "text/html" },
