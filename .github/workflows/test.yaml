@@ -39,7 +39,7 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - run: bun install
       - run: cp .env.example .env
-      - run: bun test
+      - run: bun test --bail 5 __tests__
 
   complete:
     runs-on: ubuntu-latest

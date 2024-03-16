@@ -19,7 +19,7 @@ export class API {
   constructor() {
     this.bootTime = new Date().getTime();
     this.rootDir = path.join(import.meta.path, "..", "..");
-    this.logger = this.buildLogger();
+    this.logger = new Logger(config.logger);
 
     this.initialized = false;
     this.started = false;
@@ -78,10 +78,6 @@ export class API {
 
     this.stopped = true;
     this.logger.warn("Stopping complete");
-  }
-
-  private buildLogger() {
-    return new Logger(config.logger);
   }
 
   private async findInitializers() {

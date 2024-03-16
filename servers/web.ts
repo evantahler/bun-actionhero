@@ -51,6 +51,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
         await Bun.sleep(1000);
       }
+      console.log("web server stopped");
     }
   }
 
