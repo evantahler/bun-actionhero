@@ -1,10 +1,17 @@
+import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
+import { Container } from "react-bootstrap";
 
-export const page = () => (
+export const Page = () => (
   <MainLayout title="Hello World">
-    <div>
+    <Container>
       <h1>Hello World</h1>
       <p>sups.</p>
-    </div>
+      <hr />
+      <StatusCard />
+    </Container>
+    {/* <div>
+
+    </div> */}
   </MainLayout>
 );

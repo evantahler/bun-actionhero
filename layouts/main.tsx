@@ -14,9 +14,13 @@ export const MainLayout = (props: React.PropsWithChildren<LayoutProps>) => {
             name="viewport"
             content="width=device-width, initial-scale=1.0"
           />
+          <link rel="stylesheet" href="/assets/styles/bootstrap.min.css"></link>
           <title>{props.title}</title>
         </head>
-        <body>{props.children}</body>
+        <body>
+          <br />
+          {props.children}
+        </body>
       </html>
     </React.StrictMode>
   );
