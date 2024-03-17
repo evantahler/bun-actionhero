@@ -3,6 +3,11 @@ import { config } from "../config";
 import { logger, api } from "../api";
 import { Connection } from "../classes/Connection";
 import path from "path";
+import { type HTTP_METHOD } from "../classes/Action";
+import { renderToReadableStream } from "react-dom/server";
+import type { BunFile } from "bun";
+
+type URLParsed = import("url").URL;
 
 const commonHeaders = {
   "Content-Type": "application/json",
@@ -34,7 +39,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async stop() {
     if (this.server) {
-      this.server.stop();
+      this.server.stop(false); // allow open connections to complete
+
       while (
         this.server.pendingRequests > 0 ||
         this.server.pendingWebSockets > 0
@@ -44,26 +50,33 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
           pendingWebSockets: this.server.pendingWebSockets,
         });
 
-        await Bun.sleep(1000);
+        await Bun.sleep(100);
       }
     }
   }
 
   async fetch(request: Request): Promise<Response> {
-    let errorStatusCode = 500;
+    const url = new URL(request.url);
+
+    if (url.pathname.startsWith(`${config.server.web.apiRoute}/`)) {
+      return this.handleAction(request, url);
+    } else if (url.pathname.startsWith(`${config.server.web.assetRoute}/`)) {
+      return this.handleAsset(request, url);
+    } else {
+      return this.handlePage(request, url);
+    }
+  }
+
+  async handleAction(request: Request, url: URLParsed) {
     if (!this.server) throw new Error("server not started");
+    let errorStatusCode = 500;
 
-    // assets
-    const requestedAsset = await this.findAsset(request);
-    if (requestedAsset) return new Response(requestedAsset);
-
-    // pages (TODO)
-
-    // actions
     const ipAddress = this.server.requestIP(request)?.address || "unknown";
-    // const contentType = request.headers.get("content-type") || "";
     const connection = new Connection(this.name, ipAddress);
-    const actionName = await this.determineActionName(request);
+    const actionName = await this.determineActionName(
+      url,
+      request.method as HTTP_METHOD,
+    );
     if (!actionName) errorStatusCode = 404;
 
     let params: FormData;
@@ -86,10 +99,25 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       : this.buildResponse(response);
   }
 
-  async findAsset(request: Request) {
-    const url = new URL(request.url);
-    if (!url.pathname.startsWith(`${config.server.web.assetRoute}/`)) return;
+  async handleAsset(request: Request, url: URLParsed) {
+    const requestedAsset = await this.findAsset(url);
+    if (requestedAsset) {
+      return new Response(requestedAsset);
+    } else return this.buildError(new Error("Asset not found"), 404);
+  }
 
+  async handlePage(request: Request, url: URLParsed) {
+    const [requestedAsset, assetPath, isReact] = await this.findPage(url);
+    if (requestedAsset && isReact && assetPath) {
+      return this.renderReactPage(request, url, assetPath);
+    } else if (requestedAsset && !isReact) {
+      return new Response(requestedAsset);
+    } else {
+      return this.buildError(new Error("Page not found"), 404);
+    }
+  }
+
+  async findAsset(url: URLParsed) {
     const replacer = new RegExp(`^${config.server.web.assetRoute}/`, "g");
     const localPath = path.join(
       api.rootDir,
@@ -104,10 +132,41 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
-  async determineActionName(request: Request) {
-    const url = new URL(request.url);
-    if (!url.pathname.startsWith(`${config.server.web.apiRoute}/`)) return;
+  async findPage(
+    url: URLParsed,
+  ): Promise<[BunFile | undefined, string | undefined, boolean | undefined]> {
+    const replacer = new RegExp(`^${config.server.web.pageRoute}/`, "g");
+    const localPath = path.join(
+      api.rootDir,
+      "pages",
+      url.pathname.replace(replacer, ""),
+    );
 
+    const possiblePaths: [P: string, isReact: boolean][] = [
+      [localPath, false],
+      [localPath + ".htm", false],
+      [localPath + ".html", false],
+      [localPath + ".js", true],
+      [localPath + ".jsx", true],
+      [localPath + ".ts", true],
+      [localPath + ".tsx", true],
+      [localPath + "index.htm", false],
+      [localPath + "index.html", false],
+      [localPath + "index.js", true],
+      [localPath + "index.jsx", true],
+      [localPath + "index.ts", true],
+      [localPath + "index.tsx", true],
+    ];
+
+    for (const [p, isReact] of possiblePaths) {
+      const filePointer = Bun.file(p);
+      if (await filePointer.exists()) return [filePointer, p, isReact];
+    }
+
+    return [undefined, undefined, undefined];
+  }
+
+  async determineActionName(url: URLParsed, method: HTTP_METHOD) {
     const pathToMatch = url.pathname.replace(
       new RegExp(`${config.server.web.apiRoute}`),
       "",
@@ -123,7 +182,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
       if (
         pathToMatch.match(matcher) &&
-        request.method.toUpperCase() === action.web.method
+        method.toUpperCase() === action.web.method
       ) {
         return action.name;
       }
@@ -150,5 +209,18 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         headers: commonHeaders,
       },
     );
+  }
+
+  async renderReactPage(request: Request, url: URLParsed, assetPath: string) {
+    const constructors = (await import(assetPath)) as Record<
+      string,
+      () => React.ReactNode
+    >;
+    const outputStream = await renderToReadableStream(
+      Object.values(constructors)[0](),
+    );
+    return new Response(outputStream, {
+      headers: { "Content-Type": "text/html" },
+    });
   }
 }

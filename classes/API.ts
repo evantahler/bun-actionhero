@@ -19,7 +19,7 @@ export class API {
   constructor() {
     this.bootTime = new Date().getTime();
     this.rootDir = path.join(import.meta.path, "..", "..");
-    this.logger = this.buildLogger();
+    this.logger = new Logger(config.logger);
 
     this.initialized = false;
     this.started = false;
@@ -30,6 +30,7 @@ export class API {
 
   async initialize() {
     this.logger.warn("Initializing process");
+    this.initialized = false;
 
     await this.findInitializers();
     this.sortInitializers("loadPriority");
@@ -47,6 +48,8 @@ export class API {
   }
 
   async start() {
+    this.stopped = false;
+    this.started = false;
     if (!this.initialized) await this.initialize();
 
     this.logger.warn("Starting process");
@@ -77,11 +80,8 @@ export class API {
     }
 
     this.stopped = true;
+    this.started = false;
     this.logger.warn("Stopping complete");
-  }
-
-  private buildLogger() {
-    return new Logger(config.logger);
   }
 
   private async findInitializers() {

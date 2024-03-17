@@ -2,7 +2,7 @@ import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
 
-export const HTTP_METHODS = [
+export const httpMethods = [
   "GET",
   "POST",
   "PUT",
@@ -10,6 +10,7 @@ export const HTTP_METHODS = [
   "PATCH",
   "OPTIONS",
 ] as const;
+export type HTTP_METHOD = (typeof httpMethods)[number];
 
 export type ActionConstructorInputs = {
   name: string;
@@ -17,7 +18,7 @@ export type ActionConstructorInputs = {
   inputs?: Inputs;
   web?: {
     route?: RegExp | string;
-    method?: (typeof HTTP_METHODS)[number];
+    method?: HTTP_METHOD;
   };
 };
 
@@ -27,7 +28,7 @@ export abstract class Action {
   inputs: Inputs;
   web: {
     route: RegExp | string;
-    method: (typeof HTTP_METHODS)[number];
+    method: HTTP_METHOD;
   };
 
   constructor(args: ActionConstructorInputs) {
