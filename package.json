@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@types/bun": "^1.0.8",
+    "@types/react-dom": "^18.2.22",
     "colors": "^1.4.0",
     "react-bootstrap": "^2.10.1",
     "react-dom": "^18.2.0"
