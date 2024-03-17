@@ -39,7 +39,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async stop() {
     if (this.server) {
-      this.server.stop(false);
+      this.server.stop(false); // allow open connections to complete
 
       while (
         this.server.pendingRequests > 0 ||

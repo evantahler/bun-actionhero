@@ -44,8 +44,6 @@ export async function loadFromEnvIfSet<T>(
     See https://github.com/oven-sh/bun/issues/9352 for a more ideal solution.
     */
 
-    await Bun.sleep(10);
-
     const pids = (await $`ps | grep -v grep | grep 'bun test'`.text())
       .split(EOL)
       .map((l) => l.split(" ")[0])
