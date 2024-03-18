@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Card } from "react-bootstrap";
+import { Button, Card } from "react-bootstrap";
 import type { ActionResponse } from "../api";
 import type { Status } from "../actions/status";
 
@@ -32,6 +32,8 @@ export const StatusCard = () => {
           <strong>Memory Used</strong>: {status?.consumedMemoryMB}MB
         </code>
       </Card.Body>
+
+      <Button onClick={loadStatus}>Refresh</Button>
     </Card>
   );
 };
