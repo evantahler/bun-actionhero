@@ -55,8 +55,7 @@ describe("pages", () => {
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toEqual("text/html");
     const text = await res.text();
-    expect(text).toContain("<title>Hello World</title>"); // from the layout w/ props
-    expect(text).toContain("<h1>Hello World</h1>"); // from the child page
+    expect(text).toContain("Loading");
   });
 
   test("the web server can handle missing pages gracefully", async () => {

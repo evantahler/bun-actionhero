@@ -8,7 +8,7 @@ import { api } from "../api";
  */
 export async function globLoader<T>(searchDir: string) {
   const results: T[] = [];
-  const globs = [new Glob("**/*.ts"), new Glob("**/*.tsx")];
+  const globs = [new Glob("**/*.{ts,tsx}")];
   const dir = path.join(api.rootDir, searchDir);
 
   for (const glob of globs) {

@@ -19,7 +19,19 @@ export const StatusCard = () => {
   return (
     <Card bg="primary">
       <Card.Header>Server Status</Card.Header>
-      <Card.Body>{JSON.stringify(status)}</Card.Body>
+      <Card.Body>
+        <code>
+          <strong>Name</strong>: {status?.name}
+          <br />
+          <strong>PID</strong>: {status?.pid}
+          <br />
+          <strong>Version</strong>: {status?.version}
+          <br />
+          <strong>Uptime</strong>: {status?.uptime ? status.uptime / 1000 : 0}s
+          <br />
+          <strong>Memory Used</strong>: {status?.consumedMemoryMB}MB
+        </code>
+      </Card.Body>
     </Card>
   );
 };

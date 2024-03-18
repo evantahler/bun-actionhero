@@ -137,8 +137,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   ): Promise<[BunFile | undefined, string | undefined, boolean | undefined]> {
     const replacer = new RegExp(`^${config.server.web.pageRoute}/`, "g");
     const localPath = path.join(
-      api.rootDir,
-      "pages",
+      api.react.transpiledPagesDir,
       url.pathname.replace(replacer, ""),
     );
 
@@ -212,14 +211,25 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async renderReactPage(request: Request, url: URLParsed, assetPath: string) {
-    const constructors = (await import(assetPath)) as Record<
-      string,
-      () => React.ReactNode
-    >;
-    const outputStream = await renderToReadableStream(
-      Object.values(constructors)[0](),
-    );
-    return new Response(outputStream, {
+    // const jsContent = await Bun.file(assetPath).text();
+    const jsPath =
+      config.server.web.assetRoute +
+      "/.transpiled-pages/" +
+      assetPath.split(api.react.transpiledPagesDir)[1];
+
+    const body = `
+<!DOCTYPE html>
+  <head>
+    <script type="module" src="${jsPath}">$</script>
+  </head>
+
+  <body>
+    <p>Loading react...</p>
+  </body>
+</html>
+`;
+    return new Response(body, {
+      status: 200,
       headers: { "Content-Type": "text/html" },
     });
   }
