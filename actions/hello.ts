@@ -1,5 +1,5 @@
 import { Action, type ActionParams } from "../api";
-import { ensureNumber } from "../util/formatters";
+import { ensureString } from "../util/formatters";
 
 export class Hello extends Action {
   constructor() {
@@ -7,17 +7,16 @@ export class Hello extends Action {
       name: "hello",
       web: { route: "/hello", method: "POST" },
       inputs: {
-        name: { required: true },
-        number: {
+        name: {
           required: true,
-          default: 42,
-          formatter: ensureNumber,
+          validator: (p) => p.length > 0,
+          formatter: ensureString,
         },
       },
     });
   }
 
   async run(params: ActionParams<Hello>) {
-    return { message: `Hello, ${params.name} (${params.number})!` };
+    return { message: `Hello, ${params.name}!` };
   }
 }

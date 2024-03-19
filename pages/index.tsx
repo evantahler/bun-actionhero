@@ -1,8 +1,9 @@
-import { Container } from "react-bootstrap";
+import { Container, Row, Col } from "react-bootstrap";
+import { mount } from "../util/browser";
 
 import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
-import { mount } from "../util/browser";
+import { HelloCard } from "../components/HelloCard";
 
 export default function Page() {
   return (
@@ -11,7 +12,14 @@ export default function Page() {
         <h1>Hello World</h1>
         <p>sups.</p>
         <hr />
-        <StatusCard />
+        <Row>
+          <Col>
+            <StatusCard />
+          </Col>
+          <Col>
+            <HelloCard />
+          </Col>
+        </Row>
       </Container>
     </MainLayout>
   );
