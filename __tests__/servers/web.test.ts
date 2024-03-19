@@ -50,12 +50,18 @@ describe("assets", () => {
 });
 
 describe("pages", () => {
-  test("the web server can serve a react page", async () => {
+  test("the web server can serve a react page pre-rendered", async () => {
     const res = await fetch(url + "/");
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toEqual("text/html");
     const text = await res.text();
-    expect(text).toContain("Loading");
+    expect(text).toContain("Hello World");
+  });
+
+  test("react pages also include react-loader", async () => {
+    const res = await fetch(url + "/");
+    const text = await res.text();
+    expect(text).toContain("reactScript = document.createElement");
   });
 
   test("the web server can handle missing pages gracefully", async () => {

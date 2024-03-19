@@ -1,7 +1,7 @@
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import path from "path";
-import { Glob } from "bun";
+import { Glob, type BuildConfig } from "bun";
 import { watch } from "fs";
 
 const namespace = "react";
@@ -12,6 +12,20 @@ declare module "../classes/API" {
   }
 }
 
+const transpiledPagesDirPrefix = ".transpiled-pages";
+const transpiledPagesDir = path.join(
+  api.rootDir,
+  "assets",
+  transpiledPagesDirPrefix,
+);
+const transpilerOptions = {
+  target: "browser" as const,
+  outdir: transpiledPagesDir,
+  minify: true,
+  splitting: true,
+  sourcemap: "inline" as const,
+} as BuildConfig;
+
 export class React extends Initializer {
   constructor() {
     super(namespace);
@@ -19,10 +33,6 @@ export class React extends Initializer {
   }
 
   async initialize() {
-    const transpiledPagesDir = path.join(
-      api.rootDir,
-      "assets/.transpiled-pages",
-    );
     const pagesDir = path.join(api.rootDir, "pages");
     const componentsDir = path.join(api.rootDir, "components");
     const glob = new Glob("**/*.{jsx,tsx}");
@@ -34,8 +44,8 @@ export class React extends Initializer {
 
     const transpileAllPages = async () => {
       await Bun.build({
-        entrypoints: pages,
-        outdir: transpiledPagesDir,
+        ...{ entrypoints: pages },
+        ...transpilerOptions,
       });
     };
 
@@ -52,8 +62,8 @@ export class React extends Initializer {
       logger.trace(`Detected ${event} in ${fullFilename}`);
 
       await Bun.build({
-        entrypoints: [fullFilename],
-        outdir: transpiledPagesDir,
+        ...{ entrypoints: [fullFilename] },
+        ...transpilerOptions,
       });
     });
 
@@ -68,7 +78,12 @@ export class React extends Initializer {
       },
     );
 
-    return { transpiledPagesDir, pagesDirWatcher, componentsDirWatcher };
+    return {
+      transpiledPagesDir,
+      transpiledPagesDirPrefix,
+      pagesDirWatcher,
+      componentsDirWatcher,
+    };
   }
 
   async stop() {

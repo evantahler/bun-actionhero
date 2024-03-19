@@ -210,27 +210,51 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
   }
 
+  /**
+   * All of this will change with Bun.App (https://bun.sh/blog/bun-bundler#sneak-peek-bun-app)
+   */
   async renderReactPage(request: Request, url: URLParsed, assetPath: string) {
-    // const jsContent = await Bun.file(assetPath).text();
+    // const ssrContent = await Bun.file(assetPath).text();
+    // console.log({ assetPath });
+
     const jsPath =
       config.server.web.assetRoute +
-      "/.transpiled-pages/" +
+      "/" +
+      api.react.transpiledPagesDirPrefix +
       assetPath.split(api.react.transpiledPagesDir)[1];
 
-    const body = `
-<!DOCTYPE html>
-  <head>
-    <script type="module" src="${jsPath}">$</script>
-  </head>
+    const pageComponentPath = path.join(
+      api.rootDir,
+      "pages",
+      assetPath
+        .split(
+          config.server.web.assetRoute +
+            "/" +
+            api.react.transpiledPagesDirPrefix,
+        )[1]
+        .split(".")[0],
+    );
 
-  <body>
-    <p>Loading react...</p>
-  </body>
-</html>
-`;
-    return new Response(body, {
-      status: 200,
-      headers: { "Content-Type": "text/html" },
+    const modules = (await import(pageComponentPath)) as Record<
+      string,
+      () => JSX.Element
+    >;
+    const ssrContentStream = await renderToReadableStream(
+      Object.values(modules)[0](),
+      {
+        bootstrapScriptContent: `
+/** Hydrate the react page **/
+var reactScript = document.createElement("script");
+reactScript.src = "${jsPath}";
+reactScript.async = true;
+reactScript.type = "module";
+document.head.appendChild(reactScript);
+         `,
+      },
+    );
+
+    return new Response(ssrContentStream, {
+      headers: { "content-type": "text/html" },
     });
   }
 }

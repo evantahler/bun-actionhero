@@ -1,10 +1,10 @@
-import ReactDOM from "react-dom/client";
+import { Container } from "react-bootstrap";
 
 import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
-import { Container } from "react-bootstrap";
+import { mount } from "../util/browser";
 
-const Page = () => {
+export default function Page() {
   return (
     <MainLayout title="Hello World">
       <Container>
@@ -15,6 +15,6 @@ const Page = () => {
       </Container>
     </MainLayout>
   );
-};
+}
 
-ReactDOM.createRoot(document as any).render(<Page />);
+mount(Page);
