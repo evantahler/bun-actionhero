@@ -13,7 +13,7 @@ export default function Page() {
         <p>sups.</p>
         <hr />
         <Row>
-          <Col>
+          <Col md={6}>
             <StatusCard />
           </Col>
           <Col>
