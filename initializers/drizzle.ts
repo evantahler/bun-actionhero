@@ -30,7 +30,7 @@ export class Drizzle extends Initializer {
   async start() {
     if (config.database.autoMigrate) {
       await this.generateMigrations();
-      // await migrate(api.drizzle.db, { migrationsFolder: "./drizzle" });
+      logger.info("migration files generated from models");
     }
 
     const pool = new Pool({
@@ -38,6 +38,12 @@ export class Drizzle extends Initializer {
     });
 
     api.drizzle.db = drizzle(pool);
+
+    if (config.database.autoMigrate) {
+      await migrate(api.drizzle.db, { migrationsFolder: "./drizzle" });
+      logger.info("database migrated successfully");
+    }
+
     logger.info("database connection established");
   }
 
@@ -58,12 +64,16 @@ export class Drizzle extends Initializer {
     const tmpfilePath = path.join(api.rootDir, "drizzle", "config.tmp.ts");
 
     try {
-      // TODO: subshell hack...
       await Bun.write(tmpfilePath, fileContent);
-      const { exitCode } =
-        await $`bun drizzle-kit generate:pg --config ${tmpfilePath}`;
+      const { exitCode, stdout, stderr } =
+        await $`bun drizzle-kit generate:pg --config ${tmpfilePath}`.quiet();
+      logger.trace(stdout.toString());
       if (exitCode !== 0) {
-        throw new Error("Failed to generate migrations");
+        {
+          throw new Error(
+            `Failed to generate migrations: ${stderr.toString()}`,
+          );
+        }
       }
     } finally {
       const filePointer = Bun.file(tmpfilePath);
