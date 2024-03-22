@@ -5,6 +5,10 @@
   "type": "module",
   "license": "MIT",
   "devDependencies": {
+    "@types/bun": "^1.0.8",
+    "@types/pg": "^8.11.4",
+    "@types/react-dom": "^18.2.22",
+    "drizzle-kit": "^0.20.14",
     "prettier": "^3.2.5",
     "typedoc": "^0.25.12"
   },
@@ -12,9 +16,9 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@types/bun": "^1.0.8",
-    "@types/react-dom": "^18.2.22",
     "colors": "^1.4.0",
+    "drizzle-orm": "^0.30.4",
+    "pg": "^8.11.3",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.1",
     "react-dom": "^18.2.0"
@@ -23,6 +27,7 @@
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
     "ci": "bun run type_doc && bun run lint && bun test",
-    "type_doc": "bun run typedoc api.ts"
+    "type_doc": "bun run typedoc api.ts",
+    "generate-migrations": "drizzle-kit generate:pg"
   }
 }

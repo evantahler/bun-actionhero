@@ -90,3 +90,7 @@ This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) 
 **Testing**
 
 - No mock server. Let's make real API requests. Now that bun has `fetch` included, it's easy.
+
+**ORM**
+
+- we use drizzle for the ORM and migrations.
