@@ -9,7 +9,8 @@ export class Hello extends Action {
       inputs: {
         name: {
           required: true,
-          validator: (p) => p.length > 0,
+          validator: (p) =>
+            p.length < 0 ? "Name must be at least 1 character" : undefined,
           formatter: ensureString,
         },
       },

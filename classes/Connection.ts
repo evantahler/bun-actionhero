@@ -92,9 +92,11 @@ export class Connection {
       }
 
       if (paramDefinition.validator) {
-        const valid = paramDefinition.validator(value);
-        if (!valid) {
-          throw new Error(`Invalid value for param: ${key}: ${value}`);
+        const validationResponse = paramDefinition.validator(value);
+        if (validationResponse) {
+          throw new Error(
+            `Invalid value for param: ${key}: ${value}: ${validationResponse}`,
+          );
         }
       }
 
