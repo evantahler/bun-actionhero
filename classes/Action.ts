@@ -1,6 +1,7 @@
 import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
+import { TypedError } from "./TypedError";
 
 export const httpMethods = [
   "GET",
@@ -53,8 +54,13 @@ export abstract class Action {
   ): Promise<any>;
 
   async validate() {
-    if (!this.name) throw new Error("Action name is required");
-    if (!this.description) throw new Error("Action description is required");
+    if (!this.name)
+      throw new TypedError("Action name is required", "ACTION_VALIDATION");
+    if (!this.description)
+      throw new TypedError(
+        "Action description is required",
+        "ACTION_VALIDATION",
+      );
   }
 }
 

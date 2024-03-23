@@ -6,6 +6,7 @@ import path from "path";
 import { type HTTP_METHOD } from "../classes/Action";
 import { renderToReadableStream } from "react-dom/server";
 import type { BunFile } from "bun";
+import { TypedError } from "../classes/TypedError";
 
 type URLParsed = import("url").URL;
 
@@ -32,7 +33,9 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       fetch: async (request) => this.fetch(request),
       error: async (error) => {
         logger.error(`uncaught web server error: ${error.message}`);
-        return this.buildError(error);
+        return this.buildError(
+          new TypedError(`${error}`, "CONNECTION_SERVER_ERROR"),
+        );
       },
     });
   }
@@ -68,7 +71,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleAction(request: Request, url: URLParsed) {
-    if (!this.server) throw new Error("server not started");
+    if (!this.server)
+      throw new TypedError("Serb server not started", "SERVER_START");
     let errorStatusCode = 500;
 
     const ipAddress = this.server.requestIP(request)?.address || "unknown";
@@ -103,7 +107,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const requestedAsset = await this.findAsset(url);
     if (requestedAsset) {
       return new Response(requestedAsset);
-    } else return this.buildError(new Error("Asset not found"), 404);
+    } else
+      return this.buildError(
+        new TypedError("Asset not found", "CONNECTION_SERVER_ERROR"),
+        404,
+      );
   }
 
   async handlePage(request: Request, url: URLParsed) {
@@ -113,7 +121,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     } else if (requestedAsset && !isReact) {
       return new Response(requestedAsset);
     } else {
-      return this.buildError(new Error("Page not found"), 404);
+      return this.buildError(
+        new TypedError("Page not found", "CONNECTION_SERVER_ERROR"),
+        404,
+      );
     }
   }
 
@@ -177,7 +188,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       const matcher =
         action.web.route instanceof RegExp
           ? action.web.route
-          : new RegExp(`^/${action.name}$`);
+          : new RegExp(`^${action.web.route}$`);
 
       if (
         pathToMatch.match(matcher) &&
@@ -195,11 +206,14 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     });
   }
 
-  async buildError(error: Error, status = 500): Promise<Response> {
+  async buildError(error: TypedError, status = 500): Promise<Response> {
     return new Response(
       JSON.stringify({
         error: {
           message: error.message,
+          type: error.type,
+          key: error.key !== undefined ? error.key : undefined,
+          value: error.value !== undefined ? error.value : undefined,
           stack: error.stack,
         },
       }) + "\n",

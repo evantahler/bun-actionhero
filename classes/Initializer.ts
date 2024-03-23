@@ -1,3 +1,5 @@
+import { TypedError } from "./TypedError";
+
 export const InitializerPriorities = [
   "loadPriority",
   "startPriority",
@@ -43,19 +45,24 @@ export abstract class Initializer {
 
   async validate() {
     if (!this.name) {
-      throw new Error("name is required for this initializer");
+      throw new TypedError(
+        "name is required for this initializer",
+        "INITIALIZER_VALIDATION",
+      );
     }
 
     for (const priority of InitializerPriorities) {
       const p = this[priority];
 
       if (!p) {
-        throw new Error(
+        throw new TypedError(
           `${priority} is a required property for the initializer \`${this.name}\``,
+          "INITIALIZER_VALIDATION",
         );
       } else if (typeof p !== "number" || p < 0) {
-        throw new Error(
+        throw new TypedError(
           `${priority} is not a positive integer for the initializer \`${this.name}\``,
+          "INITIALIZER_VALIDATION",
         );
       }
     }

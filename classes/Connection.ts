@@ -2,6 +2,7 @@ import { api, logger } from "../api";
 import { config } from "../config";
 import colors from "colors";
 import type { Action, ActionParams } from "./Action";
+import { TypedError } from "./TypedError";
 
 export class Connection {
   type: string;
@@ -23,25 +24,29 @@ export class Connection {
     params: FormData, // note: params are not constant for all connections - some are long-lived, like websockets
     method: Request["method"] = "",
     url: string = "",
-  ): Promise<{ response: Object; error?: Error }> {
+  ): Promise<{ response: Object; error?: TypedError }> {
     const reqStartTime = new Date().getTime();
     let loggerResponsePrefix: "OK" | "ERROR" = "OK";
     let response: Object = {};
-    let error: Error | undefined;
+    let error: TypedError | undefined;
 
     try {
       const action = this.findAction(actionName);
       if (!action) {
-        throw new Error(
+        throw new TypedError(
           `Action not found${actionName ? `: ${actionName}` : ""}`,
+          "CONNECTION_ACTION_NOT_FOUND",
         );
       }
 
       const formattedParams = await this.formatParams(params, action);
       response = await action.run(formattedParams, this);
-    } catch (e: any) {
+    } catch (e) {
       loggerResponsePrefix = "ERROR";
-      error = e;
+      error =
+        e instanceof TypedError
+          ? e
+          : new TypedError(`${e}`, "CONNECTION_ACTION_RUN");
     }
 
     // Note: we want the params object to remain on the same line as the message, so we stringify
@@ -76,26 +81,49 @@ export class Connection {
     for (const [key, paramDefinition] of Object.entries(action.inputs)) {
       let value = params.get(key); // TODO: handle getAll for multiple values
 
-      if (!value && paramDefinition.default) {
-        value =
-          typeof paramDefinition.default === "function"
-            ? paramDefinition.default(value)
-            : paramDefinition.default;
+      try {
+        if (!value && paramDefinition.default) {
+          value =
+            typeof paramDefinition.default === "function"
+              ? paramDefinition.default(value)
+              : paramDefinition.default;
+        }
+      } catch (e) {
+        throw new TypedError(
+          `Error creating default value for for param ${key}: ${e}`,
+          "CONNECTION_ACTION_PARAM_DEFAULT",
+        );
       }
 
       if ((paramDefinition.required && value === undefined) || value === null) {
-        throw new Error(`Missing required param: ${key}`);
+        throw new TypedError(
+          `Missing required param: ${key}`,
+          "CONNECTION_ACTION_PARAM_REQUIRED",
+          key,
+        );
       }
 
       if (paramDefinition.formatter) {
-        value = paramDefinition.formatter(value);
+        try {
+          value = paramDefinition.formatter(value);
+        } catch (e) {
+          throw new TypedError(
+            `${e}`,
+            "CONNECTION_ACTION_PARAM_FORMATTING",
+            key,
+            value,
+          );
+        }
       }
 
       if (paramDefinition.validator) {
         const validationResponse = paramDefinition.validator(value);
         if (validationResponse) {
-          throw new Error(
-            `Invalid value for param: ${key}: ${value}: ${validationResponse}`,
+          throw new TypedError(
+            validationResponse,
+            "CONNECTION_ACTION_PARAM_VALIDATION",
+            key,
+            value,
           );
         }
       }

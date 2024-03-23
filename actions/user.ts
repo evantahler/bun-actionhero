@@ -4,8 +4,8 @@ import { ensureString } from "../util/formatters";
 export class UserCreate extends Action {
   constructor() {
     super({
-      name: "status",
-      web: { route: "/status", method: "GET" },
+      name: "userCreate",
+      web: { route: "/user", method: "PUT" },
       inputs: {
         name: {
           required: true,
@@ -29,5 +29,7 @@ export class UserCreate extends Action {
     });
   }
 
-  async run(params: ActionParams<UserCreate>) {}
+  async run(params: ActionParams<UserCreate>) {
+    console.log(params);
+  }
 }
