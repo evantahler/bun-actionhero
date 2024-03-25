@@ -39,6 +39,7 @@ To run:
 ```bash
 # one-time env setup
 cp .env.example .env
+createdb bun
 
 # run the app
 bun run --watch index.ts
@@ -47,7 +48,14 @@ bun run --watch index.ts
 To test:
 
 ```bash
+# one time db setup
+createdb bun-test
+
+# run the tests
 bun test
+
+# run all all the stuff that CI does
+bun ci
 ```
 
 To lint:
