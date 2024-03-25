@@ -1,4 +1,6 @@
 import { api, Action, type ActionParams } from "../api";
+import { hashPassword, serializeUser } from "../ops/UserOps";
+import { users } from "../schema/users";
 import { ensureString } from "../util/formatters";
 
 export class UserCreate extends Action {
@@ -16,7 +18,7 @@ export class UserCreate extends Action {
         email: {
           required: true,
           validator: (p: string) =>
-            p.length < 3 || !p.includes("@") ? "Email invalids" : undefined,
+            p.length < 3 || !p.includes("@") ? "Email invalid" : undefined,
           formatter: ensureString,
         },
         password: {
@@ -30,6 +32,20 @@ export class UserCreate extends Action {
   }
 
   async run(params: ActionParams<UserCreate>) {
-    console.log(params);
+    console.log("userCreate", params);
+
+    const user = (
+      await api.drizzle.db
+        .insert(users)
+        .values({
+          name: params.name,
+          email: params.email,
+          password_hash: await hashPassword(params.password),
+        })
+        .returning()
+    )[0];
+
+    console.log(params, user);
+    return serializeUser(user);
   }
 }

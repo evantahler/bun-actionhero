@@ -25,15 +25,14 @@ export class Drizzle extends Initializer {
   }
 
   async initialize() {
-    return {} as { db?: ReturnType<typeof drizzle> };
+    const dbContainer = {} as { db: ReturnType<typeof drizzle> };
+    return Object.assign(
+      { generateMigrations: this.generateMigrations },
+      dbContainer,
+    );
   }
 
   async start() {
-    if (config.database.autoMigrate) {
-      await this.generateMigrations();
-      logger.info("migration files generated from models");
-    }
-
     const pool = new Pool({
       connectionString: config.database.connectionString,
     });

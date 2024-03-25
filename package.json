@@ -24,10 +24,10 @@
     "react-dom": "^18.2.0"
   },
   "scripts": {
+    "migrations": "bun run migrations.ts",
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
     "ci": "bun run type_doc && bun run lint && bun test",
-    "type_doc": "bun run typedoc api.ts",
-    "generate-migrations": "drizzle-kit generate:pg"
+    "type_doc": "bun run typedoc api.ts"
   }
 }
