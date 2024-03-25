@@ -57,8 +57,8 @@ jobs:
       - run: cp .env.example .env
       - run: bun test
         env:
-          "db.connectionString": postgres://postgres:postgres@localhost:5432/postgres
-          "redis.connectionString": redis://localhost:6379/1
+          db.connectionString: postgres://postgres:postgres@localhost:5432/postgres
+          redis.connectionString: redis://localhost:6379/1
 
   complete:
     runs-on: ubuntu-latest
