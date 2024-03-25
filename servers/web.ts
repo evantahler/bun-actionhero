@@ -90,9 +90,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       params = new FormData();
     }
 
-    // yes, body payload content clobbers form content, if the same keys exist
-    const body = await request.text();
-    if (body && body.length > 2) {
+    if (request.headers.get("content-type") === "application/json") {
+      const body = await request.text();
       try {
         const bodyContent = JSON.parse(body) as Record<string, string>;
         for (const [key, value] of Object.entries(bodyContent)) {
