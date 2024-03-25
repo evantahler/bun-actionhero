@@ -3,6 +3,7 @@ import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { sql } from "drizzle-orm";
 import { Pool } from "pg";
 import path from "path";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
@@ -10,15 +11,15 @@ import { unlink } from "node:fs/promises";
 import { $ } from "bun";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
-const namespace = "drizzle";
+const namespace = "db";
 
 declare module "../classes/API" {
   export interface API {
-    [namespace]: Awaited<ReturnType<Drizzle["initialize"]>>;
+    [namespace]: Awaited<ReturnType<DB["initialize"]>>;
   }
 }
 
-export class Drizzle extends Initializer {
+export class DB extends Initializer {
   constructor() {
     super(namespace);
     this.startPriority = 100;
@@ -27,7 +28,10 @@ export class Drizzle extends Initializer {
   async initialize() {
     const dbContainer = {} as { db: ReturnType<typeof drizzle> };
     return Object.assign(
-      { generateMigrations: this.generateMigrations },
+      {
+        generateMigrations: this.generateMigrations,
+        clearDatabase: this.clearDatabase,
+      },
       dbContainer,
     );
   }
@@ -37,10 +41,10 @@ export class Drizzle extends Initializer {
       connectionString: config.database.connectionString,
     });
 
-    api.drizzle.db = drizzle(pool);
+    api.db.db = drizzle(pool);
 
     if (config.database.autoMigrate) {
-      await migrate(api.drizzle.db, { migrationsFolder: "./drizzle" });
+      await migrate(api.db.db, { migrationsFolder: "./drizzle" });
       logger.info("database migrated successfully");
     }
 
@@ -79,6 +83,31 @@ export class Drizzle extends Initializer {
     } finally {
       const filePointer = Bun.file(tmpfilePath);
       if (await filePointer.exists()) await unlink(tmpfilePath);
+    }
+  }
+
+  /**
+   * Erase all the tables in the active database.  Will fail on production environments.
+   */
+  async clearDatabase(restartIdentity = true, cascade = true) {
+    if (Bun.env.NODE_ENV === "production") {
+      throw new TypedError(
+        "clearDatabase cannot be called in production",
+        ErrorType.SERVER_INITIALIZATION,
+      );
+    }
+
+    const { rows } = await api.db.db.execute(
+      sql`SELECT tablename FROM pg_tables WHERE schemaname = CURRENT_SCHEMA`,
+    );
+
+    for (const row of rows) {
+      logger.debug(`truncating table ${row.tablename}`);
+      await api.db.db.execute(
+        sql.raw(
+          `TRUNCATE TABLE "${row.tablename}" ${restartIdentity ? "RESTART IDENTITY" : ""} ${cascade ? "CASCADE" : ""} `,
+        ),
+      );
     }
   }
 }

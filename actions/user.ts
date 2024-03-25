@@ -30,7 +30,7 @@ export class UserCreate implements Action {
 
   async run(params: ActionParams<UserCreate>) {
     const user = (
-      await api.drizzle.db
+      await api.db.db
         .insert(users)
         .values({
           name: params.name,
