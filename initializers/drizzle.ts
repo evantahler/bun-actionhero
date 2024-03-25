@@ -8,7 +8,7 @@ import path from "path";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { unlink } from "node:fs/promises";
 import { $ } from "bun";
-import { TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "../classes/TypedError";
 
 const namespace = "drizzle";
 
@@ -72,7 +72,7 @@ export class Drizzle extends Initializer {
         {
           throw new TypedError(
             `Failed to generate migrations: ${stderr.toString()}`,
-            "SERVER_INITIALIZATION",
+            ErrorType.SERVER_INITIALIZATION,
           );
         }
       }

@@ -1,6 +1,6 @@
 import { $, sleep } from "bun";
 import { EOL } from "os";
-import { TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "../classes/TypedError";
 
 /**
 Loads a value from the environment, if it's set, otherwise returns the default value.
@@ -32,7 +32,7 @@ export async function loadFromEnvIfSet<T>(
     if (!["string", "number"].includes(typeof val)) {
       throw new TypedError(
         "Only config values of number or string can be made unique.",
-        "CONFIG_ERROR",
+        ErrorType.CONFIG_ERROR,
       );
     }
 

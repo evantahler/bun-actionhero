@@ -2,7 +2,7 @@ import { api, logger } from "../api";
 import { config } from "../config";
 import colors from "colors";
 import type { Action, ActionParams } from "./Action";
-import { TypedError } from "./TypedError";
+import { ErrorType, TypedError } from "./TypedError";
 
 export class Connection {
   type: string;
@@ -35,7 +35,7 @@ export class Connection {
       if (!action) {
         throw new TypedError(
           `Action not found${actionName ? `: ${actionName}` : ""}`,
-          "CONNECTION_ACTION_NOT_FOUND",
+          ErrorType.CONNECTION_ACTION_NOT_FOUND,
         );
       }
 
@@ -46,7 +46,7 @@ export class Connection {
       error =
         e instanceof TypedError
           ? e
-          : new TypedError(`${e}`, "CONNECTION_ACTION_RUN");
+          : new TypedError(`${e}`, ErrorType.CONNECTION_ACTION_RUN);
     }
 
     // Note: we want the params object to remain on the same line as the message, so we stringify
@@ -91,14 +91,14 @@ export class Connection {
       } catch (e) {
         throw new TypedError(
           `Error creating default value for for param ${key}: ${e}`,
-          "CONNECTION_ACTION_PARAM_DEFAULT",
+          ErrorType.CONNECTION_ACTION_PARAM_DEFAULT,
         );
       }
 
       if ((paramDefinition.required && value === undefined) || value === null) {
         throw new TypedError(
           `Missing required param: ${key}`,
-          "CONNECTION_ACTION_PARAM_REQUIRED",
+          ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
           key,
         );
       }
@@ -109,7 +109,7 @@ export class Connection {
         } catch (e) {
           throw new TypedError(
             `${e}`,
-            "CONNECTION_ACTION_PARAM_FORMATTING",
+            ErrorType.CONNECTION_ACTION_PARAM_FORMATTING,
             key,
             value,
           );
@@ -121,7 +121,7 @@ export class Connection {
         if (validationResponse) {
           throw new TypedError(
             validationResponse,
-            "CONNECTION_ACTION_PARAM_VALIDATION",
+            ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
             key,
             value,
           );

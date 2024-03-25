@@ -1,4 +1,4 @@
-export const typedErrorTypes = [
+export enum ErrorType {
   // general
   "SERVER_INITIALIZATION",
   "SERVER_START",
@@ -19,20 +19,14 @@ export const typedErrorTypes = [
   "CONNECTION_ACTION_PARAM_VALIDATION",
   "CONNECTION_ACTION_PARAM_FORMATTING",
   "CONNECTION_ACTION_RUN",
-] as const;
-export type TypedErrorType = (typeof typedErrorTypes)[number];
+}
 
 export class TypedError extends Error {
-  type: TypedErrorType;
+  type: ErrorType;
   key?: string;
   value?: any;
 
-  constructor(
-    message: string,
-    type: TypedErrorType,
-    key?: string,
-    value?: any,
-  ) {
+  constructor(message: string, type: ErrorType, key?: string, value?: any) {
     super(message);
     this.type = type;
     this.key = key;

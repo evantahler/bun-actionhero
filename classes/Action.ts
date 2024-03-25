@@ -1,17 +1,15 @@
 import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
-import { TypedError } from "./TypedError";
 
-export const httpMethods = [
-  "GET",
-  "POST",
-  "PUT",
-  "DELETE",
-  "PATCH",
-  "OPTIONS",
-] as const;
-export type HTTP_METHOD = (typeof httpMethods)[number];
+export enum HTTP_METHOD {
+  "GET" = "GET",
+  "POST" = "POST",
+  "PUT" = "PUT",
+  "DELETE" = "DELETE",
+  "PATCH" = "PATCH",
+  "OPTIONS" = "OPTIONS",
+}
 
 export type ActionConstructorInputs = {
   name: string;
@@ -25,7 +23,7 @@ export type ActionConstructorInputs = {
 
 export abstract class Action {
   name: string;
-  description: string;
+  description?: string;
   inputs: Inputs;
   web: {
     route: RegExp | string;
@@ -38,7 +36,7 @@ export abstract class Action {
     this.inputs = args.inputs ?? ({} as Inputs);
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
-      method: args.web?.method ?? "GET",
+      method: args.web?.method ?? HTTP_METHOD.GET,
     };
   }
 
@@ -52,16 +50,6 @@ export abstract class Action {
     params: ActionParams<typeof this>,
     connection: Connection, // ): ActionResponse<typeof this>;
   ): Promise<any>;
-
-  async validate() {
-    if (!this.name)
-      throw new TypedError("Action name is required", "ACTION_VALIDATION");
-    if (!this.description)
-      throw new TypedError(
-        "Action description is required",
-        "ACTION_VALIDATION",
-      );
-  }
 }
 
 export type ActionParams<A extends Action> = {

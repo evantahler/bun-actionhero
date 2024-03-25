@@ -3,7 +3,7 @@ import { config } from "../config";
 import { globLoader } from "../util/glob";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
-import { TypedError } from "./TypedError";
+import { ErrorType, TypedError } from "./TypedError";
 
 export class API {
   rootDir: string;
@@ -39,12 +39,11 @@ export class API {
     for (const initializer of this.initializers) {
       try {
         this.logger.debug(`Initializing initializer ${initializer.name}`);
-        await initializer.validate();
         const response = await initializer.initialize?.();
         if (response) this[initializer.name] = response;
         this.logger.debug(`Initialized initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, "SERVER_INITIALIZATION");
+        throw new TypedError(`${e}`, ErrorType.SERVER_INITIALIZATION);
       }
     }
 
@@ -67,7 +66,7 @@ export class API {
         await initializer.start?.();
         this.logger.debug(`Started initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, "SERVER_START");
+        throw new TypedError(`${e}`, ErrorType.SERVER_START);
       }
     }
 
@@ -88,7 +87,7 @@ export class API {
         await initializer.stop?.();
         this.logger.debug(`Stopped initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, "SERVER_STOP");
+        throw new TypedError(`${e}`, ErrorType.SERVER_STOP);
       }
     }
 
