@@ -1,11 +1,3 @@
-export const InitializerPriorities = [
-  "loadPriority",
-  "startPriority",
-  "stopPriority",
-] as const;
-
-export type InitializerPriority = (typeof InitializerPriorities)[number];
-
 /**
  * Create a new Initializer. The required properties of an initializer. These can be defined statically (this.name) or as methods which return a value.
  */
@@ -40,26 +32,6 @@ export abstract class Initializer {
    * Method run as part of the `initialize` lifecycle of your process.  Usually disconnects from remote servers or processes.
    */
   async stop?(): Promise<any>;
-
-  async validate() {
-    if (!this.name) {
-      throw new Error("name is required for this initializer");
-    }
-
-    for (const priority of InitializerPriorities) {
-      const p = this[priority];
-
-      if (!p) {
-        throw new Error(
-          `${priority} is a required property for the initializer \`${this.name}\``,
-        );
-      } else if (typeof p !== "number" || p < 0) {
-        throw new Error(
-          `${priority} is not a positive integer for the initializer \`${this.name}\``,
-        );
-      }
-    }
-  }
 }
 
 export type InitializerSortKeys =

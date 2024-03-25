@@ -3,6 +3,7 @@ import { config } from "../config";
 import { globLoader } from "../util/glob";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
+import { ErrorType, TypedError } from "./TypedError";
 
 export class API {
   rootDir: string;
@@ -36,11 +37,14 @@ export class API {
     this.sortInitializers("loadPriority");
 
     for (const initializer of this.initializers) {
-      this.logger.debug(`Initializing initializer ${initializer.name}`);
-      await initializer.validate();
-      const response = await initializer.initialize?.();
-      if (response) this[initializer.name] = response;
-      this.logger.debug(`Initialized initializer ${initializer.name}`);
+      try {
+        this.logger.debug(`Initializing initializer ${initializer.name}`);
+        const response = await initializer.initialize?.();
+        if (response) this[initializer.name] = response;
+        this.logger.debug(`Initialized initializer ${initializer.name}`);
+      } catch (e) {
+        throw new TypedError(`${e}`, ErrorType.SERVER_INITIALIZATION);
+      }
     }
 
     this.initialized = true;
@@ -57,9 +61,13 @@ export class API {
     this.sortInitializers("startPriority");
 
     for (const initializer of this.initializers) {
-      this.logger.debug(`Starting initializer ${initializer.name}`);
-      const response = await initializer.start?.();
-      this.logger.debug(`Started initializer ${initializer.name}`);
+      try {
+        this.logger.debug(`Starting initializer ${initializer.name}`);
+        await initializer.start?.();
+        this.logger.debug(`Started initializer ${initializer.name}`);
+      } catch (e) {
+        throw new TypedError(`${e}`, ErrorType.SERVER_START);
+      }
     }
 
     this.started = true;
@@ -74,9 +82,13 @@ export class API {
     this.sortInitializers("stopPriority");
 
     for (const initializer of this.initializers) {
-      this.logger.debug(`Stopping initializer ${initializer.name}`);
-      await initializer.stop?.();
-      this.logger.debug(`Stopped initializer ${initializer.name}`);
+      try {
+        this.logger.debug(`Stopping initializer ${initializer.name}`);
+        await initializer.stop?.();
+        this.logger.debug(`Stopped initializer ${initializer.name}`);
+      } catch (e) {
+        throw new TypedError(`${e}`, ErrorType.SERVER_STOP);
+      }
     }
 
     this.stopped = true;

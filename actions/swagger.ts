@@ -1,4 +1,5 @@
 import { Action, config, api } from "../api";
+import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
 
 const SWAGGER_VERSION = "2.0";
@@ -28,14 +29,11 @@ type SwaggerPath = {
   };
 };
 
-export class Swagger extends Action {
-  constructor() {
-    super({
-      name: "swagger",
-      description: "return API documentation in the OpenAPI specification",
-      web: { route: "/swagger", method: "GET" },
-    });
-  }
+export class Swagger implements Action {
+  name = "swagger";
+  description = "return API documentation in the OpenAPI specification";
+  inputs = {};
+  web = { route: "/swagger", method: HTTP_METHOD.GET };
 
   async run() {
     const swaggerPaths = buildSwaggerPaths();

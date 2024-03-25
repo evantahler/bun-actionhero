@@ -1,13 +1,11 @@
-import { api, Action } from "../api";
+import { api, Action, type Inputs } from "../api";
+import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
 
-export class Status extends Action {
-  constructor() {
-    super({
-      name: "status",
-      web: { route: "/status", method: "GET" },
-    });
-  }
+export class Status implements Action {
+  name = "status";
+  inputs = {};
+  web = { route: "/status", method: HTTP_METHOD.GET };
 
   async run() {
     const consumedMemoryMB =

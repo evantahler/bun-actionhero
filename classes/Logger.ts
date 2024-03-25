@@ -2,16 +2,14 @@ import colors from "colors";
 
 import type { configLogger } from "../config/logger";
 
-export const LogLevels = [
-  "trace",
-  "debug",
-  "info",
-  "warn",
-  "error",
-  "fatal",
-] as const;
-
-export type LogLevel = (typeof LogLevels)[number];
+export enum LogLevel {
+  "trace" = "trace",
+  "debug" = "debug",
+  "info" = "info",
+  "warn" = "warn",
+  "error" = "error",
+  "fatal" = "fatal",
+}
 
 export type LoggerStream = "stdout" | "stderr";
 
@@ -34,7 +32,10 @@ export class Logger {
   }
 
   log(level: LogLevel, message: string, object?: any) {
-    if (LogLevels.indexOf(level) < LogLevels.indexOf(this.level)) {
+    if (
+      Object.values(LogLevel).indexOf(level) <
+      Object.values(LogLevel).indexOf(this.level)
+    ) {
       return;
     }
 
@@ -62,42 +63,42 @@ export class Logger {
   }
 
   trace(message: string, object?: any) {
-    this.log("trace", message, object);
+    this.log(LogLevel.trace, message, object);
   }
 
   debug(message: string, object?: any) {
-    this.log("debug", message, object);
+    this.log(LogLevel.debug, message, object);
   }
 
   info(message: string, object?: any) {
-    this.log("info", message, object);
+    this.log(LogLevel.info, message, object);
   }
 
   warn(message: string, object?: any) {
-    this.log("warn", message, object);
+    this.log(LogLevel.warn, message, object);
   }
 
   error(message: string, object?: any) {
-    this.log("error", message, object);
+    this.log(LogLevel.error, message, object);
   }
 
   fatal(message: string, object?: any) {
-    this.log("fatal", message, object);
+    this.log(LogLevel.fatal, message, object);
   }
 
   private colorFromLopLevel(level: LogLevel) {
     switch (level) {
-      case "trace":
+      case LogLevel.trace:
         return colors.gray;
-      case "debug":
+      case LogLevel.debug:
         return colors.blue;
-      case "info":
+      case LogLevel.info:
         return colors.green;
-      case "warn":
+      case LogLevel.warn:
         return colors.yellow;
-      case "error":
+      case LogLevel.error:
         return colors.red;
-      case "fatal":
+      case LogLevel.fatal:
         return colors.magenta;
     }
   }

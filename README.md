@@ -61,6 +61,10 @@ bun run prettier --write .
 
 This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
 
+## Databases and Migrations
+
+This project uses Drizzle as the ORM. Migrations are derived from the schemas. To create a migration from changes in `scheams/*.ts` run `bun run migrations.ts`. Then, restart the server - pending migrations are auto-applied.
+
 ## Intentional changes from ActionHero
 
 **Process**
@@ -90,3 +94,7 @@ This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) 
 **Testing**
 
 - No mock server. Let's make real API requests. Now that bun has `fetch` included, it's easy.
+
+**ORM**
+
+- we use drizzle for the ORM and migrations.
