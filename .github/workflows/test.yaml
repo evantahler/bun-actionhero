@@ -53,6 +53,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: createdb -U postgres bun-test
       - run: bun install
       - run: cp .env.example .env
       - run: bun test
