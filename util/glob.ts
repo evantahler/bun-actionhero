@@ -1,7 +1,7 @@
 import path from "path";
 import { Glob } from "bun";
 import { api } from "../api";
-import { TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "../classes/TypedError";
 
 /**
  *
@@ -25,7 +25,7 @@ export async function globLoader<T>(searchDir: string) {
         } catch (error) {
           throw new TypedError(
             `Error loading from ${dir} -  ${name} - ${error}`,
-            "SERVER_INITIALIZATION",
+            ErrorType.SERVER_INITIALIZATION,
           );
         }
       }

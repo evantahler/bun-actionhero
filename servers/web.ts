@@ -6,7 +6,7 @@ import path from "path";
 import { type HTTP_METHOD } from "../classes/Action";
 import { renderToReadableStream } from "react-dom/server";
 import type { BunFile } from "bun";
-import { TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "../classes/TypedError";
 
 type URLParsed = import("url").URL;
 
@@ -34,7 +34,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       error: async (error) => {
         logger.error(`uncaught web server error: ${error.message}`);
         return this.buildError(
-          new TypedError(`${error}`, "CONNECTION_SERVER_ERROR"),
+          new TypedError(`${error}`, ErrorType.CONNECTION_SERVER_ERROR),
         );
       },
     });
@@ -72,7 +72,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async handleAction(request: Request, url: URLParsed) {
     if (!this.server)
-      throw new TypedError("Serb server not started", "SERVER_START");
+      throw new TypedError("Serb server not started", ErrorType.SERVER_START);
     let errorStatusCode = 500;
 
     const ipAddress = this.server.requestIP(request)?.address || "unknown";
@@ -109,7 +109,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       return new Response(requestedAsset);
     } else
       return this.buildError(
-        new TypedError("Asset not found", "CONNECTION_SERVER_ERROR"),
+        new TypedError("Asset not found", ErrorType.CONNECTION_SERVER_ERROR),
         404,
       );
   }
@@ -122,7 +122,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       return new Response(requestedAsset);
     } else {
       return this.buildError(
-        new TypedError("Page not found", "CONNECTION_SERVER_ERROR"),
+        new TypedError("Page not found", ErrorType.CONNECTION_SERVER_ERROR),
         404,
       );
     }
