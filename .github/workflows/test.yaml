@@ -42,6 +42,7 @@ jobs:
         image: postgres
         env:
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: bun-test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -53,7 +54,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
-      - run: createdb -U postgres bun-test
       - run: bun install
       - run: cp .env.example .env
       - run: bun test
