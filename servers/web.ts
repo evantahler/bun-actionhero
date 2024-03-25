@@ -90,6 +90,14 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       params = new FormData();
     }
 
+    const body = await request.text();
+    try {
+      const bodyContent = JSON.parse(body) as Record<string, string>;
+      for (const [key, value] of Object.entries(bodyContent)) {
+        params.set(key, value);
+      }
+    } catch {}
+
     // TODO: fork for files vs actions vs pages
     const { response, error } = await connection.act(
       actionName,
