@@ -7,4 +7,4 @@ export interface Input {
 
 export type InputDefault = ((p?: any) => any) | any;
 export type InputFormatter = (arg: any) => any;
-export type InputValidator = (p: any) => string | undefined; // returning anything truthy means there is an error
+export type InputValidator = (p: any) => true | string | Error; // true means valid - everything else is an error message

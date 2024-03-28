@@ -11,19 +11,19 @@ export class UserCreate implements Action {
     name: {
       required: true,
       validator: (p: string) =>
-        p.length < 3 ? "Name must be at least 3 characters" : undefined,
+        p.length < 3 ? "Name must be at least 3 characters" : true,
       formatter: ensureString,
     },
     email: {
       required: true,
       validator: (p: string) =>
-        p.length < 3 || !p.includes("@") ? "Email invalid" : undefined,
+        p.length < 3 || !p.includes("@") ? "Email invalid" : true,
       formatter: ensureString,
     },
     password: {
       required: true,
       validator: (p: string) =>
-        p.length < 3 ? "Password must be at least 3 characters" : undefined,
+        p.length < 3 ? "Password must be at least 3 characters" : true,
       formatter: ensureString,
     },
   };

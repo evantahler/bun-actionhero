@@ -118,9 +118,11 @@ export class Connection {
 
       if (paramDefinition.validator) {
         const validationResponse = paramDefinition.validator(value);
-        if (validationResponse) {
+        if (validationResponse !== true) {
           throw new TypedError(
-            validationResponse,
+            validationResponse instanceof Error
+              ? validationResponse.message
+              : validationResponse,
             ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
             key,
             value,
