@@ -10,7 +10,9 @@ export default function Page() {
     <MainLayout title="Hello World">
       <Container>
         <h1>Hello World</h1>
-        <p>sups.</p>
+        <p>
+          <a href="/swagger">View API Endpoints</a>
+        </p>
         <hr />
         <Row>
           <Col md={6}>

@@ -3,6 +3,7 @@ import { Initializer } from "../classes/Initializer";
 import path from "path";
 import { Glob, type BuildConfig } from "bun";
 import { watch } from "fs";
+import { unlink } from "node:fs/promises";
 
 const namespace = "react";
 
@@ -42,14 +43,7 @@ export class React extends Initializer {
       pages.push(path.join(pagesDir, f));
     }
 
-    const transpileAllPages = async () => {
-      await Bun.build({
-        ...{ entrypoints: pages },
-        ...transpilerOptions,
-      });
-    };
-
-    await transpileAllPages();
+    await transpileAllPages(pages);
 
     logger.info(
       `Transpiled ${pages.length} react pages to ${transpiledPagesDir}`,
@@ -74,7 +68,7 @@ export class React extends Initializer {
 
         const fullFilename = path.join(pagesDir, filename);
         logger.trace(`Detected ${event} in ${fullFilename}`);
-        await transpileAllPages(); // TODO: this can certainly be optimized by walking the react trees...
+        await transpileAllPages(pages); // TODO: this can certainly be optimized by walking the react trees...
       },
     );
 
@@ -91,3 +85,21 @@ export class React extends Initializer {
     if (api.react.componentsDirWatcher) api.react.componentsDirWatcher.close();
   }
 }
+
+const transpileAllPages = async (pages: string[]) => {
+  // we need to clear the directory to remove dangling pages that were deleted
+  const glob = new Glob("**/*.{js}");
+  for await (const f of glob.scan(transpiledPagesDir)) {
+    await unlink(path.join(transpiledPagesDir, f));
+  }
+
+  const result = await Bun.build({
+    ...{ entrypoints: pages },
+    ...transpilerOptions,
+  });
+
+  if (!result.success) {
+    logger.fatal("Build failed");
+    for (const message of result.logs) console.error(message);
+  }
+};
