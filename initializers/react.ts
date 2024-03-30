@@ -2,7 +2,7 @@ import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import path from "path";
 import { Glob, type BuildConfig } from "bun";
-import { watch } from "fs";
+import { watch, mkdirSync } from "fs";
 import { unlink } from "node:fs/promises";
 
 const namespace = "react";
@@ -87,6 +87,9 @@ export class React extends Initializer {
 }
 
 const transpileAllPages = async (pages: string[]) => {
+  const dir = Bun.file(transpiledPagesDir);
+  if (!(await dir.exists())) mkdirSync(transpiledPagesDir, { recursive: true });
+
   // we need to clear the directory to remove dangling pages that were deleted
   const glob = new Glob("**/*.{js}");
   for await (const f of glob.scan(transpiledPagesDir)) {
