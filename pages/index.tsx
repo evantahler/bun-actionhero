@@ -4,6 +4,7 @@ import { mount } from "../util/browser";
 import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
 import { HelloCard } from "../components/HelloCard";
+import { SwaggerCard } from "../components/SwaggerCard";
 
 export default function Page() {
   return (
@@ -18,6 +19,12 @@ export default function Page() {
           </Col>
           <Col>
             <HelloCard />
+          </Col>
+        </Row>
+        <br />
+        <Row>
+          <Col md={12}>
+            <SwaggerCard />
           </Col>
         </Row>
       </Container>

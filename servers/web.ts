@@ -100,7 +100,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       } catch {}
     }
 
-    // TODO: fork for files vs actions vs pages
     const { response, error } = await connection.act(
       actionName,
       params,
