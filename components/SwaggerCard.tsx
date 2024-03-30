@@ -1,10 +1,21 @@
-import { Card } from "react-bootstrap";
+import { useEffect } from "react";
+
+declare var SwaggerUIBundle: any; // imported via the layout
 
 export const SwaggerCard = () => {
-  return (
-    <Card bg="primary">
-      <Card.Header>API Endpoints</Card.Header>
-      <Card.Body></Card.Body>
-    </Card>
-  );
+  useEffect(() => {
+    SwaggerUIBundle({
+      dom_id: "#swaggerContainer",
+      url: `/api/swagger`,
+      presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.SwaggerUIStandalonePreset,
+      ],
+      deepLinking: true,
+      docExpansion: "none",
+      filter: true,
+    });
+  }, []);
+
+  return <div id="swaggerContainer" />;
 };

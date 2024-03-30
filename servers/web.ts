@@ -100,6 +100,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       } catch {}
     }
 
+    for (const [key, value] of url.searchParams) {
+      params.set(key, value);
+    }
+
     const { response, error } = await connection.act(
       actionName,
       params,

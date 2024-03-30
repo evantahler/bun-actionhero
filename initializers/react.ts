@@ -93,8 +93,13 @@ const transpileAllPages = async (pages: string[]) => {
     await unlink(path.join(transpiledPagesDir, f));
   }
 
-  await Bun.build({
+  const result = await Bun.build({
     ...{ entrypoints: pages },
     ...transpilerOptions,
   });
+
+  if (!result.success) {
+    logger.fatal("Build failed");
+    for (const message of result.logs) console.error(message);
+  }
 };

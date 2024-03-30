@@ -47,7 +47,10 @@ export class Swagger implements Action {
       },
       host: `${config.server.web.host}:${config.server.web.port}`,
       basePath: `${config.server.web.apiRoute}/`,
-      schemes: ["https", "http"],
+      schemes:
+        ["0.0.0.0", "localhost"].indexOf(config.server.web.host) >= 0
+          ? ["http"]
+          : ["https", "http"],
       paths: swaggerPaths,
 
       securityDefinitions: {
@@ -76,12 +79,37 @@ function buildSwaggerPaths() {
     if (!swaggerPaths[formattedPath]) swaggerPaths[formattedPath] = {};
 
     swaggerPaths[formattedPath][method] = {
-      summary: action.description || "no description",
+      summary: action.description || action.name,
       consumes: ["application/json"],
       produces: ["application/json"],
       responses: swaggerResponses,
       security: [],
-      parameters: [], //TODO
+      parameters: Object.keys(action.inputs)
+        .sort()
+        .map((inputName) => {
+          return {
+            // in: action?.web?.route.toString().includes(`:${inputName}`)
+            //   ? "path"
+            //   : "query",
+            in: "query",
+            name: inputName,
+            type: "string", // not really true, but helps the swagger validator
+            required: action.inputs[inputName].required ?? false,
+            //  ||
+            // route.path.includes(`:${inputName}`)
+            //   ? true
+            //   : false
+            default:
+              action.inputs[inputName].default !== null &&
+              action.inputs[inputName].default !== undefined
+                ? typeof action.inputs[inputName].default === "object"
+                  ? JSON.stringify(action.inputs[inputName].default)
+                  : typeof action.inputs[inputName].default === "function"
+                    ? action.inputs[inputName].default()
+                    : `${action.inputs[inputName].default}`
+                : undefined,
+          };
+        }),
     };
   }
 
