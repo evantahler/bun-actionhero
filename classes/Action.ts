@@ -1,6 +1,7 @@
 import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
+import type { TypedError } from "./TypedError";
 
 export enum HTTP_METHOD {
   "GET" = "GET",
@@ -25,7 +26,7 @@ export abstract class Action {
   name: string;
   description?: string;
   inputs: Inputs;
-  web: {
+  web?: {
     route: RegExp | string;
     method: HTTP_METHOD;
   };
@@ -62,6 +63,4 @@ type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
   : unknown;
 
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
-  Partial<{
-    error?: { message: string; stack?: string };
-  }>;
+  Partial<{ error?: TypedError }>;

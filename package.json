@@ -9,8 +9,7 @@
     "@types/pg": "^8.11.4",
     "@types/react-dom": "^18.2.22",
     "drizzle-kit": "^0.20.14",
-    "prettier": "^3.2.5",
-    "typedoc": "^0.25.12"
+    "prettier": "^3.2.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
@@ -27,7 +26,6 @@
     "migrations": "bun run migrations.ts",
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
-    "ci": "bun run type_doc && bun run lint && bun test",
-    "type_doc": "bun run typedoc api.ts"
+    "ci": "bun run lint && bun test"
   }
 }

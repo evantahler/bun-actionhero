@@ -1,6 +1,7 @@
 import { Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ensureString } from "../util/formatters";
+import { nameValidator } from "../util/validators";
 
 export class Hello implements Action {
   name = "hello";
@@ -8,8 +9,7 @@ export class Hello implements Action {
   inputs = {
     name: {
       required: true,
-      validator: (p: string) =>
-        p.length <= 0 ? "Name must be at least 1 character" : true,
+      validator: nameValidator,
       formatter: ensureString,
     },
   };

@@ -24,7 +24,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     logger.info(
-      `starting web server @ ${config.server.web.host}:${config.server.web.port}`,
+      `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
     );
 
     this.server = Bun.serve({
@@ -193,7 +193,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
 
     for (const action of api.actions.actions) {
-      if (!action.web.route) continue;
+      if (!action?.web?.route) continue;
 
       const matcher =
         action.web.route instanceof RegExp

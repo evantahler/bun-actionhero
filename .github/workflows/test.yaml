@@ -24,14 +24,6 @@ jobs:
       - run: bun install
       - run: bun run prettier --check .
 
-  docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
-      - run: bun install
-      - run: bun run typedoc api.ts
-
   test:
     runs-on: ubuntu-latest
 
@@ -60,6 +52,6 @@ jobs:
 
   complete:
     runs-on: ubuntu-latest
-    needs: [build, lint, docs, test]
+    needs: [build, lint, test]
     steps:
       - run: echo "Done!"

@@ -3,6 +3,11 @@ import { HTTP_METHOD } from "../classes/Action";
 import { hashPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";
 import { ensureString } from "../util/formatters";
+import {
+  emailValidator,
+  nameValidator,
+  passwordValidator,
+} from "../util/validators";
 
 export class UserCreate implements Action {
   name = "userCreate";
@@ -10,35 +15,30 @@ export class UserCreate implements Action {
   inputs = {
     name: {
       required: true,
-      validator: (p: string) =>
-        p.length < 3 ? "Name must be at least 3 characters" : true,
+      validator: nameValidator,
       formatter: ensureString,
     },
     email: {
       required: true,
-      validator: (p: string) =>
-        p.length < 3 || !p.includes("@") ? "Email invalid" : true,
+      validator: emailValidator,
       formatter: ensureString,
     },
     password: {
       required: true,
-      validator: (p: string) =>
-        p.length < 3 ? "Password must be at least 3 characters" : true,
+      validator: passwordValidator,
       formatter: ensureString,
     },
   };
 
   async run(params: ActionParams<UserCreate>) {
-    const user = (
-      await api.db.db
-        .insert(users)
-        .values({
-          name: params.name,
-          email: params.email,
-          password_hash: await hashPassword(params.password),
-        })
-        .returning()
-    )[0];
+    const [user] = await api.db.db
+      .insert(users)
+      .values({
+        name: params.name,
+        email: params.email.toLowerCase(),
+        password_hash: await hashPassword(params.password),
+      })
+      .returning();
 
     return serializeUser(user);
   }
