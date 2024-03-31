@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { api, type Action, type ActionParams } from "../api";
+import { api, type Action, type ActionParams, Connection } from "../api";
 import { users } from "../schema/users";
 import { ensureString } from "../util/formatters";
 import { emailValidator, passwordValidator } from "../util/validators";
@@ -23,7 +23,7 @@ export class SessionCreate implements Action {
     },
   };
 
-  run = async (params: ActionParams<SessionCreate>) => {
+  run = async (params: ActionParams<SessionCreate>, connection: Connection) => {
     const [user] = await api.db.db
       .select()
       .from(users)
@@ -41,6 +41,8 @@ export class SessionCreate implements Action {
       );
     }
 
-    return serializeUser(user);
+    const session = await api.session.create(connection, user);
+
+    return { user: serializeUser(user), session };
   };
 }
