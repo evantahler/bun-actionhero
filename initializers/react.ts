@@ -90,10 +90,10 @@ const transpileAllPages = async (pages: string[]) => {
   const dir = Bun.file(transpiledPagesDir);
   if (!(await dir.exists())) mkdirSync(transpiledPagesDir, { recursive: true });
 
-  // we need to clear the directory to remove dangling pages that were deleted
   const glob = new Glob("**/*.{js}");
+  const existingTranspiledPages: string[] = [];
   for await (const f of glob.scan(transpiledPagesDir)) {
-    await unlink(path.join(transpiledPagesDir, f));
+    existingTranspiledPages.push(path.join(transpiledPagesDir, f));
   }
 
   const result = await Bun.build({
@@ -104,5 +104,15 @@ const transpileAllPages = async (pages: string[]) => {
   if (!result.success) {
     logger.fatal("Build failed");
     for (const message of result.logs) console.error(message);
+  }
+
+  result.outputs.forEach((output) => {
+    const idx = existingTranspiledPages.indexOf(output.path);
+    if (idx >= 0) existingTranspiledPages.splice(idx, 1);
+  });
+
+  for await (const f of existingTranspiledPages) {
+    logger.debug(`Removing no-longer found transpiled artifact: ${f}`);
+    await unlink(f);
   }
 };
