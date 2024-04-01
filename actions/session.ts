@@ -6,6 +6,7 @@ import { emailValidator, passwordValidator } from "../util/validators";
 import { serializeUser, checkPassword } from "../ops/UserOps";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { HTTP_METHOD } from "../classes/Action";
+import type { SessionData } from "../initializers/session";
 
 export class SessionCreate implements Action {
   name = "sessionCreate";
@@ -23,7 +24,13 @@ export class SessionCreate implements Action {
     },
   };
 
-  run = async (params: ActionParams<SessionCreate>, connection: Connection) => {
+  run = async (
+    params: ActionParams<SessionCreate>,
+    connection: Connection,
+  ): Promise<{
+    user: ReturnType<typeof serializeUser>;
+    session: SessionData;
+  }> => {
     const [user] = await api.db.db
       .select()
       .from(users)
@@ -41,8 +48,11 @@ export class SessionCreate implements Action {
       );
     }
 
-    const session = await api.session.create(connection, user);
+    await connection.updateSession({ userId: user.id });
 
-    return { user: serializeUser(user), session };
+    return {
+      user: serializeUser(user),
+      session: connection.session as SessionData,
+    };
   };
 }

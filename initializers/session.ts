@@ -1,14 +1,15 @@
 import { api, Connection } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
-import type { User } from "../schema/users";
 
 const namespace = "session";
 
 export interface SessionData {
-  id: number;
+  key: string;
+  cookieName: typeof config.session.cookieName;
   csrfToken: string;
   createdAt: number;
+  data: Record<string, any>;
 }
 
 declare module "../classes/API" {
@@ -37,19 +38,28 @@ export class Session extends Initializer {
     return JSON.parse(data) as SessionData;
   };
 
-  create = async (connection: Connection, user: User) => {
+  create = async (connection: Connection, data: Record<string, any> = {}) => {
     const key = this.getKey(connection);
     const csrfToken = crypto.randomUUID() + ":" + crypto.randomUUID();
 
     const sessionData: SessionData = {
-      id: user.id,
+      key,
+      cookieName: config.session.cookieName,
       csrfToken: csrfToken,
       createdAt: new Date().getTime(),
+      data,
     };
 
     await api.redis.redis.set(key, JSON.stringify(sessionData));
     await api.redis.redis.expire(key, config.session.ttl);
     return sessionData;
+  };
+
+  update = async (session: SessionData, data: Record<string, any>) => {
+    session.data = { ...session.data, ...data };
+    await api.redis.redis.set(session.key, JSON.stringify(session));
+    await api.redis.redis.expire(session.key, config.session.ttl);
+    return session.data;
   };
 
   destroy = async (connection: Connection) => {
@@ -62,6 +72,7 @@ export class Session extends Initializer {
     return {
       load: this.load,
       create: this.create,
+      update: this.update,
       destroy: this.destroy,
     };
   }

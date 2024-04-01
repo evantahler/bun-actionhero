@@ -3,16 +3,22 @@ import { config } from "../config";
 import colors from "colors";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
+import type { SessionData } from "../initializers/session";
 
 export class Connection {
   type: string;
-  ipAddress: string;
+  identifier: string;
   id: string;
+  session?: SessionData;
 
-  constructor(type: string, ipAddress: string) {
-    this.id = crypto.randomUUID();
+  constructor(
+    type: string,
+    identifier: string,
+    id = crypto.randomUUID() as string,
+  ) {
     this.type = type;
-    this.ipAddress = ipAddress;
+    this.identifier = identifier;
+    this.id = id;
   }
 
   /**
@@ -39,6 +45,8 @@ export class Connection {
         );
       }
 
+      await this.loadSession();
+
       const formattedParams = await this.formatParams(params, action);
       response = await action.run(formattedParams, this);
     } catch (e) {
@@ -63,17 +71,41 @@ export class Connection {
     const duration = new Date().getTime() - reqStartTime;
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.ipAddress}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
     );
 
     return { response, error };
   }
 
-  findAction(actionName: string | undefined) {
+  async updateSession(data: Record<string, any>) {
+    await this.loadSession();
+
+    if (!this.session) {
+      throw new TypedError(
+        "Session not found",
+        ErrorType.CONNECTION_SESSION_NOT_FOUND,
+      );
+    }
+
+    return api.session.update(this.session, data);
+  }
+
+  private async loadSession() {
+    if (this.session) return;
+
+    const session = await api.session.load(this);
+    if (session) {
+      this.session = session;
+    } else {
+      this.session = await api.session.create(this);
+    }
+  }
+
+  private findAction(actionName: string | undefined) {
     return api.actions.actions.find((a) => a.name === actionName);
   }
 
-  async formatParams(params: FormData, action: Action) {
+  private async formatParams(params: FormData, action: Action) {
     if (!action.inputs) return {} as ActionParams<Action>;
 
     const formattedParams = {} as ActionParams<Action>;
