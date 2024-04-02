@@ -7,8 +7,14 @@ import { type HTTP_METHOD } from "../classes/Action";
 import type { BunFile } from "bun";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
-// @ts-ignore TODO: Hack because react-dom wants to load the node package, but wa want the browser package for some reason
-import { renderToReadableStream } from "react-dom/server.browser.js";
+// TODO: Hack because react-dom wants to load the node package, but wa want the browser package for some reason
+import ReactDOM from "react-dom/server";
+// @ts-ignore
+import reactDomBrowser from "react-dom/server.browser.js";
+const {
+  renderToReadableStream,
+}: { renderToReadableStream: typeof ReactDOM.renderToReadableStream } =
+  reactDomBrowser;
 
 type URLParsed = import("url").URL;
 
