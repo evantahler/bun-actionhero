@@ -4,9 +4,11 @@ import { logger, api } from "../api";
 import { Connection } from "../classes/Connection";
 import path from "path";
 import { type HTTP_METHOD } from "../classes/Action";
-import { renderToReadableStream } from "react-dom/server";
 import type { BunFile } from "bun";
 import { ErrorType, TypedError } from "../classes/TypedError";
+
+// @ts-ignore TODO: Hack because react-dom wants to load the node package, but wa want the browser package for some reason
+import { renderToReadableStream } from "react-dom/server.browser.js";
 
 type URLParsed = import("url").URL;
 
