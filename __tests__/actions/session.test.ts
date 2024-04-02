@@ -33,8 +33,10 @@ test("returns user when matched", async () => {
   const response = (await res.json()) as ActionResponse<SessionCreate>;
   expect(res.status).toBe(200);
 
-  expect(response.id).toEqual(1);
-  expect(response.name).toEqual("Mario Mario");
+  expect(response.user.id).toEqual(1);
+  expect(response.user.name).toEqual("Mario Mario");
+  expect(response.session.createdAt).toBeGreaterThan(0);
+  expect(response.session.data.userId).toEqual(response.user.id);
 });
 
 test("fails when users is not found", async () => {

@@ -1,11 +1,12 @@
 import { eq } from "drizzle-orm";
-import { api, type Action, type ActionParams } from "../api";
+import { api, type Action, type ActionParams, Connection } from "../api";
 import { users } from "../schema/users";
 import { ensureString } from "../util/formatters";
 import { emailValidator, passwordValidator } from "../util/validators";
 import { serializeUser, checkPassword } from "../ops/UserOps";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { HTTP_METHOD } from "../classes/Action";
+import type { SessionData } from "../initializers/session";
 
 export class SessionCreate implements Action {
   name = "sessionCreate";
@@ -23,7 +24,13 @@ export class SessionCreate implements Action {
     },
   };
 
-  run = async (params: ActionParams<SessionCreate>) => {
+  run = async (
+    params: ActionParams<SessionCreate>,
+    connection: Connection,
+  ): Promise<{
+    user: Awaited<ReturnType<typeof serializeUser>>;
+    session: SessionData;
+  }> => {
     const [user] = await api.db.db
       .select()
       .from(users)
@@ -41,6 +48,11 @@ export class SessionCreate implements Action {
       );
     }
 
-    return serializeUser(user);
+    await connection.updateSession({ userId: user.id });
+
+    return {
+      user: await serializeUser(user),
+      session: connection.session as SessionData,
+    };
   };
 }

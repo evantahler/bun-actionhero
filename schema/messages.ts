@@ -8,7 +8,10 @@ export const messages = pgTable("messages", {
     .references(() => users.id)
     .notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at")
+    .notNull()
+    .defaultNow()
+    .$onUpdateFn(() => new Date()),
 });
 
 export type Message = typeof messages.$inferSelect;

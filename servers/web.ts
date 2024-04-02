@@ -4,15 +4,32 @@ import { logger, api } from "../api";
 import { Connection } from "../classes/Connection";
 import path from "path";
 import { type HTTP_METHOD } from "../classes/Action";
-import { renderToReadableStream } from "react-dom/server";
 import type { BunFile } from "bun";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
+// TODO: Hack because react-dom wants to load the node package, but wa want the browser package for some reason
+import ReactDOM from "react-dom/server";
+// @ts-ignore
+import reactDomBrowser from "react-dom/server.browser.js";
+const {
+  renderToReadableStream,
+}: { renderToReadableStream: typeof ReactDOM.renderToReadableStream } =
+  reactDomBrowser;
+
 type URLParsed = import("url").URL;
 
-const commonHeaders = {
-  "Content-Type": "application/json",
-  "x-server-name": config.process.name,
+const buildHeaders = (connection?: Connection) => {
+  const headers: Record<string, string> = {};
+
+  headers["Content-Type"] = "application/json";
+  headers["x-server-name"] = config.process.name;
+
+  if (connection) {
+    headers["Set-Cookie"] =
+      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}`; //HttpOnly; SameSite=Strict; Path=/
+  }
+
+  return headers;
 };
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
@@ -71,18 +88,26 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleAction(request: Request, url: URLParsed) {
-    if (!this.server)
-      throw new TypedError("Serb server not started", ErrorType.SERVER_START);
+    if (!this.server) {
+      throw new TypedError("Server server not started", ErrorType.SERVER_START);
+    }
+
     let errorStatusCode = 500;
 
     const ipAddress = this.server.requestIP(request)?.address || "unknown";
-    const connection = new Connection(this.name, ipAddress);
+    const cookies = request.headers.getSetCookie();
+    const idFromCookie = cookies
+      .filter((c) => c.split("=")[0] === config.session.cookieName)[0]
+      ?.split("=")[1];
+
+    const connection = new Connection(this.name, ipAddress, idFromCookie);
     const actionName = await this.determineActionName(
       url,
       request.method as HTTP_METHOD,
     );
     if (!actionName) errorStatusCode = 404;
 
+    // param load order: url params -> body params -> query params
     let params: FormData;
     try {
       params = await request.formData();
@@ -113,7 +138,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     return error
       ? this.buildError(error, errorStatusCode)
-      : this.buildResponse(response);
+      : this.buildResponse(connection, response);
   }
 
   async handleAsset(request: Request, url: URLParsed) {
@@ -212,10 +237,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
-  async buildResponse(response: Object, status = 200) {
+  async buildResponse(connection: Connection, response: Object, status = 200) {
     return new Response(JSON.stringify(response, null, 2), {
       status,
-      headers: commonHeaders,
+      headers: buildHeaders(connection),
     });
   }
 
@@ -232,7 +257,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       }) + "\n",
       {
         status,
-        headers: commonHeaders,
+        headers: buildHeaders(),
       },
     );
   }

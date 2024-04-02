@@ -23,6 +23,7 @@ export class DB extends Initializer {
   constructor() {
     super(namespace);
     this.startPriority = 100;
+    this.stopPriority = 910;
   }
 
   async initialize() {
@@ -49,6 +50,14 @@ export class DB extends Initializer {
     }
 
     logger.info("database connection established");
+  }
+
+  async stop() {
+    if (api.db.db) {
+      // TODO: no exit method on drizzle?
+      // await api.db.db.close();
+      // logger.info("database connection closed");
+    }
   }
 
   /**
