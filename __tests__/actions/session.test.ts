@@ -36,7 +36,6 @@ test("returns user when matched", async () => {
   expect(response.user.id).toEqual(1);
   expect(response.user.name).toEqual("Mario Mario");
   expect(response.session.createdAt).toBeGreaterThan(0);
-  expect(response.session.csrfToken).not.toBe(null);
   expect(response.session.data.userId).toEqual(response.user.id);
 });
 

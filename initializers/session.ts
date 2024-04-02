@@ -7,7 +7,6 @@ const namespace = "session";
 export interface SessionData {
   id: string;
   cookieName: typeof config.session.cookieName;
-  csrfToken: string;
   createdAt: number;
   data: Record<string, any>;
 }
@@ -40,12 +39,10 @@ export class Session extends Initializer {
 
   create = async (connection: Connection, data: Record<string, any> = {}) => {
     const key = this.getKey(connection.id);
-    const csrfToken = crypto.randomUUID() + ":" + crypto.randomUUID();
 
     const sessionData: SessionData = {
       id: connection.id,
       cookieName: config.session.cookieName,
-      csrfToken: csrfToken,
       createdAt: new Date().getTime(),
       data,
     };

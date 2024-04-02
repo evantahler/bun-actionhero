@@ -73,7 +73,6 @@ describe("userEdit", () => {
     const sessionResponse =
       (await sessionRes.json()) as ActionResponse<SessionCreate>;
     expect(sessionRes.status).toBe(200);
-    const csrfToken = sessionResponse.session.csrfToken;
     const sessionId = sessionResponse.session.id;
 
     await Bun.sleep(1001);
