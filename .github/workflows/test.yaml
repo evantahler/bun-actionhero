@@ -52,7 +52,7 @@ jobs:
       - run: cp .env.example .env
       - run: bun test
         env:
-          redis.connectionString.test: "redis://redis:6379/1"
+          # redis.connectionString.test: "redis://redis:6379/1"
 
   complete:
     runs-on: ubuntu-latest
