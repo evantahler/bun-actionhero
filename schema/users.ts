@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import {
   pgTable,
   serial,
@@ -19,7 +18,7 @@ export const users = pgTable(
     updatedAt: timestamp("updated_at")
       .notNull()
       .defaultNow()
-      .$onUpdateFn(() => sql`updated_at = NOW()`),
+      .$onUpdateFn(() => new Date()),
   },
   (users) => {
     return {

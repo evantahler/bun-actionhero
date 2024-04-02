@@ -5,7 +5,7 @@ import { config } from "../config";
 const namespace = "session";
 
 export interface SessionData {
-  key: string;
+  id: string;
   cookieName: typeof config.session.cookieName;
   csrfToken: string;
   createdAt: number;
@@ -24,14 +24,14 @@ export class Session extends Initializer {
     this.startPriority = 600;
   }
 
-  prefix = `${namespace}:` as const;
+  prefix = `${namespace}` as const;
 
-  getKey = (connection: Connection) => {
-    return `${this.prefix}:${connection.id}`;
+  getKey = (connectionId: Connection["id"]) => {
+    return `${this.prefix}:${connectionId}`;
   };
 
   load = async (connection: Connection) => {
-    const key = this.getKey(connection);
+    const key = this.getKey(connection.id);
     const data = await api.redis.redis.get(key);
     if (!data) return null;
     await api.redis.redis.expire(key, config.session.ttl);
@@ -39,11 +39,11 @@ export class Session extends Initializer {
   };
 
   create = async (connection: Connection, data: Record<string, any> = {}) => {
-    const key = this.getKey(connection);
+    const key = this.getKey(connection.id);
     const csrfToken = crypto.randomUUID() + ":" + crypto.randomUUID();
 
     const sessionData: SessionData = {
-      key,
+      id: connection.id,
       cookieName: config.session.cookieName,
       csrfToken: csrfToken,
       createdAt: new Date().getTime(),
@@ -56,14 +56,15 @@ export class Session extends Initializer {
   };
 
   update = async (session: SessionData, data: Record<string, any>) => {
+    const key = this.getKey(session.id);
     session.data = { ...session.data, ...data };
-    await api.redis.redis.set(session.key, JSON.stringify(session));
-    await api.redis.redis.expire(session.key, config.session.ttl);
+    await api.redis.redis.set(key, JSON.stringify(session));
+    await api.redis.redis.expire(key, config.session.ttl);
     return session.data;
   };
 
   destroy = async (connection: Connection) => {
-    const key = this.getKey(connection);
+    const key = this.getKey(connection.id);
     const response = await api.redis.redis.del(key);
     return response > 0;
   };

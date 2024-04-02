@@ -28,7 +28,7 @@ export class SessionCreate implements Action {
     params: ActionParams<SessionCreate>,
     connection: Connection,
   ): Promise<{
-    user: ReturnType<typeof serializeUser>;
+    user: Awaited<ReturnType<typeof serializeUser>>;
     session: SessionData;
   }> => {
     const [user] = await api.db.db
@@ -51,7 +51,7 @@ export class SessionCreate implements Action {
     await connection.updateSession({ userId: user.id });
 
     return {
-      user: serializeUser(user),
+      user: await serializeUser(user),
       session: connection.session as SessionData,
     };
   };

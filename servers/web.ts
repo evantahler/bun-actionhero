@@ -91,6 +91,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const idFromCookie = cookies
       .filter((c) => c.split("=")[0] === config.session.cookieName)[0]
       ?.split("=")[1];
+
     const connection = new Connection(this.name, ipAddress, idFromCookie);
     const actionName = await this.determineActionName(
       url,

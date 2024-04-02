@@ -127,7 +127,10 @@ export class Connection {
         );
       }
 
-      if ((paramDefinition.required && value === undefined) || value === null) {
+      if (
+        paramDefinition.required === true &&
+        (value === undefined || value === null)
+      ) {
         throw new TypedError(
           `Missing required param: ${key}`,
           ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
@@ -135,7 +138,7 @@ export class Connection {
         );
       }
 
-      if (paramDefinition.formatter) {
+      if (paramDefinition.formatter && value !== undefined && value !== null) {
         try {
           value = paramDefinition.formatter(value);
         } catch (e) {
@@ -148,7 +151,7 @@ export class Connection {
         }
       }
 
-      if (paramDefinition.validator) {
+      if (paramDefinition.validator && value !== undefined && value !== null) {
         const validationResponse = paramDefinition.validator(value);
         if (validationResponse !== true) {
           throw new TypedError(

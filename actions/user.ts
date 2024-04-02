@@ -1,4 +1,5 @@
-import { api, Action, type ActionParams } from "../api";
+import { eq } from "drizzle-orm";
+import { api, Action, type ActionParams, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { hashPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";
@@ -8,6 +9,7 @@ import {
   nameValidator,
   passwordValidator,
 } from "../util/validators";
+import { ErrorType, TypedError } from "../classes/TypedError";
 
 export class UserCreate implements Action {
   name = "userCreate";
@@ -40,6 +42,48 @@ export class UserCreate implements Action {
       })
       .returning();
 
-    return serializeUser(user);
+    return { user: await serializeUser(user) };
+  }
+}
+
+export class UserEdit implements Action {
+  name = "userEdit";
+  web = { route: "/user", method: HTTP_METHOD.POST };
+  inputs = {
+    name: {
+      required: false,
+      validator: nameValidator,
+      formatter: ensureString,
+    },
+    email: {
+      required: false,
+      validator: emailValidator,
+      formatter: ensureString,
+    },
+    password: {
+      required: false,
+      validator: passwordValidator,
+      formatter: ensureString,
+    },
+  };
+
+  async run(params: ActionParams<UserEdit>, connection: Connection) {
+    if (!connection?.session?.data.userId) {
+      throw new TypedError("User not found", ErrorType.CONNECTION_ACTION_RUN);
+    }
+
+    const { name, email, password } = params;
+    const updates = {} as Record<string, string>;
+    if (name) updates.name = name;
+    if (email) updates.email = email.toLowerCase();
+    if (password) updates.password_hash = await hashPassword(password);
+
+    const [user] = await api.db.db
+      .update(users)
+      .set(updates)
+      .where(eq(users.id, connection.session.data.userId))
+      .returning();
+
+    return { user: await serializeUser(user) };
   }
 }

@@ -10,12 +10,12 @@ export async function checkPassword(user: User, password: string) {
   return isMatch;
 }
 
-export function serializeUser(user: User) {
+export async function serializeUser(user: User) {
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
+    createdAt: user.createdAt.getTime(),
+    updatedAt: user.updatedAt.getTime(),
   };
 }
