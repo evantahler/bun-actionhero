@@ -2,15 +2,19 @@ import { Button, Form } from "react-bootstrap";
 import type { ActionResponse } from "../api";
 import type { SessionCreate } from "../actions/session";
 import React, { useState } from "react";
+import type { AppUser } from "./App";
 
-export const SessionCard = () => {
-  const [success, setSuccess] = useState<string>();
-  const [error, setError] = useState<string>();
-
+export const SessionCard = ({
+  setUser,
+  setSuccessMessage,
+  setErrorMessage,
+}: {
+  setUser: React.Dispatch<React.SetStateAction<AppUser>>;
+  setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
+}) => {
   async function handleForm(event: React.SyntheticEvent) {
     event.preventDefault();
-    setError(undefined);
-    setSuccess(undefined);
 
     const target = event.target as typeof event.target & {
       email: { value: string };
@@ -26,9 +30,10 @@ export const SessionCard = () => {
     }).then((res) => res.json())) as ActionResponse<SessionCreate>;
 
     if (response.error) {
-      setError(response.error.message);
+      setErrorMessage(response.error.message);
     } else {
-      setSuccess(`Welcome ${response.user.name}!`);
+      setSuccessMessage(`Welcome ${response.user.name}!`);
+      setUser(response.user);
     }
   }
 
@@ -49,10 +54,6 @@ export const SessionCard = () => {
           Submit
         </Button>
       </Form>
-
-      <br />
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
     </div>
   );
 };

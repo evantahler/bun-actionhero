@@ -1,9 +1,8 @@
-import { Container, Row, Col } from "react-bootstrap";
+import { Container } from "react-bootstrap";
 import { mount } from "../util/browser";
 
-import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
-import { SessionCard } from "../components/SessionCreateCard";
+import App from "../components/App";
 
 export default function Page() {
   return (
@@ -14,14 +13,7 @@ export default function Page() {
           <a href="/swagger">View API Endpoints</a>
         </p>
         <hr />
-        <Row>
-          <Col md={6}>
-            <StatusCard />
-          </Col>
-          <Col>
-            <SessionCard />
-          </Col>
-        </Row>
+        <App />
       </Container>
     </MainLayout>
   );
