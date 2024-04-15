@@ -3,7 +3,7 @@ import { mount } from "../util/browser";
 
 import { StatusCard } from "../components/StatusCard";
 import { MainLayout } from "../layouts/main";
-import { HelloCard } from "../components/HelloCard";
+import { SessionCard } from "../components/SessionCreateCard";
 
 export default function Page() {
   return (
@@ -19,7 +19,7 @@ export default function Page() {
             <StatusCard />
           </Col>
           <Col>
-            <HelloCard />
+            <SessionCard />
           </Col>
         </Row>
       </Container>
