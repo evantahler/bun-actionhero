@@ -4,6 +4,7 @@ import { Initializer } from "../classes/Initializer";
 import { api, logger } from "../api";
 import { config } from "../config";
 import path from "node:path";
+import { monkeyPatchLogging } from "../util/consoleLoggingPatches";
 
 const namespace = "next";
 
@@ -32,13 +33,15 @@ export class Next extends Initializer {
     if (config.next.enabled !== true) return;
     if (config.server.web.enabled !== true) return;
 
+    monkeyPatchLogging();
+
     if (config.next.dev) {
       logger.info("Running next.js in development mode");
     }
 
     api[namespace].app = next({
       dev: config.next.dev,
-      quiet: config.next.quiet,
+      quiet: false,
       dir: path.join(__dirname, ".."),
     });
 

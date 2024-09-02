@@ -62,11 +62,12 @@ export class Connection {
       ? colors.gray(JSON.stringify(params))
       : JSON.stringify(params);
 
+    const statusMessage = `[ACTION:${loggerResponsePrefix}]`;
     const messagePrefix = config.logger.colorize
       ? loggerResponsePrefix === "OK"
-        ? colors.bgBlue(`[${loggerResponsePrefix}]`)
-        : colors.bgMagenta(`[${loggerResponsePrefix}]`)
-      : `[${loggerResponsePrefix}]`;
+        ? colors.bgBlue(statusMessage)
+        : colors.bgMagenta(statusMessage)
+      : statusMessage;
 
     const duration = new Date().getTime() - reqStartTime;
 

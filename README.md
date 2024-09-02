@@ -42,7 +42,8 @@ cp .env.example .env
 createdb bun
 
 # run the app
-bun run --watch index.ts
+bun run --watch index.ts # this will hot-reload the server when server files change
+bun run index.ts # when working on the front-end, we can rely on next.js' hot-reloading instead of bun's
 ```
 
 To test:
