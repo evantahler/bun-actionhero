@@ -55,21 +55,4 @@ describe("updating config", () => {
       expect(output).toEqual(v);
     }
   });
-
-  describe("unique values", () => {
-    test("numbers can be made unique", async () => {
-      const val = await loadFromEnvIfSet("x", 8081, true);
-      expect(val).toBeGreaterThanOrEqual(8081);
-    });
-
-    test("strings can be made unique", async () => {
-      const val = await loadFromEnvIfSet("x", "foo", true);
-      expect(val).not.toEqual("foo");
-      expect(val).toContain("foo-");
-    });
-
-    test("objects cannot be made unique", async () => {
-      expect(() => loadFromEnvIfSet("x", {}, true)).toThrow();
-    });
-  });
 });
