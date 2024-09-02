@@ -47,6 +47,7 @@ export class Next extends Initializer {
 
     await api[namespace].app.prepare();
     api[namespace].handle = api[namespace].app.getRequestHandler();
+    logger.info("next.js server ready");
   }
 
   async stop() {
