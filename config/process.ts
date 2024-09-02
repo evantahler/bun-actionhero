@@ -1,6 +1,9 @@
 import { loadFromEnvIfSet } from "../util/config";
 
 export const configProcess = {
-  name: await loadFromEnvIfSet("process.name", "server", true),
-  shutdownTimeout: await loadFromEnvIfSet("process.shutdownTimeout", 1000 * 5),
+  name: await loadFromEnvIfSet("BUN_PROCESS_NAME", "server"),
+  shutdownTimeout: await loadFromEnvIfSet(
+    "BUN_PROCESS_SHUTDOWN_TIMEOUT",
+    1000 * 5,
+  ),
 };

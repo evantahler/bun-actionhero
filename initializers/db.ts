@@ -83,10 +83,10 @@ export class DB extends Initializer {
       logger.trace(stdout.toString());
       if (exitCode !== 0) {
         {
-          throw new TypedError(
-            `Failed to generate migrations: ${stderr.toString()}`,
-            ErrorType.SERVER_INITIALIZATION,
-          );
+          throw new TypedError({
+            message: `Failed to generate migrations: ${stderr.toString()}`,
+            type: ErrorType.SERVER_INITIALIZATION,
+          });
         }
       }
     } finally {
@@ -100,10 +100,10 @@ export class DB extends Initializer {
    */
   async clearDatabase(restartIdentity = true, cascade = true) {
     if (Bun.env.NODE_ENV === "production") {
-      throw new TypedError(
-        "clearDatabase cannot be called in production",
-        ErrorType.SERVER_INITIALIZATION,
-      );
+      throw new TypedError({
+        message: "clearDatabase cannot be called in production",
+        type: ErrorType.SERVER_INITIALIZATION,
+      });
     }
 
     const { rows } = await api.db.db.execute(

@@ -23,10 +23,11 @@ export async function globLoader<T>(searchDir: string) {
           const instance = new klass();
           results.push(instance);
         } catch (error) {
-          throw new TypedError(
-            `Error loading from ${dir} -  ${name} - ${error}`,
-            ErrorType.SERVER_INITIALIZATION,
-          );
+          throw new TypedError({
+            message: `Error loading from ${dir} -  ${name} - ${error}`,
+            type: ErrorType.SERVER_INITIALIZATION,
+            originalError: error,
+          });
         }
       }
     }

@@ -28,7 +28,7 @@ export class Logger {
     this.colorize = config.colorize;
     this.includeTimestamps = config.includeTimestamps;
     this.stream = config.stream;
-    this.jSONObjectParsePadding = config.jSONObjectParsePadding;
+    this.jSONObjectParsePadding = 4;
   }
 
   log(level: LogLevel, message: string, object?: any) {

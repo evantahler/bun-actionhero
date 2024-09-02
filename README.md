@@ -42,7 +42,8 @@ cp .env.example .env
 createdb bun
 
 # run the app
-bun run --watch index.ts
+bun run --watch index.ts # this will hot-reload the server when server files change
+bun run index.ts # when working on the front-end, we can rely on next.js' hot-reloading instead of bun's
 ```
 
 To test:
@@ -53,6 +54,9 @@ createdb bun-test
 
 # run the tests
 bun test
+
+# run a single test file
+bun test __tests__/actions/user.test.ts
 
 # run all all the stuff that CI does
 bun ci
@@ -67,7 +71,15 @@ bun run prettier --check .
 bun run prettier --write .
 ```
 
-This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Production Builds
+
+```bash
+# install only prod deps
+bun install --production --frozen-lockfile
+# pre-compile the front-end
+bun run next build
+# in .env, set NODE_ENV=production and set next.dev=false
+```
 
 ## Databases and Migrations
 
@@ -106,3 +118,7 @@ This project uses Drizzle as the ORM. Migrations are derived from the schemas. T
 **ORM**
 
 - we use drizzle for the ORM and migrations.
+
+**React and Frontend**
+
+- We bundle next.js into the project.

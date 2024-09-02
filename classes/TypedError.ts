@@ -24,15 +24,31 @@ export enum ErrorType {
   "CONNECTION_ACTION_RUN" = "CONNECTION_ACTION_RUN",
 }
 
+export type TypedErrorArgs = {
+  message: string;
+  type: ErrorType;
+  originalError?: unknown;
+  key?: string;
+  value?: any;
+};
+
 export class TypedError extends Error {
   type: ErrorType;
   key?: string;
   value?: any;
 
-  constructor(message: string, type: ErrorType, key?: string, value?: any) {
-    super(message);
-    this.type = type;
-    this.key = key;
-    this.value = value;
+  constructor(args: TypedErrorArgs) {
+    super(args.message);
+    this.type = args.type;
+    this.key = args.key;
+    this.value = args.value;
+
+    if (args.originalError !== undefined) {
+      if (args.originalError instanceof Error) {
+        this.stack = args.originalError.stack;
+      } else {
+        this.stack = `OriginalStringError: ${args.originalError}`;
+      }
+    }
   }
 }

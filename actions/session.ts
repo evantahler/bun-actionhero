@@ -21,9 +21,11 @@ export class SessionCreate implements Action {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 
+  // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it
   run = async (
     params: ActionParams<SessionCreate>,
     connection: Connection,
@@ -37,15 +39,18 @@ export class SessionCreate implements Action {
       .where(eq(users.email, params.email.toLowerCase()));
 
     if (!user) {
-      throw new TypedError("User not found", ErrorType.CONNECTION_ACTION_RUN);
+      throw new TypedError({
+        message: "User not found",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
     }
 
     const passwordMatch = await checkPassword(user, params.password);
     if (!passwordMatch) {
-      throw new TypedError(
-        "Password does not match",
-        ErrorType.CONNECTION_ACTION_RUN,
-      );
+      throw new TypedError({
+        message: "Password does not match",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
     }
 
     await connection.updateSession({ userId: user.id });

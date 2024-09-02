@@ -12,8 +12,10 @@ afterAll(async () => {
   await api.stop();
 });
 
-test("the web server will boot on a test port", async () => {
-  expect(url).toContain(":80"); // the port will be dynamic
+describe("booting", () => {
+  test("the web server will boot on a test port", async () => {
+    expect(url).toContain(":80"); // the port will be dynamic
+  });
 });
 
 describe("actions", () => {
@@ -35,7 +37,7 @@ describe("actions", () => {
 
 describe("assets", () => {
   test("the web server can serve a static asset", async () => {
-    const res = await fetch(url + "/assets/actionhero.png");
+    const res = await fetch(url + "/assets/images/actionhero.png");
     expect(res.status).toBe(200);
     expect(res.headers.get("Content-Type")).toEqual("image/png");
     const body = await res.text();
@@ -45,7 +47,7 @@ describe("assets", () => {
   test("the web server can handle missing assets gracefully", async () => {
     const res = await fetch(url + "/assets/missing.png");
     expect(res.status).toBe(404);
-    expect(res.headers.get("Content-Type")).toEqual("application/json");
+    expect(res.headers.get("Content-Type")).toContain("text/html");
   });
 });
 
@@ -53,20 +55,14 @@ describe("pages", () => {
   test("the web server can serve a react page pre-rendered", async () => {
     const res = await fetch(url + "/");
     expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toEqual("text/html");
+    expect(res.headers.get("Content-Type")).toContain("text/html");
     const text = await res.text();
     expect(text).toContain("Hello World");
-  });
-
-  test("react pages also include react-loader", async () => {
-    const res = await fetch(url + "/");
-    const text = await res.text();
-    expect(text).toContain("reactScript = document.createElement");
   });
 
   test("the web server can handle missing pages gracefully", async () => {
     const res = await fetch(url + "/missing.html");
     expect(res.status).toBe(404);
-    expect(res.headers.get("Content-Type")).toEqual("application/json");
+    expect(res.headers.get("Content-Type")).toContain("text/html");
   });
 });

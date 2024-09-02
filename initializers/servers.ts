@@ -15,10 +15,16 @@ export class Servers extends Initializer {
   constructor() {
     super(namespace);
     this.loadPriority = 800;
+    this.startPriority = 500;
   }
 
   async initialize() {
     const servers = await globLoader<Server<any>>("servers");
+
+    for (const server of servers) {
+      await server.initialize();
+    }
+
     return { servers };
   }
 

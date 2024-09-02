@@ -29,6 +29,7 @@ export class UserCreate implements Action {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 
@@ -64,12 +65,16 @@ export class UserEdit implements Action {
       required: false,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
     if (!connection?.session?.data.userId) {
-      throw new TypedError("User not found", ErrorType.CONNECTION_ACTION_RUN);
+      throw new TypedError({
+        message: "User not found",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
     }
 
     const { name, email, password } = params;

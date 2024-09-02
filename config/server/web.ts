@@ -1,9 +1,8 @@
 import { loadFromEnvIfSet } from "../../util/config";
 
 export const configServerWeb = {
-  port: await loadFromEnvIfSet("servers.web.port", 8080, true),
-  host: await loadFromEnvIfSet("servers.web.host", "0.0.0.0"),
-  apiRoute: await loadFromEnvIfSet("servers.web.apiRoute", "/api"),
-  assetRoute: await loadFromEnvIfSet("servers.web.assetRouter", "/assets"),
-  pageRoute: await loadFromEnvIfSet("servers.web.pageRoute", "/pages"),
+  enabled: await loadFromEnvIfSet("BUN_SERVERS_WEB_ENABLED", true),
+  port: await loadFromEnvIfSet("BUN_SERVERS_WEB_PORT", 8080),
+  host: await loadFromEnvIfSet("BUN_SERVERS_WEB_HOST", "0.0.0.0"),
+  apiRoute: await loadFromEnvIfSet("BUN_SERVERS_WEB_API_ROUTE", "/api"),
 };

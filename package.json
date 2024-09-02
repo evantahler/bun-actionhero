@@ -4,29 +4,33 @@
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
-  "devDependencies": {
-    "@types/bun": "^1.0.12",
-    "@types/pg": "^8.11.4",
-    "@types/react-dom": "^18.2.23",
-    "drizzle-kit": "^0.20.14",
-    "prettier": "^3.2.5"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
+  "scripts": {
+    "migrations": "bun run migrations.ts",
+    "build": "next build",
+    "lint": "prettier --check .",
+    "pretty": "prettier --write .",
+    "ci": "bun run lint && bun run build && bun test"
   },
   "dependencies": {
     "colors": "^1.4.0",
-    "drizzle-orm": "^0.30.6",
-    "ioredis": "^5.3.2",
-    "pg": "^8.11.4",
-    "react": "^18.2.0",
-    "react-bootstrap": "^2.10.2",
-    "react-dom": "^18.2.0"
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.30.10",
+    "formidable": "^3.5.1",
+    "ioredis": "^5.4.1",
+    "next": "^14.2.7",
+    "pg": "^8.12.0",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.4.3"
   },
-  "scripts": {
-    "migrations": "bun run migrations.ts",
-    "lint": "prettier --check .",
-    "pretty": "prettier --write .",
-    "ci": "bun run lint && bun test"
+  "devDependencies": {
+    "@types/bun": "^1.1.8",
+    "@types/cookie": "^0.6.0",
+    "@types/formidable": "^3.4.5",
+    "@types/pg": "^8.11.8",
+    "@types/react-dom": "^18.3.0",
+    "drizzle-kit": "^0.20.18",
+    "prettier": "^3.3.3"
   }
 }
