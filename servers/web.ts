@@ -23,25 +23,7 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
   }
 
   async initialize() {
-    this.server = createServer((req: IncomingMessage, res: ServerResponse) => {
-      const parsedUrl = parse(req.url!, true);
-      if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-        this.handleAction(req, res, parsedUrl);
-      } else if (typeof api.next.handle === "function") {
-        logNextRequest(req, res, parsedUrl);
-        api.next.handle(req, res, parsedUrl);
-      } else {
-        this.buildError(
-          res,
-          undefined,
-          new TypedError(
-            "static server not enabled",
-            ErrorType.CONNECTION_SERVER_ERROR,
-          ),
-          404,
-        );
-      }
-    });
+    this.server = createServer(this.handleIncomingConnection.bind(this));
 
     this.server.on("error", (error) => {
       throw new TypedError(
@@ -60,15 +42,20 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
 
   async start() {
     if (config.server.web.enabled !== true) return;
-    if (!this.server) {
-      throw new TypedError("server not initialized", ErrorType.SERVER_START);
-    }
 
     logger.info(
       `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
     );
 
-    this.server.listen(config.server.web.port, config.server.web.host);
+    await new Promise((resolve) => {
+      if (!this.server) {
+        throw new TypedError("server not initialized", ErrorType.SERVER_START);
+      }
+
+      this.server.listen(config.server.web.port, config.server.web.host, () => {
+        resolve(true);
+      });
+    });
   }
 
   async stop() {
@@ -92,6 +79,26 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
         resolve(true);
       }
     });
+  }
+
+  async handleIncomingConnection(req: IncomingMessage, res: ServerResponse) {
+    const parsedUrl = parse(req.url!, true);
+    if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
+      this.handleAction(req, res, parsedUrl);
+    } else if (typeof api.next.handle === "function") {
+      logNextRequest(req, res, parsedUrl);
+      api.next.handle(req, res, parsedUrl);
+    } else {
+      this.buildError(
+        res,
+        undefined,
+        new TypedError(
+          "static server not enabled",
+          ErrorType.CONNECTION_SERVER_ERROR,
+        ),
+        404,
+      );
+    }
   }
 
   async handleAction(
