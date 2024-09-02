@@ -6,9 +6,10 @@
   "license": "MIT",
   "scripts": {
     "migrations": "bun run migrations.ts",
+    "build": "next build",
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
-    "ci": "bun run lint && bun test"
+    "ci": "bun run lint && bun run build && bun test"
   },
   "dependencies": {
     "colors": "^1.4.0",

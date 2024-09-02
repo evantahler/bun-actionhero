@@ -20,6 +20,11 @@ export class Servers extends Initializer {
 
   async initialize() {
     const servers = await globLoader<Server<any>>("servers");
+
+    for (const server of servers) {
+      await server.initialize();
+    }
+
     return { servers };
   }
 

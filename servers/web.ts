@@ -14,19 +14,15 @@ import { Socket } from "node:net";
 
 export class WebServer extends Server<ReturnType<typeof createServer>> {
   sockets: Record<number, Socket>;
+  socketCounter: number;
 
   constructor() {
     super("web");
     this.sockets = {};
+    this.socketCounter = 0;
   }
 
-  async initialize() {}
-
-  async start() {
-    logger.info(
-      `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
-    );
-
+  async initialize() {
     this.server = createServer((req: IncomingMessage, res: ServerResponse) => {
       const parsedUrl = parse(req.url!, true);
       if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
@@ -45,15 +41,34 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
           404,
         );
       }
-    }).listen(config.server.web.port, config.server.web.host);
+    });
 
-    let socketCounter = 0;
+    this.server.on("error", (error) => {
+      throw new TypedError(
+        `cannot start web server @ ${config.server.web.host}:${config.server.web.port} => ${error}`,
+        ErrorType.SERVER_START,
+      );
+    });
+
     this.server.on("connection", (socket) => {
-      const id = socketCounter;
+      const id = this.socketCounter;
       this.sockets[id] = socket;
       socket.on("close", () => delete this.sockets[id]);
-      socketCounter++;
+      this.socketCounter++;
     });
+  }
+
+  async start() {
+    if (config.server.web.enabled !== true) return;
+    if (!this.server) {
+      throw new TypedError("server not initialized", ErrorType.SERVER_START);
+    }
+
+    logger.info(
+      `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
+    );
+
+    this.server.listen(config.server.web.port, config.server.web.host);
   }
 
   async stop() {
@@ -247,8 +262,6 @@ const logNextRequest = (
   res: ServerResponse,
   url: ReturnType<typeof parse>,
 ) => {
-  if (url.path?.startsWith("/_next")) return; // don't log the .next partial pages
-
   const startTime = new Date().getTime();
   const { ip, port } = parseHeadersForClientAddress(req);
 
