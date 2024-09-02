@@ -64,8 +64,15 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const { ip, port } = parseHeadersForClientAddress(req);
-    const cookies = cookie.parse(req.headers.cookie || "");
-    const idFromCookie = cookies[config.session.cookieName]?.split("=")[1];
+    const cookies = cookie.parse(
+      req.headers["set-cookie"]
+        ? req.headers["set-cookie"].filter((s) =>
+            s.includes(`${config.session.cookieName}=`),
+          )[0]
+        : "",
+    );
+
+    const idFromCookie = cookies[config.session.cookieName];
 
     const connection = new Connection(this.name, ip, idFromCookie);
     const actionName = await this.determineActionName(url, httpMethod);
