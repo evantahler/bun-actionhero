@@ -4,6 +4,7 @@ import { configServerWeb } from "./server/web";
 import { configDatabase } from "./database";
 import { configRedis } from "./redis";
 import { configSession } from "./session";
+import { configNext } from "./next";
 
 export const config = {
   process: configProcess,
@@ -12,4 +13,5 @@ export const config = {
   redis: configRedis,
   session: configSession,
   server: { web: configServerWeb },
+  next: configNext,
 };

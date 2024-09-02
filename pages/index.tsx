@@ -1,6 +1,4 @@
 import { Container } from "react-bootstrap";
-import { mount } from "../util/browser";
-
 import { MainLayout } from "../layouts/main";
 import App from "../components/App";
 
@@ -18,5 +16,3 @@ export default function Page() {
     </MainLayout>
   );
 }
-
-mount(Page);

@@ -1,6 +1,7 @@
 import { loadFromEnvIfSet } from "../../util/config";
 
 export const configServerWeb = {
+  enabled: await loadFromEnvIfSet("servers.web.enabled", true),
   port: await loadFromEnvIfSet("servers.web.port", 8080, true),
   host: await loadFromEnvIfSet("servers.web.host", "0.0.0.0"),
   apiRoute: await loadFromEnvIfSet("servers.web.apiRoute", "/api"),

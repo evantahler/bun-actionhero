@@ -15,6 +15,7 @@ export class Servers extends Initializer {
   constructor() {
     super(namespace);
     this.loadPriority = 800;
+    this.startPriority = 500;
   }
 
   async initialize() {
