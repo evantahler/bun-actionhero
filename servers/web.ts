@@ -10,7 +10,6 @@ import { logger, api } from "../api";
 import { parse } from "node:url";
 import { parseHeadersForClientAddress } from "../util/parseHeadersForClientAddress";
 import { type HTTP_METHOD } from "../classes/Action";
-import os from "node:os";
 
 export class WebServer extends Server<ReturnType<typeof createServer>> {
   constructor() {
@@ -192,7 +191,7 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       timestamp: new Date().getTime(),
       key: error.key !== undefined ? error.key : undefined,
       value: error.value !== undefined ? error.value : undefined,
-      stack: error.stack?.split(os.EOL),
+      stack: error.stack,
     };
 
     res.writeHead(status, buildHeaders(connection));
