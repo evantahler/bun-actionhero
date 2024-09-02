@@ -39,10 +39,10 @@ export class Connection {
     try {
       const action = this.findAction(actionName);
       if (!action) {
-        throw new TypedError(
-          `Action not found${actionName ? `: ${actionName}` : ""}`,
-          ErrorType.CONNECTION_ACTION_NOT_FOUND,
-        );
+        throw new TypedError({
+          message: `Action not found${actionName ? `: ${actionName}` : ""}`,
+          type: ErrorType.CONNECTION_ACTION_NOT_FOUND,
+        });
       }
 
       await this.loadSession();
@@ -54,7 +54,11 @@ export class Connection {
       error =
         e instanceof TypedError
           ? e
-          : new TypedError(`${e}`, ErrorType.CONNECTION_ACTION_RUN);
+          : new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_ACTION_RUN,
+              originalError: e,
+            });
     }
 
     // Note: we want the params object to remain on the same line as the message, so we stringify
@@ -82,10 +86,10 @@ export class Connection {
     await this.loadSession();
 
     if (!this.session) {
-      throw new TypedError(
-        "Session not found",
-        ErrorType.CONNECTION_SESSION_NOT_FOUND,
-      );
+      throw new TypedError({
+        message: "Session not found",
+        type: ErrorType.CONNECTION_SESSION_NOT_FOUND,
+      });
     }
 
     return api.session.update(this.session, data);
@@ -122,47 +126,50 @@ export class Connection {
               : paramDefinition.default;
         }
       } catch (e) {
-        throw new TypedError(
-          `Error creating default value for for param ${key}: ${e}`,
-          ErrorType.CONNECTION_ACTION_PARAM_DEFAULT,
-        );
+        throw new TypedError({
+          message: `Error creating default value for for param ${key}: ${e}`,
+          type: ErrorType.CONNECTION_ACTION_PARAM_DEFAULT,
+          originalError: e,
+        });
       }
 
       if (
         paramDefinition.required === true &&
         (value === undefined || value === null)
       ) {
-        throw new TypedError(
-          `Missing required param: ${key}`,
-          ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
+        throw new TypedError({
+          message: `Missing required param: ${key}`,
+          type: ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
           key,
-        );
+        });
       }
 
       if (paramDefinition.formatter && value !== undefined && value !== null) {
         try {
           value = paramDefinition.formatter(value);
         } catch (e) {
-          throw new TypedError(
-            `${e}`,
-            ErrorType.CONNECTION_ACTION_PARAM_FORMATTING,
+          throw new TypedError({
+            message: `${e}`,
+            type: ErrorType.CONNECTION_ACTION_PARAM_FORMATTING,
             key,
             value,
-          );
+            originalError: e,
+          });
         }
       }
 
       if (paramDefinition.validator && value !== undefined && value !== null) {
         const validationResponse = paramDefinition.validator(value);
         if (validationResponse !== true) {
-          throw new TypedError(
-            validationResponse instanceof Error
-              ? validationResponse.message
-              : validationResponse,
-            ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
+          throw new TypedError({
+            message:
+              validationResponse instanceof Error
+                ? validationResponse.message
+                : validationResponse,
+            type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
             key,
             value,
-          );
+          });
         }
       }
 

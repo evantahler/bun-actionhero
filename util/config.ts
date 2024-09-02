@@ -1,7 +1,3 @@
-import { $ } from "bun";
-import { EOL } from "os";
-import { ErrorType, TypedError } from "../classes/TypedError";
-
 /**
 Loads a value from the environment, if it's set, otherwise returns the default value.
 */

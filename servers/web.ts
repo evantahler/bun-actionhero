@@ -25,11 +25,12 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
   async initialize() {
     this.server = createServer(this.handleIncomingConnection.bind(this));
 
-    this.server.on("error", (error) => {
-      throw new TypedError(
-        `cannot start web server @ ${config.server.web.host}:${config.server.web.port} => ${error}`,
-        ErrorType.SERVER_START,
-      );
+    this.server.on("error", (e) => {
+      throw new TypedError({
+        message: `cannot start web server @ ${config.server.web.host}:${config.server.web.port} => ${e.message}`,
+        type: ErrorType.SERVER_START,
+        originalError: e,
+      });
     });
 
     this.server.on("connection", (socket) => {
@@ -49,7 +50,10 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
 
     await new Promise((resolve) => {
       if (!this.server) {
-        throw new TypedError("server not initialized", ErrorType.SERVER_START);
+        throw new TypedError({
+          message: "server not initialized",
+          type: ErrorType.SERVER_START,
+        });
       }
 
       this.server.listen(config.server.web.port, config.server.web.host, () => {
@@ -92,10 +96,10 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       this.buildError(
         res,
         undefined,
-        new TypedError(
-          "static server not enabled",
-          ErrorType.CONNECTION_SERVER_ERROR,
-        ),
+        new TypedError({
+          message: "static server not enabled",
+          type: ErrorType.CONNECTION_SERVER_ERROR,
+        }),
         404,
       );
     }
@@ -107,7 +111,10 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     url: ReturnType<typeof parse>,
   ) {
     if (!this.server) {
-      throw new TypedError("Server server not started", ErrorType.SERVER_START);
+      throw new TypedError({
+        message: "Server server not started",
+        type: ErrorType.SERVER_START,
+      });
     }
 
     let errorStatusCode = 500;

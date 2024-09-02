@@ -43,7 +43,11 @@ export class API {
         if (response) this[initializer.name] = response;
         this.logger.debug(`Initialized initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, ErrorType.SERVER_INITIALIZATION);
+        throw new TypedError({
+          message: `${e}`,
+          type: ErrorType.SERVER_INITIALIZATION,
+          originalError: e,
+        });
       }
     }
 
@@ -66,7 +70,11 @@ export class API {
         await initializer.start?.();
         this.logger.debug(`Started initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, ErrorType.SERVER_START);
+        throw new TypedError({
+          message: `${e}`,
+          type: ErrorType.SERVER_START,
+          originalError: e,
+        });
       }
     }
 
@@ -90,7 +98,11 @@ export class API {
         await initializer.stop?.();
         this.logger.debug(`Stopped initializer ${initializer.name}`);
       } catch (e) {
-        throw new TypedError(`${e}`, ErrorType.SERVER_STOP);
+        throw new TypedError({
+          message: `${e}`,
+          type: ErrorType.SERVER_STOP,
+          originalError: e,
+        });
       }
     }
 
