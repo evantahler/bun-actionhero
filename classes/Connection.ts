@@ -36,8 +36,9 @@ export class Connection {
     let response: Object = {};
     let error: TypedError | undefined;
 
+    let action: Action | undefined;
     try {
-      const action = this.findAction(actionName);
+      action = this.findAction(actionName);
       if (!action) {
         throw new TypedError({
           message: `Action not found${actionName ? `: ${actionName}` : ""}`,
@@ -62,9 +63,10 @@ export class Connection {
     }
 
     // Note: we want the params object to remain on the same line as the message, so we stringify
+    const sanitizedParams = sanitizeParams(params, action);
     const loggingParams = config.logger.colorize
-      ? colors.gray(JSON.stringify(params))
-      : JSON.stringify(params);
+      ? colors.gray(JSON.stringify(sanitizedParams))
+      : JSON.stringify(sanitizedParams);
 
     const statusMessage = `[ACTION:${loggerResponsePrefix}]`;
     const messagePrefix = config.logger.colorize
@@ -179,3 +181,18 @@ export class Connection {
     return formattedParams;
   }
 }
+
+const REDACTED = "[[secret]]" as const;
+
+const sanitizeParams = (params: FormData, action: Action | undefined) => {
+  const sanitizedParams: Record<string, any> = {};
+  params.forEach((v, k) => {
+    if (action && action?.inputs[k]?.secret === true) {
+      sanitizedParams[k] = REDACTED;
+    } else {
+      sanitizedParams[k] = v;
+    }
+  });
+
+  return sanitizedParams;
+};

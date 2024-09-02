@@ -3,6 +3,7 @@ export interface Input {
   default?: InputDefault;
   formatter?: InputFormatter;
   validator?: InputValidator;
+  secret?: boolean;
 }
 
 export type InputDefault = ((p?: any) => any) | any;

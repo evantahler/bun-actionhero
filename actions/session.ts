@@ -21,6 +21,7 @@ export class SessionCreate implements Action {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 

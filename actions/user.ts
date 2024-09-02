@@ -29,6 +29,7 @@ export class UserCreate implements Action {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 
@@ -64,6 +65,7 @@ export class UserEdit implements Action {
       required: false,
       validator: passwordValidator,
       formatter: ensureString,
+      secret: true,
     },
   };
 
