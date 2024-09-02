@@ -55,6 +55,9 @@ createdb bun-test
 # run the tests
 bun test
 
+# run a single test file
+bun test __tests__/actions/user.test.ts
+
 # run all all the stuff that CI does
 bun ci
 ```

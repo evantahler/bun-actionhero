@@ -74,22 +74,6 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     // param load order: url params -> body params -> query params
     let params = new FormData();
 
-    const form = formidable({});
-    const [fields, files] = await form.parse(req);
-
-    for (const [key, values] of Object.entries(fields)) {
-      if (values !== undefined) {
-        for (const v of values) params.append(key, v);
-      }
-    }
-
-    // TODO: deal with file uploads
-    // for (const [key, values] of Object.entries(files)) {
-    //   if (values !== undefined) {
-    //     for (const v of values) params.append(key, v);
-    //   }
-    // }
-
     if (req.headers["content-type"] === "application/json") {
       const bodyString: string = await new Promise((resolve, reject) => {
         let body: Uint8Array[] = [];
@@ -105,6 +89,31 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
           params.set(key, value);
         }
       }
+    } else {
+      const form = formidable({ multiples: true });
+      const [fields, files] = await form.parse(req);
+
+      for (const [key, values] of Object.entries(fields)) {
+        if (values !== undefined) {
+          if (Array.isArray(values)) {
+            for (const v of values) params.append(key, v);
+          } else {
+            params.append(key, values);
+          }
+        }
+      }
+
+      // TODO: FILES
+
+      // for (const [key, values] of Object.entries(files)) {
+      //   if (values !== undefined) {
+      //     if (Array.isArray(values)) {
+      //       for (const v of values) params.append(key, v);
+      //     } else {
+      //       params.append(key, values);
+      //     }
+      //   }
+      // }
     }
 
     if (url.query) {
