@@ -71,7 +71,15 @@ bun run prettier --check .
 bun run prettier --write .
 ```
 
-This project was created using `bun init` in bun v1.0.29. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+## Production Builds
+
+```bash
+# install only prod deps
+bun install --production
+# pre-compile the front-end
+bun run next build
+# in .env, set NODE_ENV=production and set next.dev=false
+```
 
 ## Databases and Migrations
 
@@ -110,3 +118,7 @@ This project uses Drizzle as the ORM. Migrations are derived from the schemas. T
 **ORM**
 
 - we use drizzle for the ORM and migrations.
+
+**React and Frontend**
+
+- We bundle next.js into the project.

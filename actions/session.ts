@@ -24,6 +24,7 @@ export class SessionCreate implements Action {
     },
   };
 
+  // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it
   run = async (
     params: ActionParams<SessionCreate>,
     connection: Connection,
