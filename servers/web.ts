@@ -10,10 +10,14 @@ import { logger, api } from "../api";
 import { parse } from "node:url";
 import { parseHeadersForClientAddress } from "../util/parseHeadersForClientAddress";
 import { type HTTP_METHOD } from "../classes/Action";
+import { Socket } from "node:net";
 
 export class WebServer extends Server<ReturnType<typeof createServer>> {
+  sockets: Record<number, Socket>;
+
   constructor() {
     super("web");
+    this.sockets = {};
   }
 
   async initialize() {}
@@ -23,31 +27,49 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
     );
 
-    this.server = createServer(async (req, res) => {
-      const parsedUrl = parse(req.url!, true);
-      if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-        this.handleAction(req, res, parsedUrl);
-      } else if (typeof api.next.handle === "function") {
-        logNextRequest(req, res, parsedUrl);
-        api.next.handle(req, res, parsedUrl);
-      } else {
-        this.buildError(
-          res,
-          undefined,
-          new TypedError(
-            "static server not enabled",
-            ErrorType.CONNECTION_SERVER_ERROR,
-          ),
-          404,
-        );
-      }
-    }).listen(config.server.web.port, config.server.web.host);
+    this.server = createServer(
+      async (req: IncomingMessage, res: ServerResponse) => {
+        const parsedUrl = parse(req.url!, true);
+        if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
+          this.handleAction(req, res, parsedUrl);
+        } else if (typeof api.next.handle === "function") {
+          logNextRequest(req, res, parsedUrl);
+          api.next.handle(req, res, parsedUrl);
+        } else {
+          this.buildError(
+            res,
+            undefined,
+            new TypedError(
+              "static server not enabled",
+              ErrorType.CONNECTION_SERVER_ERROR,
+            ),
+            404,
+          );
+        }
+      },
+    ).listen(config.server.web.port, config.server.web.host);
+
+    let socketCounter = 0;
+    this.server.on("connection", (socket) => {
+      const id = socketCounter;
+      this.sockets[id] = socket;
+      socket.on("close", () => delete this.sockets[id]);
+      socketCounter++;
+    });
   }
 
   async stop() {
-    if (this.server) {
-      this.server.close(); // will allow open connections to complete...
-    }
+    await new Promise(async (resolve) => {
+      if (this.server) {
+        this.server.close(resolve);
+        await Bun.sleep(1);
+        for (const socket of Object.values(this.sockets)) {
+          socket.destroy();
+        }
+      } else {
+        resolve(true);
+      }
+    });
   }
 
   async handleAction(

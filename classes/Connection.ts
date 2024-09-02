@@ -72,7 +72,7 @@ export class Connection {
     const duration = new Date().getTime() - reqStartTime;
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""}${loggingParams}`,
     );
 
     return { response, error };

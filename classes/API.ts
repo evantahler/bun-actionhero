@@ -75,7 +75,10 @@ export class API {
   }
 
   async stop() {
-    if (this.stopped) return;
+    if (this.stopped) {
+      this.logger.warn("API is already stopped");
+      return;
+    }
 
     this.logger.warn("Stopping process");
 

@@ -13,7 +13,8 @@ export async function loadFromEnvIfSet<T>(
 ) {
   let val = defaultValue;
   let valFromEnv = Bun.env[envString];
-  let valFromEnvNodeEnv = Bun.env[`${envString}_${Bun.env.NODE_ENV}`];
+  const env = (Bun.env.NODE_ENV || "development").toUpperCase();
+  let valFromEnvNodeEnv = Bun.env[`${envString}_${env}`];
   let testVal = valFromEnvNodeEnv || valFromEnv;
 
   if (testVal !== undefined) {
