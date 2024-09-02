@@ -12,8 +12,10 @@ afterAll(async () => {
   await api.stop();
 });
 
-test("the web server will boot on a test port", async () => {
-  expect(url).toContain(":80"); // the port will be dynamic
+describe("booting", () => {
+  test("the web server will boot on a test port", async () => {
+    expect(url).toContain(":80"); // the port will be dynamic
+  });
 });
 
 describe("actions", () => {

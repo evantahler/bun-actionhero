@@ -6,8 +6,18 @@ import type { IncomingMessage } from "node:http";
  */
 export function parseHeadersForClientAddress(req: IncomingMessage) {
   const headers = req.headers;
-  let ip: string | undefined = req.connection.remoteAddress || "0.0.0.0";
-  let port: number | string | undefined = req.connection.remotePort || "0";
+  let ip = "0.0.0.0";
+  let port: number | string = "0";
+
+  try {
+    ip = req.socket.remoteAddress || ip;
+    port = req.socket.remotePort || port;
+  } catch (e) {
+    // TODO: WHAT IS GOING ON HERE????
+    console.error(e);
+    console.error("error parsing client address... exiting");
+    process.exit(1);
+  }
 
   if (headers["x-forwarded-for"]) {
     let parts;

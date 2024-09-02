@@ -27,27 +27,25 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
     );
 
-    this.server = createServer(
-      async (req: IncomingMessage, res: ServerResponse) => {
-        const parsedUrl = parse(req.url!, true);
-        if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-          this.handleAction(req, res, parsedUrl);
-        } else if (typeof api.next.handle === "function") {
-          logNextRequest(req, res, parsedUrl);
-          api.next.handle(req, res, parsedUrl);
-        } else {
-          this.buildError(
-            res,
-            undefined,
-            new TypedError(
-              "static server not enabled",
-              ErrorType.CONNECTION_SERVER_ERROR,
-            ),
-            404,
-          );
-        }
-      },
-    ).listen(config.server.web.port, config.server.web.host);
+    this.server = createServer((req: IncomingMessage, res: ServerResponse) => {
+      const parsedUrl = parse(req.url!, true);
+      if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
+        this.handleAction(req, res, parsedUrl);
+      } else if (typeof api.next.handle === "function") {
+        logNextRequest(req, res, parsedUrl);
+        api.next.handle(req, res, parsedUrl);
+      } else {
+        this.buildError(
+          res,
+          undefined,
+          new TypedError(
+            "static server not enabled",
+            ErrorType.CONNECTION_SERVER_ERROR,
+          ),
+          404,
+        );
+      }
+    }).listen(config.server.web.port, config.server.web.host);
 
     let socketCounter = 0;
     this.server.on("connection", (socket) => {
@@ -59,12 +57,21 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
   }
 
   async stop() {
-    await new Promise(async (resolve) => {
+    await new Promise(async (resolve, reject) => {
       if (this.server) {
-        this.server.close(resolve);
-        await Bun.sleep(1);
+        this.server.close((err) => {
+          if (err) reject(err);
+          resolve(true);
+        });
+
+        let destroyedClients = 0;
         for (const socket of Object.values(this.sockets)) {
           socket.destroy();
+          destroyedClients++;
+        }
+
+        if (destroyedClients > 0) {
+          logger.info(`destroyed ${destroyedClients} hanging sockets`);
         }
       } else {
         resolve(true);
