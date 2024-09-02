@@ -1,7 +1,6 @@
 import { loadFromEnvIfSet } from "../util/config";
 
 export const configNext = {
-  enabled: await loadFromEnvIfSet("next.enabled", true),
-  dev: await loadFromEnvIfSet("next.dev", true),
-  quiet: await loadFromEnvIfSet("next.quiet", false),
+  enabled: await loadFromEnvIfSet("BUN_NEXT_ENABLED", true),
+  dev: await loadFromEnvIfSet("BUN_NEXT_DEV", true),
 };

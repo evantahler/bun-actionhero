@@ -7,5 +7,9 @@ COPY . .
 RUN ls -la
 RUN bun install --production --frozen-lockfile
 
+
+
+RUN bun run next build
+
 EXPOSE 3000/tcp
 ENTRYPOINT [ "bun", "run", "index.ts" ]

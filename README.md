@@ -75,7 +75,7 @@ bun run prettier --write .
 
 ```bash
 # install only prod deps
-bun install --production
+bun install --production --frozen-lockfile
 # pre-compile the front-end
 bun run next build
 # in .env, set NODE_ENV=production and set next.dev=false

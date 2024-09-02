@@ -1,4 +1,4 @@
-import { $, sleep } from "bun";
+import { $ } from "bun";
 import { EOL } from "os";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
@@ -13,7 +13,7 @@ export async function loadFromEnvIfSet<T>(
 ) {
   let val = defaultValue;
   let valFromEnv = Bun.env[envString];
-  let valFromEnvNodeEnv = Bun.env[`${envString}.${Bun.env.NODE_ENV}`];
+  let valFromEnvNodeEnv = Bun.env[`${envString}_${Bun.env.NODE_ENV}`];
   let testVal = valFromEnvNodeEnv || valFromEnv;
 
   if (testVal !== undefined) {
