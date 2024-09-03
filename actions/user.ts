@@ -34,6 +34,19 @@ export class UserCreate implements Action {
   };
 
   async run(params: ActionParams<UserCreate>) {
+    const [existingUser] = await api.db.db
+      .select()
+      .from(users)
+      .where(eq(users.email, params.email.toLowerCase()))
+      .limit(1);
+
+    if (existingUser) {
+      throw new TypedError({
+        message: "User already exists",
+        type: ErrorType.ACTION_VALIDATION,
+      });
+    }
+
     const [user] = await api.db.db
       .insert(users)
       .values({

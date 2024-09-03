@@ -45,7 +45,9 @@ describe("user:create", () => {
     });
     const response = (await res.json()) as ActionResponse<UserCreate>;
     expect(res.status).toBe(500);
-    expect(response.error?.message).toMatch(/violates unique constraint/);
+    expect(response.error?.message.toLowerCase()).toMatch(
+      /user already exists/,
+    );
   });
 });
 

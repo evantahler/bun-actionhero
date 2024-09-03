@@ -206,7 +206,11 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     if (url.query) {
       for (const [key, values] of Object.entries(url.query)) {
         if (values !== undefined) {
-          for (const v of values) params.append(key, v);
+          if (Array.isArray(values)) {
+            for (const v of values) params.append(key, v);
+          } else {
+            params.append(key, values);
+          }
         }
       }
     }
