@@ -4,7 +4,7 @@ import type { UserCreate, UserEdit } from "../../actions/user";
 import { config } from "../../config";
 import type { SessionCreate } from "../../actions/session";
 
-const url = `http://${config.server.web.host}:${config.server.web.port}`;
+const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();

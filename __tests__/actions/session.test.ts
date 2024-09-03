@@ -5,7 +5,7 @@ import { users } from "../../schema/users";
 import { hashPassword } from "../../ops/UserOps";
 import type { SessionCreate } from "../../actions/session";
 
-const url = `http://${config.server.web.host}:${config.server.web.port}`;
+const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
