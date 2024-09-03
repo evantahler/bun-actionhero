@@ -2,7 +2,7 @@ import { test, expect, describe, beforeAll, afterAll } from "bun:test";
 import { api, config, type ActionResponse } from "../../api";
 import type { Status } from "../../actions/status";
 
-const url = `http://${config.server.web.host}:${config.server.web.port}`;
+const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();

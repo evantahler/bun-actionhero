@@ -45,12 +45,13 @@ export class Swagger implements Action {
         title: packageJSON.name,
         license: { name: packageJSON.license },
       },
-      host: `${config.server.web.host}:${config.server.web.port}`,
+      host: config.server.web.applicationUrl
+        .replace(/^https?:\/\//, "")
+        .replace(/^http?:\/\//, ""),
       basePath: `${config.server.web.apiRoute}/`,
-      schemes:
-        ["0.0.0.0", "localhost"].indexOf(config.server.web.host) >= 0
-          ? ["http"]
-          : ["https", "http"],
+      schemes: config.server.web.applicationUrl.includes("https://")
+        ? ["https", "http"]
+        : ["http"],
       paths: swaggerPaths,
 
       securityDefinitions: {
@@ -58,7 +59,7 @@ export class Swagger implements Action {
       },
       externalDocs: {
         description: "Learn more about this server",
-        url: `${config.server.web.host}:${config.server.web.port}`,
+        url: config.server.web.applicationUrl,
       },
     };
   }

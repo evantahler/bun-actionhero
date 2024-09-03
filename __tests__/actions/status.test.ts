@@ -3,7 +3,7 @@ import { api, type ActionResponse } from "../../api";
 import type { Status } from "../../actions/status";
 import { config } from "../../config";
 
-const url = `http://${config.server.web.host}:${config.server.web.port}`;
+const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
