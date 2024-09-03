@@ -161,13 +161,23 @@ export class Connection {
       }
 
       if (paramDefinition.validator && value !== undefined && value !== null) {
-        const validationResponse = paramDefinition.validator(value);
-        if (validationResponse !== true) {
+        let validationResponse: string | boolean | Error = false;
+
+        try {
+          validationResponse = paramDefinition.validator(value);
+        } catch (e) {
+          if (e instanceof Error) validationResponse = e;
+        }
+
+        if (
+          validationResponse instanceof Error ||
+          validationResponse === false
+        ) {
           throw new TypedError({
             message:
               validationResponse instanceof Error
                 ? validationResponse.message
-                : validationResponse,
+                : `Validation failed for param ${key}`,
             type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
             key,
             value,

@@ -49,6 +49,25 @@ describe("user:create", () => {
       /user already exists/,
     );
   });
+
+  test("validation failures return the proper key", async () => {
+    const res = await fetch(url + "/api/user", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "x",
+        email: "y",
+        password: "z",
+      }),
+    });
+    const response = (await res.json()) as ActionResponse<UserCreate>;
+    expect(res.status).toBe(500);
+    expect(response.error?.message.toLowerCase()).toMatch(
+      /this field is required and must be at least 3 characters long/,
+    );
+    expect(response.error?.key).toEqual("name");
+    expect(response.error?.value).toEqual("x");
+  });
 });
 
 describe("user:edit", () => {

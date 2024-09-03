@@ -11,6 +11,7 @@ import { parse } from "node:url";
 import { parseHeadersForClientAddress } from "../util/parseHeadersForClientAddress";
 import { type HTTP_METHOD } from "../classes/Action";
 import { Socket } from "node:net";
+import querystring from "node:querystring";
 
 export class WebServer extends Server<ReturnType<typeof createServer>> {
   sockets: Record<number, Socket>;
@@ -171,9 +172,41 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       });
 
       if (bodyString) {
-        const bodyContent = JSON.parse(bodyString) as Record<string, string>;
-        for (const [key, value] of Object.entries(bodyContent)) {
-          params.set(key, value);
+        try {
+          const bodyContent = JSON.parse(bodyString) as Record<string, string>;
+          for (const [key, value] of Object.entries(bodyContent)) {
+            params.set(key, value);
+          }
+        } catch (e) {
+          if (e instanceof Error) {
+            if (
+              e.message.includes("Unexpected end of JSON input") ||
+              e.message.includes("JSON Parse error")
+            ) {
+              const bodyQuery = querystring.parse(bodyString);
+              for (const [key, values] of Object.entries(bodyQuery)) {
+                if (values !== undefined) {
+                  if (Array.isArray(values)) {
+                    for (const v of values) params.append(key, v);
+                  } else {
+                    params.append(key, values);
+                  }
+                }
+              }
+            } else {
+              throw new TypedError({
+                message: `cannot parse request body: ${e.message}`,
+                type: ErrorType.CONNECTION_ACTION_RUN,
+                originalError: e,
+              });
+            }
+          } else {
+            throw new TypedError({
+              message: `cannot parse request body: ${e}`,
+              type: ErrorType.CONNECTION_ACTION_RUN,
+              originalError: e,
+            });
+          }
         }
       }
     } else {

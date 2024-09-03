@@ -92,9 +92,12 @@ function buildSwaggerPaths() {
             // in: action?.web?.route.toString().includes(`:${inputName}`)
             //   ? "path"
             //   : "query",
-            in: "query",
+            in: "formData",
             name: inputName,
-            type: "string", // not really true, but helps the swagger validator
+            type:
+              typeof action.inputs[inputName].formatter === "function"
+                ? "string" // not really true, but helps the swagger validator
+                : "string",
             required: action.inputs[inputName].required ?? false,
             //  ||
             // route.path.includes(`:${inputName}`)
