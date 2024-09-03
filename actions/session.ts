@@ -9,7 +9,7 @@ import { HTTP_METHOD } from "../classes/Action";
 import type { SessionData } from "../initializers/session";
 
 export class SessionCreate implements Action {
-  name = "sessionCreate";
+  name = "session:create";
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = {
     email: {
