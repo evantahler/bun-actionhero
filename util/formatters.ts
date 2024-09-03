@@ -1,5 +1,5 @@
 export function ensureString<T extends string>(param: unknown) {
-  return String(param) as T;
+  return String(param).trim() as T;
 }
 
 export function ensureNumber(param: string | number) {
