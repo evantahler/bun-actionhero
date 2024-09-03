@@ -15,7 +15,7 @@ afterAll(async () => {
   await api.stop();
 });
 
-describe("userCreate", () => {
+describe("user:create", () => {
   test("user can be created", async () => {
     const res = await fetch(url + "/api/user", {
       method: "PUT",
@@ -49,7 +49,7 @@ describe("userCreate", () => {
   });
 });
 
-describe("userEdit", () => {
+describe("user:edit", () => {
   test("it fails without a session", async () => {
     const res = await fetch(url + "/api/user", {
       method: "POST",

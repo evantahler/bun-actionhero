@@ -1,4 +1,4 @@
-import { test, expect, beforeAll, afterAll } from "bun:test";
+import { test, describe, expect, beforeAll, afterAll } from "bun:test";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
 import { users } from "../../schema/users";
@@ -21,48 +21,50 @@ afterAll(async () => {
   await api.stop();
 });
 
-test("returns user when matched", async () => {
-  const res = await fetch(url + "/api/session", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: "mario@example.com",
-      password: "mushroom1",
-    }),
-  });
-  const response = (await res.json()) as ActionResponse<SessionCreate>;
-  expect(res.status).toBe(200);
+describe("session:crate", () => {
+  test("returns user when matched", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "mario@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const response = (await res.json()) as ActionResponse<SessionCreate>;
+    expect(res.status).toBe(200);
 
-  expect(response.user.id).toEqual(1);
-  expect(response.user.name).toEqual("Mario Mario");
-  expect(response.session.createdAt).toBeGreaterThan(0);
-  expect(response.session.data.userId).toEqual(response.user.id);
-});
-
-test("fails when users is not found", async () => {
-  const res = await fetch(url + "/api/session", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: "bowser@example.com",
-      password: "xxx",
-    }),
+    expect(response.user.id).toEqual(1);
+    expect(response.user.name).toEqual("Mario Mario");
+    expect(response.session.createdAt).toBeGreaterThan(0);
+    expect(response.session.data.userId).toEqual(response.user.id);
   });
-  const response = (await res.json()) as ActionResponse<SessionCreate>;
-  expect(res.status).toBe(500);
-  expect(response.error?.message).toEqual("User not found");
-});
 
-test("fails when passwords do not match", async () => {
-  const res = await fetch(url + "/api/session", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: "mario@example.com",
-      password: "yoshi",
-    }),
+  test("fails when users is not found", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "bowser@example.com",
+        password: "xxx",
+      }),
+    });
+    const response = (await res.json()) as ActionResponse<SessionCreate>;
+    expect(res.status).toBe(500);
+    expect(response.error?.message).toEqual("User not found");
   });
-  const response = (await res.json()) as ActionResponse<SessionCreate>;
-  expect(res.status).toBe(500);
-  expect(response.error?.message).toEqual("Password does not match");
+
+  test("fails when passwords do not match", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "mario@example.com",
+        password: "yoshi",
+      }),
+    });
+    const response = (await res.json()) as ActionResponse<SessionCreate>;
+    expect(res.status).toBe(500);
+    expect(response.error?.message).toEqual("Password does not match");
+  });
 });
