@@ -45,7 +45,7 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     if (config.server.web.enabled !== true) return;
 
     logger.info(
-      `starting web server @ http://${config.server.web.host}:${config.server.web.port}`,
+      `starting web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
     );
 
     await new Promise((resolve) => {
@@ -86,6 +86,9 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
   }
 
   async handleIncomingConnection(req: IncomingMessage, res: ServerResponse) {
+    const isCorrectUrl = this.checkApplicationUrl(req, res);
+    if (!isCorrectUrl) return;
+
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
       this.handleAction(req, res, parsedUrl);
@@ -103,6 +106,26 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
         404,
       );
     }
+  }
+
+  checkApplicationUrl(req: IncomingMessage, res: ServerResponse) {
+    if (config.server.web.applicationUrl.length > 3) {
+      const requestHost = req.headers["x-forwarded-proto"]
+        ? req.headers["x-forwarded-proto"] + "://" + req.headers.host
+        : "http://" + req.headers.host;
+
+      if (config.server.web.applicationUrl !== requestHost) {
+        res.statusCode = 302;
+        res.setHeader("Location", config.server.web.applicationUrl + req.url);
+        res.end(
+          `You are being redirected to ${config.server.web.applicationUrl + req.url}\r\n`,
+        );
+
+        return false;
+      }
+    }
+
+    return true;
   }
 
   async handleAction(
