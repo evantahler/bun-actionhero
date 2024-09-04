@@ -91,7 +91,7 @@ This project uses Drizzle as the ORM. Migrations are derived from the schemas. T
 
 **Actions, Tasks, and CLI Commands**
 
-- All 'controllers' are the same now! Actions are used for tasks and command line execution now, and configured for each purpose via properties. This should simplify things, and encourage reusability even more. 
+- All 'controllers' are the same now! Actions are used for tasks and command line execution now, and configured for each purpose via properties. This should simplify things, and encourage reusability even more.
 
 **Process**
 
