@@ -2,6 +2,8 @@
 
 [![Test](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml)
 
+Project Board: https://github.com/users/evantahler/projects/1/views/1
+
 ## What is this Project?
 
 This project aims to be a "modern" rewrite of the "full" ActionHero stack. It is a template for a new project, and is not yet feature complete. It is a work in progress.
