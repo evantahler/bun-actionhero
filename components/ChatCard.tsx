@@ -9,5 +9,5 @@ export default function ChatCard({
   setSuccessMessage: React.Dispatch<React.SetStateAction<string | null>>;
   setErrorMessage: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
-  return <></>;
+  return <>...</>;
 }

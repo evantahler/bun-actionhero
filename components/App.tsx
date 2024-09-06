@@ -1,6 +1,7 @@
 import { Row, Col } from "react-bootstrap";
 import { StatusCard } from "./StatusCard";
-import { SessionCard } from "./SessionCreateCard";
+import { SessionCreateCard } from "./SessionCreateCard";
+import { SignUpCard } from "./SignUpCard";
 import { useState } from "react";
 import type { ActionResponse } from "../api";
 import type { SessionCreate } from "../actions/session";
@@ -32,7 +33,7 @@ export default function App() {
       </Row>
 
       <Row>
-        <Col md={6}>
+        <Col md={4}>
           <StatusCard />
         </Col>
         <Col>
@@ -43,11 +44,25 @@ export default function App() {
               setErrorMessage={setErrorMessage}
             />
           ) : (
-            <SessionCard
-              setUser={setUser}
-              setSuccessMessage={setSuccessMessage}
-              setErrorMessage={setErrorMessage}
-            />
+            <Row>
+              <Col>
+                <h2>Sign In</h2>
+                <SessionCreateCard
+                  setUser={setUser}
+                  setSuccessMessage={setSuccessMessage}
+                  setErrorMessage={setErrorMessage}
+                />
+              </Col>
+              <Col md={1}>Or</Col>
+              <Col>
+                <h2>Sign Up</h2>
+                <SignUpCard
+                  setUser={setUser}
+                  setSuccessMessage={setSuccessMessage}
+                  setErrorMessage={setErrorMessage}
+                />
+              </Col>
+            </Row>
           )}
         </Col>
       </Row>

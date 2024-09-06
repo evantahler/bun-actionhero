@@ -1,10 +1,10 @@
 import { Button, Form } from "react-bootstrap";
 import type { ActionResponse } from "../api";
-import type { SessionCreate } from "../actions/session";
+import type { UserCreate } from "../actions/user";
 import React from "react";
 import type { AppUser } from "./App";
 
-export const SessionCreateCard = ({
+export const SignUpCard = ({
   setUser,
   setSuccessMessage,
   setErrorMessage,
@@ -18,21 +18,23 @@ export const SessionCreateCard = ({
 
     const target = event.target as typeof event.target & {
       email: { value: string };
+      name: { value: string };
       password: { value: string };
     };
 
     const body = new FormData();
     body.append("email", target.email.value);
+    body.append("name", target.name.value);
     body.append("password", target.password.value);
-    const response = (await fetch("/api/session", {
+    const response = (await fetch("/api/user", {
       method: "put",
       body,
-    }).then((res) => res.json())) as ActionResponse<SessionCreate>;
+    }).then((res) => res.json())) as ActionResponse<UserCreate>;
 
     if (response.error) {
       setErrorMessage(response.error.message);
     } else {
-      setSuccessMessage(`Welcome back, ${response.user.name}!`);
+      setSuccessMessage(`Hello ${response.user.name}!`);
       setUser(response.user);
     }
   }
@@ -40,6 +42,11 @@ export const SessionCreateCard = ({
   return (
     <div>
       <Form onSubmit={handleForm}>
+        <Form.Group className="mb-3" controlId="name">
+          <Form.Label>Name</Form.Label>
+          <Form.Control type="text" placeholder="Enter Name" />
+        </Form.Group>
+
         <Form.Group className="mb-3" controlId="email">
           <Form.Label>Email</Form.Label>
           <Form.Control type="text" placeholder="Enter Email Address" />
