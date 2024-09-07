@@ -16,11 +16,13 @@ import querystring from "node:querystring";
 export class WebServer extends Server<ReturnType<typeof createServer>> {
   sockets: Record<number, Socket>;
   socketCounter: number;
+  started: boolean;
 
   constructor() {
     super("web");
     this.sockets = {};
     this.socketCounter = 0;
+    this.started = false;
   }
 
   async initialize() {
@@ -58,6 +60,7 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       }
 
       this.server.listen(config.server.web.port, config.server.web.host, () => {
+        this.started = true;
         resolve(true);
       });
     });
@@ -65,9 +68,12 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
 
   async stop() {
     await new Promise(async (resolve, reject) => {
-      if (this.server) {
+      if (this.server && this.started) {
         this.server.close((err) => {
           if (err) reject(err);
+          logger.info(
+            `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
+          );
           resolve(true);
         });
 

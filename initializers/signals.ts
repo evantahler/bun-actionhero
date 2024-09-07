@@ -26,14 +26,17 @@ export class Signals extends Initializer {
     process.once("SIGKILL", async () => {
       await this.shuDown("SIGKILL");
     });
+
+    return { stop: this.shuDown.bind(this) };
   }
 
-  async shuDown(signal: string) {
-    logger.warn(`Received ${signal}, shutting down...`);
+  async shuDown(signal: string, logging = true, finalMessage?: any) {
+    if (logging) logger.warn(`Received ${signal}, shutting down...`);
     const timeout = setTimeout(this.onTimeout, config.process.shutdownTimeout);
     await api.stop();
     clearTimeout(timeout);
-    logger.warn("Bye!");
+    if (logging) logger.warn("Bye!");
+    if (finalMessage) console.log(finalMessage);
     process.exit(successExitCode);
   }
 
