@@ -21,7 +21,7 @@ describe("CLI", () => {
     expect(stdout.toString()).toContain("user:create");
   });
 
-  test("no action is the same as help, but errors", async () => {
+  test("no action is the same as help, but technically an error", async () => {
     const { stdout, stderr, exitCode } = await $`./actionhero.ts`
       .quiet()
       .nothrow();
@@ -81,7 +81,43 @@ describe("CLI", () => {
     expect(response2.session.id).not.toBeNull();
   });
 
-  test.todo("CLI errors");
+  describe("CLI errors", () => {
+    test("action not found", async () => {
+      const { stdout, stderr, exitCode } = await $`./actionhero.ts foo`
+        .quiet()
+        .nothrow();
 
-  test.todo("random action errors");
+      expect(exitCode).toBe(1);
+      expect(stdout).toBeEmpty();
+      expect(stderr.toString()).toContain("unknown command 'foo'");
+    });
+
+    test("action param missing", async () => {
+      // missing password
+      const { stdout, stderr, exitCode } =
+        await $`./actionhero.ts "user:create" --name test --email test@test.com`
+          .quiet()
+          .nothrow();
+
+      expect(exitCode).toBe(1);
+      expect(stderr.toString()).toContain(
+        "required option '--password <value>' not specified",
+      );
+      expect(stdout).toBeEmpty();
+    });
+
+    test("validation from within action", async () => {
+      // password too short
+      const { stdout, stderr, exitCode } =
+        await $`./actionhero.ts "user:create" --name test --email test@test.com --password x`
+          .quiet()
+          .nothrow();
+
+      expect(exitCode).toBe(1);
+      expect(stdout).toBeEmpty();
+
+      const { response } = JSON.parse(stderr.toString());
+      expect(response).toEqual({});
+    });
+  });
 });
