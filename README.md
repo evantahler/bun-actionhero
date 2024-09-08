@@ -1,6 +1,6 @@
-# bun-api-template
+# bun-actionhero
 
-[![Test](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-api-template/actions/workflows/test.yaml)
+[![Test](https://github.com/evantahler/bun-actionhero/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-actiopnhero/actions/workflows/test.yaml)
 
 Project Board: https://github.com/users/evantahler/projects/1/views/1
 
