@@ -31,7 +31,7 @@ describe("actions", () => {
     expect(res.status).toBe(404);
     const response = (await res.json()) as ActionResponse<Status>;
     expect(response.error?.message).toContain("Action not found");
-    expect(response.error?.stack).toContain("/bun-api-template/");
+    expect(response.error?.stack).toContain("/bun-actionhero/");
   });
 });
 

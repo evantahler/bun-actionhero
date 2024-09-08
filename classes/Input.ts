@@ -4,6 +4,7 @@ export interface Input {
   formatter?: InputFormatter;
   validator?: InputValidator;
   secret?: boolean;
+  description?: string;
 }
 
 export type InputDefault = ((p?: any) => any) | any;

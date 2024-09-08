@@ -87,6 +87,19 @@ bun run next build
 
 This project uses Drizzle as the ORM. Migrations are derived from the schemas. To create a migration from changes in `scheams/*.ts` run `bun run migrations.ts`. Then, restart the server - pending migrations are auto-applied.
 
+## Actions, CLI Commands, and Tasks
+
+Unlike Actionhero, we've removed the distinction between Actions, CLI commands, and Tasks. They are all the same thing now! You can run any action from the CLI, and any action can be scheduled as a task. Each action gains a `type` property to define its purpose. The same input validation and responses are used for each, just like how Actions work for both web and websocket requests.
+
+Run an action from the CLI:
+
+```bash
+# I like using -q (hide logging output) and then piping the response through jq
+ ./actionhero.ts "user:create" --name evan --email "evantahler@gmail.com" --password password -q | jq
+
+# use the --help flag to learn more
+```
+
 ## Intentional changes from ActionHero
 
 **Actions, Tasks, and CLI Commands**
@@ -128,3 +141,7 @@ This project uses Drizzle as the ORM. Migrations are derived from the schemas. T
 **React and Frontend**
 
 - We bundle next.js into the project.
+
+```
+
+```
