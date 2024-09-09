@@ -16,12 +16,14 @@ export class SessionCreate implements Action {
       required: true,
       validator: emailValidator,
       formatter: ensureString,
+      description: "The user's email",
     },
     password: {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
       secret: true,
+      description: "The user's password",
     },
   };
 

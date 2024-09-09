@@ -1,3 +1,5 @@
+import { RUN_MODE } from "./../api";
+
 /**
  * Create a new Initializer. The required properties of an initializer. These can be defined statically (this.name) or as methods which return a value.
  */
@@ -10,12 +12,15 @@ export abstract class Initializer {
   startPriority: number;
   /**What order should this Initializer stop at (Default: 1000, core methods are < 1000) */
   stopPriority: number;
+  /** which run modes does this sever start in*/
+  runModes: RUN_MODE[];
 
   constructor(name: string) {
     this.name = name;
     this.loadPriority = 1000;
     this.startPriority = 1000;
     this.stopPriority = 1000;
+    this.runModes = [RUN_MODE.SERVER, RUN_MODE.CLI];
   }
 
   /**

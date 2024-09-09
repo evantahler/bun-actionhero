@@ -22,6 +22,7 @@ export class Logger {
   includeTimestamps: boolean;
   stream: LoggerStream;
   jSONObjectParsePadding: number;
+  quiet: boolean; // an override to disable all logging (used by CLI)
 
   constructor(config: typeof configLogger) {
     this.level = config.level;
@@ -29,9 +30,12 @@ export class Logger {
     this.includeTimestamps = config.includeTimestamps;
     this.stream = config.stream;
     this.jSONObjectParsePadding = 4;
+    this.quiet = false;
   }
 
   log(level: LogLevel, message: string, object?: any) {
+    if (this.quiet) return;
+
     if (
       Object.values(LogLevel).indexOf(level) <
       Object.values(LogLevel).indexOf(this.level)

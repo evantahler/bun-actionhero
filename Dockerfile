@@ -10,4 +10,4 @@ RUN bun install
 RUN bun next build
 
 EXPOSE 3000/tcp
-ENTRYPOINT [ "bun", "run", "index.ts" ]
+ENTRYPOINT [ "bun", "run", "actionhero.ts", "start" ]

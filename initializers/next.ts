@@ -1,7 +1,7 @@
 import next from "next";
 import type { NextServer, RequestHandler } from "next/dist/server/next";
 import { Initializer } from "../classes/Initializer";
-import { api, logger } from "../api";
+import { api, logger, RUN_MODE } from "../api";
 import { config } from "../config";
 import path from "node:path";
 import { monkeyPatchLogging } from "../util/consoleLoggingPatches";
@@ -23,6 +23,7 @@ export class Next extends Initializer {
     // load and start after the webserver
     this.loadPriority = 850;
     this.startPriority = 520;
+    this.runModes = [RUN_MODE.SERVER];
   }
 
   async initialize() {

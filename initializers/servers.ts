@@ -1,4 +1,4 @@
-import { api } from "../api";
+import { api, RUN_MODE } from "../api";
 import { Initializer } from "../classes/Initializer";
 import type { Server } from "../classes/Server";
 import { globLoader } from "../util/glob";
@@ -16,6 +16,7 @@ export class Servers extends Initializer {
     super(namespace);
     this.loadPriority = 800;
     this.startPriority = 500;
+    this.runModes = [RUN_MODE.SERVER];
   }
 
   async initialize() {

@@ -1,4 +1,4 @@
-import { API } from "./classes/API";
+import { API, RUN_MODE } from "./classes/API";
 import type { Logger } from "./classes/Logger";
 import { config as Config } from "./config";
 
@@ -8,7 +8,7 @@ export {
   type ActionResponse,
   type ActionConstructorInputs,
 } from "./classes/Action";
-export { API } from "./classes/API";
+export { API, RUN_MODE } from "./classes/API";
 export { Connection } from "./classes/Connection";
 export { Initializer } from "./classes/Initializer";
 export { type Input } from "./classes/Input";

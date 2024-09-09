@@ -19,17 +19,20 @@ export class UserCreate implements Action {
       required: true,
       validator: nameValidator,
       formatter: ensureString,
+      description: "The user's name",
     },
     email: {
       required: true,
       validator: emailValidator,
       formatter: ensureString,
+      description: "The user's email",
     },
     password: {
       required: true,
       validator: passwordValidator,
       formatter: ensureString,
       secret: true,
+      description: "The user's password",
     },
   };
 
@@ -68,17 +71,20 @@ export class UserEdit implements Action {
       required: false,
       validator: nameValidator,
       formatter: ensureString,
+      description: "The user's name",
     },
     email: {
       required: false,
       validator: emailValidator,
       formatter: ensureString,
+      description: "The user's email",
     },
     password: {
       required: false,
       validator: passwordValidator,
       formatter: ensureString,
       secret: true,
+      description: "The user's password",
     },
   };
 

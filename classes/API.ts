@@ -5,6 +5,11 @@ import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
 import { ErrorType, TypedError } from "./TypedError";
 
+export enum RUN_MODE {
+  CLI = "cli",
+  SERVER = "server",
+}
+
 export class API {
   rootDir: string;
   initialized: boolean;
@@ -55,7 +60,7 @@ export class API {
     this.logger.warn("Initializing complete");
   }
 
-  async start() {
+  async start(runMode: RUN_MODE = RUN_MODE.SERVER) {
     this.stopped = false;
     this.started = false;
     if (!this.initialized) await this.initialize();
@@ -65,6 +70,13 @@ export class API {
     this.sortInitializers("startPriority");
 
     for (const initializer of this.initializers) {
+      if (!initializer.runModes.includes(runMode)) {
+        this.logger.debug(
+          `Not starting initializer ${initializer.name} in ${runMode} mode`,
+        );
+        continue;
+      }
+
       try {
         this.logger.debug(`Starting initializer ${initializer.name}`);
         await initializer.start?.();
