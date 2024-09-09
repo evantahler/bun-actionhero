@@ -4,6 +4,7 @@ import colors from "colors";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
 import type { SessionData } from "../initializers/session";
+import { randomUUID } from "crypto";
 
 export class Connection {
   type: string;
@@ -12,11 +13,7 @@ export class Connection {
   session?: SessionData;
   sessionLoaded: boolean;
 
-  constructor(
-    type: string,
-    identifier: string,
-    id = crypto.randomUUID() as string,
-  ) {
+  constructor(type: string, identifier: string, id = randomUUID() as string) {
     this.type = type;
     this.identifier = identifier;
     this.id = id;
