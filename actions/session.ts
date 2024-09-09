@@ -10,6 +10,7 @@ import type { SessionData } from "../initializers/session";
 
 export class SessionCreate implements Action {
   name = "session:create";
+  description = "Create a session";
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = {
     email: {

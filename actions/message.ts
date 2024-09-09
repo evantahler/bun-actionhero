@@ -8,6 +8,7 @@ import { messageValidator } from "../util/validators";
 
 export class MessageCrete implements Action {
   name = "message:create";
+  description = "Create a message";
   web = { route: "/message", method: HTTP_METHOD.PUT };
   inputs = {
     body: {
@@ -35,6 +36,7 @@ export class MessageCrete implements Action {
 
 export class MessagesList implements Action {
   name = "messages:list";
+  description = "List messages";
   web = { route: "/messages/list", method: HTTP_METHOD.GET };
   inputs = {
     limit: {

@@ -13,6 +13,7 @@ import { ErrorType, TypedError } from "../classes/TypedError";
 
 export class UserCreate implements Action {
   name = "user:create";
+  description = "Create a new user";
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = {
     name: {
@@ -65,6 +66,7 @@ export class UserCreate implements Action {
 
 export class UserEdit implements Action {
   name = "user:edit";
+  description = "Edit an existing user";
   web = { route: "/user", method: HTTP_METHOD.POST };
   inputs = {
     name: {
