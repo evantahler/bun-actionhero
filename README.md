@@ -141,7 +141,3 @@ Run an action from the CLI:
 **React and Frontend**
 
 - We bundle next.js into the project.
-
-```
-
-```
