@@ -1,6 +1,6 @@
 import type { Message } from "../schema/messages";
 
-export async function serializeMessage(message: Message) {
+export function serializeMessage(message: Message) {
   return {
     id: message.id,
     body: message.body,

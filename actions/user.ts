@@ -59,7 +59,7 @@ export class UserCreate implements Action {
       })
       .returning();
 
-    return { user: await serializeUser(user) };
+    return { user: serializeUser(user) };
   }
 }
 
@@ -108,6 +108,6 @@ export class UserEdit implements Action {
       .where(eq(users.id, connection.session.data.userId))
       .returning();
 
-    return { user: await serializeUser(user) };
+    return { user: serializeUser(user) };
   }
 }

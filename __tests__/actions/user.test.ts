@@ -96,13 +96,11 @@ describe("user:edit", () => {
     expect(sessionRes.status).toBe(200);
     const sessionId = sessionResponse.session.id;
 
-    await Bun.sleep(1001);
-
     const res = await fetch(url + "/api/user", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": `${config.session.cookieName}=${sessionId}`,
+        Cookie: `${config.session.cookieName}=${sessionId}`,
       },
       body: JSON.stringify({ name: "new name" }),
     });

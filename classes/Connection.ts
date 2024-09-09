@@ -10,6 +10,7 @@ export class Connection {
   identifier: string;
   id: string;
   session?: SessionData;
+  sessionLoaded: boolean;
 
   constructor(
     type: string,
@@ -19,6 +20,7 @@ export class Connection {
     this.type = type;
     this.identifier = identifier;
     this.id = id;
+    this.sessionLoaded = false;
   }
 
   /**
@@ -46,7 +48,8 @@ export class Connection {
         });
       }
 
-      await this.loadSession();
+      // load the session once, if it hasn't been loaded yet
+      if (!this.sessionLoaded) await this.loadSession();
 
       const formattedParams = await this.formatParams(params, action);
       response = await action.run(formattedParams, this);
@@ -121,7 +124,11 @@ export class Connection {
       let value = params.get(key); // TODO: handle getAll for multiple values
 
       try {
-        if (!value && paramDefinition.default) {
+        if (
+          (value === null || value === undefined) &&
+          paramDefinition.default !== undefined &&
+          paramDefinition.default !== null
+        ) {
           value =
             typeof paramDefinition.default === "function"
               ? paramDefinition.default(value)
