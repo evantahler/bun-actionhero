@@ -1,3 +1,4 @@
+import { desc, eq } from "drizzle-orm";
 import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { serializeMessage } from "../ops/MessageOps";
@@ -5,6 +6,7 @@ import { messages } from "../schema/messages";
 import { ensureNumber, ensureString } from "../util/formatters";
 import { ensureSession } from "../util/session";
 import { messageValidator } from "../util/validators";
+import { users } from "../schema/users";
 
 export class MessageCrete implements Action {
   name = "message:create";
@@ -15,7 +17,7 @@ export class MessageCrete implements Action {
       required: true,
       validator: messageValidator,
       formatter: ensureString,
-      description: "The message name",
+      description: "The message",
     },
   };
 
@@ -55,11 +57,24 @@ export class MessagesList implements Action {
     ensureSession(connection, "userId");
 
     const _messages = await api.db.db
-      .select()
+      .select({
+        id: messages.id,
+        body: messages.body,
+        createdAt: messages.createdAt,
+        updatedAt: messages.updatedAt,
+        user_id: messages.user_id,
+        user_name: users.name,
+      })
       .from(messages)
+      .orderBy(desc(messages.id))
       .limit(params.limit)
-      .offset(params.offset);
+      .offset(params.offset)
+      .leftJoin(users, eq(users.id, messages.user_id));
 
-    return { messages: _messages.map(serializeMessage) };
+    return {
+      messages: _messages.map((m) =>
+        serializeMessage(m, m.user_name ? m.user_name : undefined),
+      ),
+    };
   }
 }
