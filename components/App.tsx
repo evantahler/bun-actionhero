@@ -2,18 +2,35 @@ import { Row, Col } from "react-bootstrap";
 import { StatusCard } from "./StatusCard";
 import { SessionCreateCard } from "./SessionCreateCard";
 import { SignUpCard } from "./SignUpCard";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ActionResponse } from "../api";
-import type { SessionCreate } from "../actions/session";
 import InfoBar from "./InfoBar";
 import ChatCard from "./ChatCard";
+import type { UserView } from "../actions/user";
 
-export type AppUser = ActionResponse<SessionCreate>["user"] | null;
+export type AppUser = ActionResponse<UserView>["user"] | null;
 
 export default function App() {
   const [user, setUser] = useState<AppUser>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    hydrateUser();
+  }, []);
+
+  async function hydrateUser() {
+    const response = (await fetch("/api/user").then((res) =>
+      res.json(),
+    )) as ActionResponse<UserView>;
+
+    if (response.error) {
+      console.log(response.error);
+    } else {
+      setSuccessMessage(`Welcome back, ${response.user.name}!`);
+      setUser(response.user);
+    }
+  }
 
   return (
     <>
