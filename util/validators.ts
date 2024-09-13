@@ -12,6 +12,12 @@ export const nameValidator = (p: string) => {
   return true as const;
 };
 
+export const messageValidator = (p: string) => {
+  stringLengthValidator(p, 3);
+
+  return true as const;
+};
+
 export const emailValidator = (p: string): true => {
   stringLengthValidator(p, 3);
   if (!p.includes("@")) throw new Error(`This is not a valid email`);

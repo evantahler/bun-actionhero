@@ -4,21 +4,20 @@ import colors from "colors";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
 import type { SessionData } from "../initializers/session";
+import { randomUUID } from "crypto";
 
 export class Connection {
   type: string;
   identifier: string;
   id: string;
   session?: SessionData;
+  sessionLoaded: boolean;
 
-  constructor(
-    type: string,
-    identifier: string,
-    id = crypto.randomUUID() as string,
-  ) {
+  constructor(type: string, identifier: string, id = randomUUID() as string) {
     this.type = type;
     this.identifier = identifier;
     this.id = id;
+    this.sessionLoaded = false;
   }
 
   /**
@@ -46,7 +45,8 @@ export class Connection {
         });
       }
 
-      await this.loadSession();
+      // load the session once, if it hasn't been loaded yet
+      if (!this.sessionLoaded) await this.loadSession();
 
       const formattedParams = await this.formatParams(params, action);
       response = await action.run(formattedParams, this);
@@ -121,7 +121,11 @@ export class Connection {
       let value = params.get(key); // TODO: handle getAll for multiple values
 
       try {
-        if (!value && paramDefinition.default) {
+        if (
+          (value === null || value === undefined) &&
+          paramDefinition.default !== undefined &&
+          paramDefinition.default !== null
+        ) {
           value =
             typeof paramDefinition.default === "function"
               ? paramDefinition.default(value)

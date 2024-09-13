@@ -10,7 +10,7 @@ export async function checkPassword(user: User, password: string) {
   return isMatch;
 }
 
-export async function serializeUser(user: User) {
+export function serializeUser(user: User) {
   return {
     id: user.id,
     name: user.name,

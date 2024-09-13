@@ -4,6 +4,7 @@ import packageJSON from "../package.json";
 
 export class Status implements Action {
   name = "status";
+  description = "Return the status of the server";
   inputs = {};
   web = { route: "/status", method: HTTP_METHOD.GET };
 

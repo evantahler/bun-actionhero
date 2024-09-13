@@ -51,7 +51,7 @@ describe("swagger", () => {
           },
         },
         security: [],
-        summary: "return API documentation in the OpenAPI specification",
+        summary: "Return API documentation in the OpenAPI specification",
       },
     });
   });

@@ -79,7 +79,7 @@ describe("user:edit", () => {
     });
     const response = (await res.json()) as ActionResponse<UserEdit>;
     expect(res.status).toBe(500);
-    expect(response.error?.message).toMatch(/User not found/);
+    expect(response.error?.message).toMatch(/Session not found/);
   });
 
   test("the user can be updated", async () => {
@@ -96,13 +96,11 @@ describe("user:edit", () => {
     expect(sessionRes.status).toBe(200);
     const sessionId = sessionResponse.session.id;
 
-    await Bun.sleep(1001);
-
     const res = await fetch(url + "/api/user", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": `${config.session.cookieName}=${sessionId}`,
+        Cookie: `${config.session.cookieName}=${sessionId}`,
       },
       body: JSON.stringify({ name: "new name" }),
     });

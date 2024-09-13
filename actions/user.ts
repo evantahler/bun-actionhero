@@ -10,9 +10,11 @@ import {
   passwordValidator,
 } from "../util/validators";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { ensureSession } from "../util/session";
 
 export class UserCreate implements Action {
   name = "user:create";
+  description = "Create a new user";
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = {
     name: {
@@ -59,12 +61,13 @@ export class UserCreate implements Action {
       })
       .returning();
 
-    return { user: await serializeUser(user) };
+    return { user: serializeUser(user) };
   }
 }
 
 export class UserEdit implements Action {
   name = "user:edit";
+  description = "Edit an existing user";
   web = { route: "/user", method: HTTP_METHOD.POST };
   inputs = {
     name: {
@@ -89,12 +92,7 @@ export class UserEdit implements Action {
   };
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
-    if (!connection?.session?.data.userId) {
-      throw new TypedError({
-        message: "User not found",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
+    ensureSession(connection, "userId");
 
     const { name, email, password } = params;
     const updates = {} as Record<string, string>;
@@ -105,9 +103,28 @@ export class UserEdit implements Action {
     const [user] = await api.db.db
       .update(users)
       .set(updates)
-      .where(eq(users.id, connection.session.data.userId))
+      .where(eq(users.id, connection.session?.data.userId))
       .returning();
 
-    return { user: await serializeUser(user) };
+    return { user: serializeUser(user) };
+  }
+}
+
+export class UserView implements Action {
+  name = "user:view";
+  description = "View yourself";
+  web = { route: "/user", method: HTTP_METHOD.GET };
+  inputs = {};
+
+  async run(params: ActionParams<UserView>, connection: Connection) {
+    ensureSession(connection, "userId");
+
+    const [user] = await api.db.db
+      .select()
+      .from(users)
+      .where(eq(users.id, connection.session?.data.userId))
+      .limit(1);
+
+    return { user: serializeUser(user) };
   }
 }

@@ -10,7 +10,9 @@
   },
   "scripts": {
     "migrations": "bun run migrations.ts",
-    "build": "next build",
+    "build": "bun run build-backend && bun run build-frontend",
+    "build-backend": "bun build actionhero.ts --compile --outfile actionhero",
+    "build-frontend": "next build",
     "lint": "prettier --check .",
     "pretty": "prettier --write .",
     "ci": "bun run lint && bun run build && bun test"

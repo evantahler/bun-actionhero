@@ -10,6 +10,7 @@ import type { SessionData } from "../initializers/session";
 
 export class SessionCreate implements Action {
   name = "session:create";
+  description = "Create a session";
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = {
     email: {
@@ -58,7 +59,7 @@ export class SessionCreate implements Action {
     await connection.updateSession({ userId: user.id });
 
     return {
-      user: await serializeUser(user),
+      user: serializeUser(user),
       session: connection.session as SessionData,
     };
   };

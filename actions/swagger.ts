@@ -31,7 +31,7 @@ type SwaggerPath = {
 
 export class Swagger implements Action {
   name = "swagger";
-  description = "return API documentation in the OpenAPI specification";
+  description = "Return API documentation in the OpenAPI specification";
   inputs = {};
   web = { route: "/swagger", method: HTTP_METHOD.GET };
 
