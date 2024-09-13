@@ -62,7 +62,7 @@ export class SessionCreate implements Action {
 
     return {
       user: serializeUser(user),
-      session: connection.session,
+      session: connection.session!,
     };
   };
 }
