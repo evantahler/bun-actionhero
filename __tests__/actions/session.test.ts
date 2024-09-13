@@ -40,6 +40,20 @@ describe("session:crate", () => {
     expect(response.session.data.userId).toEqual(response.user.id);
   });
 
+  test("fails validation", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "foo",
+        password: "xxx",
+      }),
+    });
+    const response = (await res.json()) as ActionResponse<SessionCreate>;
+    expect(res.status).toBe(500);
+    expect(response.error?.message).toEqual("This is not a valid email");
+  });
+
   test("fails when users is not found", async () => {
     const res = await fetch(url + "/api/session", {
       method: "PUT",
