@@ -30,7 +30,7 @@ describe("updating config", () => {
   test("config can be overridden by environment variables", async () => {
     expect(await loadFromEnvIfSet("servers.web.port", 8081)).toEqual(8081);
 
-    Bun.env["BUN_SERVERS_WEB_PORT_TEST"] = "8081";
+    Bun.env["WEB_SERVER_PORT_TEST"] = "8081";
     expect(await loadFromEnvIfSet("servers.web.port", 8081)).toEqual(8081);
   });
 

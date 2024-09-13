@@ -11,8 +11,6 @@ export enum LogLevel {
   "fatal" = "fatal",
 }
 
-export type LoggerStream = "stdout" | "stderr";
-
 /**
  * The Logger Class.  I write to stdout or stderr, and can be colorized.
  */
@@ -20,17 +18,17 @@ export class Logger {
   level: LogLevel;
   colorize: boolean;
   includeTimestamps: boolean;
-  stream: LoggerStream;
   jSONObjectParsePadding: number;
   quiet: boolean; // an override to disable all logging (used by CLI)
+  outputStream: typeof console.log;
 
   constructor(config: typeof configLogger) {
     this.level = config.level;
     this.colorize = config.colorize;
     this.includeTimestamps = config.includeTimestamps;
-    this.stream = config.stream;
     this.jSONObjectParsePadding = 4;
     this.quiet = false;
+    this.outputStream = console.log;
   }
 
   log(level: LogLevel, message: string, object?: any) {
@@ -42,8 +40,6 @@ export class Logger {
     ) {
       return;
     }
-
-    const outputStream = this.stream === "stdout" ? console.log : console.error;
 
     let timestamp = this.includeTimestamps ? `${new Date().toISOString()}` : "";
     if (this.colorize && timestamp.length > 0) {
@@ -63,7 +59,9 @@ export class Logger {
       prettyObject = colors.cyan(prettyObject);
     }
 
-    outputStream(`${timestamp} ${formattedLevel} ${message} ${prettyObject}`);
+    this.outputStream(
+      `${timestamp} ${formattedLevel} ${message} ${prettyObject}`,
+    );
   }
 
   trace(message: string, object?: any) {

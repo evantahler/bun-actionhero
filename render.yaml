@@ -1,0 +1,52 @@
+previews:
+  generation: automatic # Enable preview environments
+
+services:
+  - type: web
+    runtime: docker
+    name: application
+    # scaling: # Autoscaling configuration
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetMemoryPercent: 60 # Optional if targetCPUPercent is set
+    #   targetCPUPercent: 60 # Optional if targetMemory is set
+    healthCheckPath: /api/status
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: database
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: redis
+          property: connectionString
+      - key: LOG_COLORIZED
+        value: "true"
+      - key: LOG_INCLUDE_TIMESTAMPS
+        value: "false"
+      - key: NEXT_DEV
+        value: "false"
+      # - key: WEB_SERVER_APPLICATION_URL
+      #   value: "false"
+      - key: WEB_SERVER_PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+
+  # A Redis instance
+  - type: redis
+    name: redis
+    ipAllowList: # Required
+      - source: 0.0.0.0/0
+        description: everywhere
+    plan: free # Default: starter
+    maxmemoryPolicy: noeviction # Default: allkeys-lru
+
+databases:
+  - name: database
+    plan: free # Default: starter
+    ipAllowList: # Optional (defaults to allow all)
+      - source: 0.0.0.0/0
+        description: everywhere
