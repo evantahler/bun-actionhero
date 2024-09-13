@@ -1,4 +1,4 @@
-import { LogLevel, type LoggerStream } from "../classes/Logger";
+import { LogLevel } from "../classes/Logger";
 import { loadFromEnvIfSet } from "../util/config";
 
 export const configLogger = {
