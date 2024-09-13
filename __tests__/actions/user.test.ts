@@ -79,7 +79,7 @@ describe("user:edit", () => {
     });
     const response = (await res.json()) as ActionResponse<UserEdit>;
     expect(res.status).toBe(500);
-    expect(response.error?.message).toMatch(/User not found/);
+    expect(response.error?.message).toMatch(/Session not found/);
   });
 
   test("the user can be updated", async () => {

@@ -106,7 +106,7 @@ describe("message:create", () => {
       }
     });
 
-    test("messages can be listed", async () => {
+    test("messages can be listed in the proper (reverse) order", async () => {
       const res = await fetch(url + "/api/messages/list", {
         method: "GET",
         headers: {
@@ -118,8 +118,8 @@ describe("message:create", () => {
 
       const response = (await res.json()) as ActionResponse<MessagesList>;
       expect(response.messages.length).toEqual(5);
-      expect(response.messages[0].body).toEqual("message 1");
-      expect(response.messages[4].body).toEqual("message 5");
+      expect(response.messages[0].body).toEqual("message 5");
+      expect(response.messages[4].body).toEqual("message 1");
     });
 
     test("limit and offset can be used", async () => {
@@ -135,7 +135,7 @@ describe("message:create", () => {
       const response = (await res.json()) as ActionResponse<MessagesList>;
       expect(response.messages.length).toEqual(2);
       expect(response.messages[0].body).toEqual("message 3");
-      expect(response.messages[1].body).toEqual("message 4");
+      expect(response.messages[1].body).toEqual("message 2");
     });
   });
 });
