@@ -8,6 +8,8 @@ import { ErrorType, TypedError } from "../classes/TypedError";
 import { HTTP_METHOD } from "../classes/Action";
 import type { SessionData } from "../initializers/session";
 
+export type SessionImpl = { userId?: number };
+
 export class SessionCreate implements Action {
   name = "session:create";
   description = "Create a session";
@@ -31,10 +33,10 @@ export class SessionCreate implements Action {
   // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it
   run = async (
     params: ActionParams<SessionCreate>,
-    connection: Connection,
+    connection: Connection<SessionImpl>,
   ): Promise<{
     user: Awaited<ReturnType<typeof serializeUser>>;
-    session: SessionData;
+    session: SessionData<SessionImpl>;
   }> => {
     const [user] = await api.db.db
       .select()
@@ -60,7 +62,7 @@ export class SessionCreate implements Action {
 
     return {
       user: serializeUser(user),
-      session: connection.session as SessionData,
+      session: connection.session,
     };
   };
 }

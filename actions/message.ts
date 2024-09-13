@@ -7,6 +7,7 @@ import { ensureNumber, ensureString } from "../util/formatters";
 import { ensureSession } from "../util/session";
 import { messageValidator } from "../util/validators";
 import { users } from "../schema/users";
+import type { SessionImpl } from "./session";
 
 export class MessageCrete implements Action {
   name = "message:create";
@@ -21,14 +22,17 @@ export class MessageCrete implements Action {
     },
   };
 
-  async run(params: ActionParams<MessageCrete>, connection: Connection) {
+  async run(
+    params: ActionParams<MessageCrete>,
+    connection: Connection<SessionImpl>,
+  ) {
     ensureSession(connection, "userId");
 
     const [message] = await api.db.db
       .insert(messages)
       .values({
         body: params.body,
-        user_id: connection?.session?.data.userId, // TODO How can we type session data?
+        user_id: connection!.session!.data.userId!,
       })
       .returning();
 
@@ -53,7 +57,10 @@ export class MessagesList implements Action {
     },
   };
 
-  async run(params: ActionParams<MessagesList>, connection: Connection) {
+  async run(
+    params: ActionParams<MessagesList>,
+    connection: Connection<SessionImpl>,
+  ) {
     ensureSession(connection, "userId");
 
     const _messages = await api.db.db

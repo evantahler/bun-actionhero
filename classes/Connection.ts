@@ -6,11 +6,11 @@ import { ErrorType, TypedError } from "./TypedError";
 import type { SessionData } from "../initializers/session";
 import { randomUUID } from "crypto";
 
-export class Connection {
+export class Connection<T extends Record<string, any> = Record<string, any>> {
   type: string;
   identifier: string;
   id: string;
-  session?: SessionData;
+  session?: SessionData<T>;
   sessionLoaded: boolean;
 
   constructor(type: string, identifier: string, id = randomUUID() as string) {
@@ -84,7 +84,7 @@ export class Connection {
     return { response, error };
   }
 
-  async updateSession(data: Record<string, any>) {
+  async updateSession(data: Partial<T>) {
     await this.loadSession();
 
     if (!this.session) {
@@ -102,7 +102,7 @@ export class Connection {
 
     const session = await api.session.load(this);
     if (session) {
-      this.session = session;
+      this.session = session as SessionData<T>;
     } else {
       this.session = await api.session.create(this);
     }
