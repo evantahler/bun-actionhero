@@ -5,9 +5,20 @@ import { Server } from "../classes/Server";
 import { config } from "../config";
 import { logger, api } from "../api";
 import { parse } from "node:url";
-import { type HTTP_METHOD } from "../classes/Action";
+import {
+  type HTTP_METHOD,
+  type WebsocketActionParams,
+} from "../classes/Action";
+import type { ServerWebSocket } from "bun";
+
+type ConnectionAndWebsocket = {
+  connection: Connection;
+  ws: ServerWebSocket;
+};
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  webSocketConnections: ConnectionAndWebsocket[] = [];
+
   constructor() {
     super("web");
   }
@@ -28,6 +39,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //   return new Response(`Error: ${error.message}`);
       // },
       fetch: this.handleIncomingConnection.bind(this),
+      websocket: {
+        open: this.handleWebSocketConnectionOpen.bind(this),
+        message: this.handleWebSocketConnectionMessage.bind(this),
+        close: this.handleWebSocketConnectionClose.bind(this),
+      },
     });
 
     await Bun.sleep(1);
@@ -36,16 +52,16 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async stop() {
     if (!this.server) return;
 
+    //TODO: Graceful shutdown
     // in test, we want to hard-kill the server
-    this.server.stop(process.env.NODE_ENV === "test");
+    this.server.stop(true);
 
-    let openConnections =
-      this.server.pendingRequests + this.server.pendingWebSockets;
-    while (openConnections > 0) {
-      await Bun.sleep(500);
-      openConnections =
-        this.server.pendingRequests + this.server.pendingWebSockets;
-    }
+    // while (this.server.pendingRequests + this.server.pendingWebSockets > 0) {
+    //   logger.debug(
+    //     `server stop pending pendingRequests:${this.server.pendingRequests}, pendingWebSockets:${this.server.pendingWebSockets}`,
+    //   );
+    //   await Bun.sleep(1000);
+    // }
 
     logger.info(
       `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
@@ -61,9 +77,15 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       return Response.redirect(config.server.web.applicationUrl + req.url, 302);
     }
 
+    const ip = server.requestIP(req)?.address || "unknown-IP";
+    const cookies = cookie.parse(req.headers.get("cookie") ?? "");
+    const id = cookies[config.session.cookieName];
+
+    if (server.upgrade(req, { data: { ip, id, cookies } })) return; // upgrade the request to a WebSocket
+
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-      return this.handleAction(req, server, parsedUrl);
+      return this.handleAction(req, parsedUrl, ip, id);
     } else if (typeof api.next.app) {
       const originalHost = req.headers.get("host");
       if (!originalHost) {
@@ -100,10 +122,93 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
+  handleWebSocketConnectionOpen(ws: ServerWebSocket) {
+    //@ts-expect-error (ws.data is not defined in the bun types)
+    const connection = new Connection(this.name, ws.data.ip, ws.data.id);
+    this.webSocketConnections.push({ ws, connection });
+    logger.info(
+      `new websocket connection from ${connection.identifier} (${connection.id})`,
+    );
+  }
+
+  async handleWebSocketConnectionMessage(
+    ws: ServerWebSocket,
+    message: string | Buffer,
+  ) {
+    const index = this.webSocketConnections.findIndex(
+      //@ts-expect-error
+      (c) => c.ws.data.id === ws.data.id,
+    );
+
+    if (index < 0) return;
+
+    const connection = this.webSocketConnections[index].connection;
+
+    try {
+      let formattedMessage = JSON.parse(
+        message.toString(),
+      ) as WebsocketActionParams<any>;
+
+      const params = new FormData();
+      for (const [key, value] of Object.entries(formattedMessage.params)) {
+        params.append(key, value);
+      }
+
+      const { response, error } = await connection.act(
+        formattedMessage.action,
+        params,
+        "WEBSOCKET",
+      );
+
+      if (error) {
+        ws.send(
+          JSON.stringify({
+            messageId: formattedMessage.messageId,
+            ...buildErrorPayload(error),
+          }),
+        );
+      } else {
+        ws.send(
+          JSON.stringify({
+            messageId: formattedMessage.messageId,
+            ...response,
+          }),
+        );
+      }
+    } catch (e) {
+      ws.send(
+        JSON.stringify(
+          buildErrorPayload(
+            new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_ACTION_RUN,
+            }),
+          ),
+        ),
+      );
+    }
+  }
+
+  handleWebSocketConnectionClose(ws: ServerWebSocket) {
+    const index = this.webSocketConnections.findIndex(
+      //@ts-expect-error
+      (c) => c.ws.data.id === ws.data.id,
+    );
+
+    if (index < 0) return;
+
+    const connection = this.webSocketConnections[index].connection;
+    this.webSocketConnections.splice(index, 1);
+    logger.info(
+      `websocket connection closed from ${connection.identifier} (${connection.id})`,
+    );
+  }
+
   async handleAction(
     req: Request,
-    server: ReturnType<typeof Bun.serve>,
     url: ReturnType<typeof parse>,
+    ip: string,
+    id: string,
   ) {
     if (!this.server) {
       throw new TypedError({
@@ -115,12 +220,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     let errorStatusCode = 500;
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
-    const ip = server.requestIP(req)?.address || "unknown-IP";
-    const cookies = cookie.parse(req.headers.get("cookie") ?? "");
-
-    const idFromCookie = cookies[config.session.cookieName];
-
-    const connection = new Connection(this.name, ip, idFromCookie);
+    const connection = new Connection(this.name, ip, id);
     const actionName = await this.determineActionName(url, httpMethod);
     if (!actionName) errorStatusCode = 404;
 
@@ -246,7 +346,17 @@ function buildError(
   error: TypedError,
   status = 500,
 ) {
-  const errorPayload = {
+  return new Response(
+    JSON.stringify({ error: buildErrorPayload(error) }, null, 2) + EOL,
+    {
+      status,
+      headers: buildHeaders(connection),
+    },
+  );
+}
+
+function buildErrorPayload(error: TypedError) {
+  return {
     message: error.message,
     type: error.type,
     timestamp: new Date().getTime(),
@@ -254,11 +364,6 @@ function buildError(
     value: error.value !== undefined ? error.value : undefined,
     stack: error.stack,
   };
-
-  return new Response(JSON.stringify({ error: errorPayload }, null, 2) + EOL, {
-    status,
-    headers: buildHeaders(connection),
-  });
 }
 
 function checkApplicationUrl(req: Request) {

@@ -17,6 +17,21 @@ export default function ChatCard({
     ActionResponse<MessagesList>["messages"]
   >([]);
 
+  let ws: WebSocket;
+  function connect() {
+    ws = new WebSocket("");
+
+    // Connection opened
+    ws.addEventListener("open", (event) => {
+      ws.send("Hello Server!");
+    });
+
+    // Listen for messages
+    ws.addEventListener("message", (event) => {
+      console.log("Message from server ", event.data);
+    });
+  }
+
   async function sendMessage(event: React.SyntheticEvent) {
     event.preventDefault();
 
@@ -52,8 +67,9 @@ export default function ChatCard({
   }
 
   useEffect(() => {
+    connect();
     loadMessages();
-    setInterval(loadMessages, 5000);
+    // setInterval(loadMessages, 5000);
   }, []);
 
   return (

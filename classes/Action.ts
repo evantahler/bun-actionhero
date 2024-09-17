@@ -64,3 +64,9 @@ type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
 
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
   Partial<{ error?: TypedError }>;
+
+export type WebsocketActionParams<A extends Action> = {
+  messageId: string | number;
+  action: A["name"];
+  params: ActionParams<A>;
+};
