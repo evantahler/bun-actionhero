@@ -1,48 +1,19 @@
 import cookie from "cookie";
-import colors from "colors";
-import formidable from "formidable";
 import { Connection } from "../classes/Connection";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { Server } from "../classes/Server";
 import { config } from "../config";
-import { createServer, IncomingMessage, ServerResponse } from "node:http";
 import { logger, api } from "../api";
 import { parse } from "node:url";
-import { parseHeadersForClientAddress } from "../util/parseHeadersForClientAddress";
 import { type HTTP_METHOD } from "../classes/Action";
-import { Socket } from "node:net";
 import querystring from "node:querystring";
 
-export class WebServer extends Server<ReturnType<typeof createServer>> {
-  sockets: Record<number, Socket>;
-  socketCounter: number;
-  started: boolean;
-
+export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   constructor() {
     super("web");
-    this.sockets = {};
-    this.socketCounter = 0;
-    this.started = false;
   }
 
-  async initialize() {
-    this.server = createServer(this.handleIncomingConnection.bind(this));
-
-    this.server.on("error", (e) => {
-      throw new TypedError({
-        message: `cannot start web server @ ${config.server.web.host}:${config.server.web.port} => ${e.message}`,
-        type: ErrorType.SERVER_START,
-        originalError: e,
-      });
-    });
-
-    this.server.on("connection", (socket) => {
-      const id = this.socketCounter;
-      this.sockets[id] = socket;
-      socket.on("close", () => delete this.sockets[id]);
-      this.socketCounter++;
-    });
-  }
+  async initialize() {}
 
   async start() {
     if (config.server.web.enabled !== true) return;
@@ -51,60 +22,77 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       `starting web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
     );
 
-    await new Promise((resolve) => {
-      if (!this.server) {
-        throw new TypedError({
-          message: "server not initialized",
-          type: ErrorType.SERVER_START,
-        });
-      }
-
-      this.server.listen(config.server.web.port, config.server.web.host, () => {
-        this.started = true;
-        resolve(true);
-      });
+    this.server = Bun.serve({
+      port: config.server.web.port,
+      hostname: config.server.web.host,
+      // error: (error) => {
+      //   return new Response(`Error: ${error.message}`);
+      // },
+      fetch: this.handleIncomingConnection.bind(this),
     });
+
+    await Bun.sleep(1);
   }
 
   async stop() {
-    await new Promise(async (resolve, reject) => {
-      if (this.server && this.started) {
-        this.server.close((err) => {
-          if (err) reject(err);
-          logger.info(
-            `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
-          );
-          resolve(true);
-        });
+    if (!this.server) return;
 
-        let destroyedClients = 0;
-        for (const socket of Object.values(this.sockets)) {
-          socket.destroy();
-          destroyedClients++;
-        }
+    this.server.stop();
 
-        if (destroyedClients > 0) {
-          logger.info(`destroyed ${destroyedClients} hanging sockets`);
-        }
-      } else {
-        resolve(true);
-      }
-    });
+    let openConnections =
+      this.server.pendingRequests + this.server.pendingWebSockets;
+    while (openConnections > 0) {
+      await Bun.sleep(500);
+      openConnections =
+        this.server.pendingRequests + this.server.pendingWebSockets;
+    }
+
+    this.server.stop(true);
+    delete this.server;
+
+    logger.info(
+      `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
+    );
   }
 
-  async handleIncomingConnection(req: IncomingMessage, res: ServerResponse) {
-    const isCorrectUrl = this.checkApplicationUrl(req, res);
-    if (!isCorrectUrl) return;
+  async handleIncomingConnection(
+    req: Request,
+    server: ReturnType<typeof Bun.serve>,
+  ) {
+    const isCorrectUrl = checkApplicationUrl(req);
+    if (!isCorrectUrl) {
+      return Response.redirect(config.server.web.applicationUrl + req.url, 302);
+    }
 
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-      this.handleAction(req, res, parsedUrl);
-    } else if (typeof api.next.handle === "function") {
-      logNextRequest(req, res, parsedUrl);
-      api.next.handle(req, res, parsedUrl);
+      return this.handleAction(req, server, parsedUrl);
+    } else if (typeof api.next.app) {
+      const originalHost = req.headers.get("host");
+      if (!originalHost) {
+        throw new TypedError({
+          type: ErrorType.CONNECTION_SERVER_ERROR,
+          message: "no host header",
+        });
+      }
+
+      // forward the request to the next.js socket
+      const response = await fetch(req.url, {
+        headers: req.headers,
+        method: req.method,
+        body: req.body,
+        // @ts-ignore - This is added by Bun to allow connecting to unix sockets
+        unix: api.next.socket,
+      });
+
+      response.headers.set("x-server-name", config.process.name);
+
+      response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
+      response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
+
+      return response;
     } else {
-      this.buildError(
-        res,
+      return buildError(
         undefined,
         new TypedError({
           message: "static server not enabled",
@@ -115,29 +103,9 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     }
   }
 
-  checkApplicationUrl(req: IncomingMessage, res: ServerResponse) {
-    if (config.server.web.applicationUrl.length > 3) {
-      const requestHost = req.headers["x-forwarded-proto"]
-        ? req.headers["x-forwarded-proto"] + "://" + req.headers.host
-        : "http://" + req.headers.host;
-
-      if (config.server.web.applicationUrl !== requestHost) {
-        res.statusCode = 302;
-        res.setHeader("Location", config.server.web.applicationUrl + req.url);
-        res.end(
-          `You are being redirected to ${config.server.web.applicationUrl + req.url}\r\n`,
-        );
-
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   async handleAction(
-    req: IncomingMessage,
-    res: ServerResponse,
+    req: Request,
+    server: ReturnType<typeof Bun.serve>,
     url: ReturnType<typeof parse>,
   ) {
     if (!this.server) {
@@ -150,8 +118,8 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     let errorStatusCode = 500;
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
-    const { ip, port } = parseHeadersForClientAddress(req);
-    const cookies = cookie.parse(req.headers["cookie"] ?? "");
+    const ip = server.requestIP(req)?.address || "unknown-IP";
+    const cookies = cookie.parse(req.headers.get("cookie") ?? "");
 
     const idFromCookie = cookies[config.session.cookieName];
 
@@ -162,78 +130,68 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     // param load order: url params -> body params -> query params
     let params = new FormData();
 
-    if (req.headers["content-type"] === "application/json") {
-      const bodyString: string = await new Promise((resolve, reject) => {
-        let body: Uint8Array[] = [];
-        req
-          .on("error", (err) => reject(err))
-          .on("data", (chunk) => body.push(chunk))
-          .on("end", () => resolve(Buffer.concat(body).toString()));
+    if (
+      req.method !== "GET" &&
+      req.headers.get("content-type") === "application/json"
+    ) {
+      // const bodyString = req.body?.getReader();
+      // console.log({ bodyString });
+
+      // if (bodyString) {
+      try {
+        const bodyContent = await req.json();
+        for (const [key, value] of Object.entries(bodyContent)) {
+          params.set(key, value as any);
+        }
+      } catch (e) {
+        // if (e instanceof Error) {
+        //   if (
+        //     e.message.includes("Unexpected end of JSON input") ||
+        //     e.message.includes("JSON Parse error")
+        //   ) {
+        //     const bodyQuery = querystring.parse(bodyString);
+        //     for (const [key, values] of Object.entries(bodyQuery)) {
+        //       if (values !== undefined) {
+        //         if (Array.isArray(values)) {
+        //           for (const v of values) params.append(key, v);
+        //         } else {
+        //           params.append(key, values);
+        //         }
+        //       }
+        //     }
+        //   } else {
+        //     throw new TypedError({
+        //       message: `cannot parse request body: ${e.message}`,
+        //       type: ErrorType.CONNECTION_ACTION_RUN,
+        //       originalError: e,
+        //     });
+        //   }
+        // } else {
+        throw new TypedError({
+          message: `cannot parse request body: ${e}`,
+          type: ErrorType.CONNECTION_ACTION_RUN,
+          originalError: e,
+        });
+      }
+      // }
+      // }
+    } else if (req.method !== "GET") {
+      const f = await req.formData();
+      f.forEach((value, key) => {
+        params.append(key, value);
       });
 
-      if (bodyString) {
-        try {
-          const bodyContent = JSON.parse(bodyString) as Record<string, string>;
-          for (const [key, value] of Object.entries(bodyContent)) {
-            params.set(key, value);
-          }
-        } catch (e) {
-          if (e instanceof Error) {
-            if (
-              e.message.includes("Unexpected end of JSON input") ||
-              e.message.includes("JSON Parse error")
-            ) {
-              const bodyQuery = querystring.parse(bodyString);
-              for (const [key, values] of Object.entries(bodyQuery)) {
-                if (values !== undefined) {
-                  if (Array.isArray(values)) {
-                    for (const v of values) params.append(key, v);
-                  } else {
-                    params.append(key, values);
-                  }
-                }
-              }
-            } else {
-              throw new TypedError({
-                message: `cannot parse request body: ${e.message}`,
-                type: ErrorType.CONNECTION_ACTION_RUN,
-                originalError: e,
-              });
-            }
-          } else {
-            throw new TypedError({
-              message: `cannot parse request body: ${e}`,
-              type: ErrorType.CONNECTION_ACTION_RUN,
-              originalError: e,
-            });
-          }
-        }
-      }
-    } else {
-      const form = formidable({ multiples: true });
-      const [fields, files] = await form.parse(req);
+      // // TODO: FILES
 
-      for (const [key, values] of Object.entries(fields)) {
-        if (values !== undefined) {
-          if (Array.isArray(values)) {
-            for (const v of values) params.append(key, v);
-          } else {
-            params.append(key, values);
-          }
-        }
-      }
-
-      // TODO: FILES
-
-      // for (const [key, values] of Object.entries(files)) {
-      //   if (values !== undefined) {
-      //     if (Array.isArray(values)) {
-      //       for (const v of values) params.append(key, v);
-      //     } else {
-      //       params.append(key, values);
-      //     }
-      //   }
-      // }
+      // // for (const [key, values] of Object.entries(files)) {
+      // //   if (values !== undefined) {
+      // //     if (Array.isArray(values)) {
+      // //       for (const v of values) params.append(key, v);
+      // //     } else {
+      // //       params.append(key, values);
+      // //     }
+      // //   }
+      // // }
     }
 
     if (url.query) {
@@ -256,8 +214,8 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
     );
 
     return error
-      ? this.buildError(res, connection, error, errorStatusCode)
-      : this.buildResponse(res, connection, response);
+      ? buildError(connection, error, errorStatusCode)
+      : buildResponse(connection, response);
   }
 
   async determineActionName(
@@ -286,35 +244,6 @@ export class WebServer extends Server<ReturnType<typeof createServer>> {
       }
     }
   }
-
-  async buildResponse(
-    res: ServerResponse,
-    connection: Connection,
-    response: Object,
-    status = 200,
-  ) {
-    res.writeHead(status, buildHeaders(connection));
-    res.end(JSON.stringify(response, null, 2) + EOL);
-  }
-
-  async buildError(
-    res: ServerResponse,
-    connection: Connection | undefined,
-    error: TypedError,
-    status = 500,
-  ) {
-    const errorPayload = {
-      message: error.message,
-      type: error.type,
-      timestamp: new Date().getTime(),
-      key: error.key !== undefined ? error.key : undefined,
-      value: error.value !== undefined ? error.value : undefined,
-      stack: error.stack,
-    };
-
-    res.writeHead(status, buildHeaders(connection));
-    res.end(JSON.stringify({ error: errorPayload }, null, 2) + EOL);
-  }
 }
 
 const buildHeaders = (connection?: Connection) => {
@@ -331,33 +260,46 @@ const buildHeaders = (connection?: Connection) => {
   return headers;
 };
 
-const logNextRequest = (
-  req: IncomingMessage,
-  res: ServerResponse,
-  url: ReturnType<typeof parse>,
-) => {
-  const startTime = new Date().getTime();
-  const { ip, port } = parseHeadersForClientAddress(req);
-
-  res.on("finish", () => {
-    // res.statusCode
-
-    const loggingQuery = config.logger.colorize
-      ? colors.gray(JSON.stringify(url.query))
-      : JSON.stringify(url.query);
-
-    const statusMessage = `[ASSET:${res.statusCode}]`;
-    const messagePrefix = config.logger.colorize
-      ? res.statusCode >= 200 && res.statusCode < 400
-        ? colors.bgBlue(statusMessage)
-        : colors.bgMagenta(statusMessage)
-      : statusMessage;
-
-    const duration = new Date().getTime() - startTime;
-    const message = `${messagePrefix} ${url.path} (${duration}ms) ${req.method && req.method?.length > 0 ? `[${req.method}]` : ""} ${ip} ${loggingQuery}`;
-
-    logger.info(config.logger.colorize ? colors.gray(message) : message);
+function buildResponse(connection: Connection, response: Object, status = 200) {
+  return new Response(JSON.stringify(response, null, 2) + EOL, {
+    status,
+    headers: buildHeaders(connection),
   });
-};
+}
+
+function buildError(
+  connection: Connection | undefined,
+  error: TypedError,
+  status = 500,
+) {
+  const errorPayload = {
+    message: error.message,
+    type: error.type,
+    timestamp: new Date().getTime(),
+    key: error.key !== undefined ? error.key : undefined,
+    value: error.value !== undefined ? error.value : undefined,
+    stack: error.stack,
+  };
+
+  return new Response(JSON.stringify({ error: errorPayload }, null, 2) + EOL, {
+    status,
+    headers: buildHeaders(connection),
+  });
+}
+
+function checkApplicationUrl(req: Request) {
+  if (config.server.web.applicationUrl.length > 3) {
+    const hostHeader = req.headers.get("host");
+    const forwardHeader = req.headers.get("x-forwarded-proto");
+
+    const requestHost = forwardHeader
+      ? forwardHeader + "://" + hostHeader
+      : "http://" + hostHeader;
+
+    if (config.server.web.applicationUrl !== requestHost) return false;
+  }
+
+  return true;
+}
 
 const EOL = "\r\n";
