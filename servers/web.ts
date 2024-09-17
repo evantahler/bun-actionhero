@@ -228,7 +228,7 @@ const buildHeaders = (connection?: Connection) => {
 
   if (connection) {
     headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}`; //HttpOnly; SameSite=Strict; Path=/
+      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/`; //HttpOnly; SameSite=Strict;
   }
 
   return headers;
