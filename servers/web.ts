@@ -37,7 +37,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async stop() {
     if (!this.server) return;
 
-    this.server.stop();
+    // in test, we want to hard-kill the server
+    this.server.stop(process.env.NODE_ENV === "test");
 
     let openConnections =
       this.server.pendingRequests + this.server.pendingWebSockets;
@@ -46,9 +47,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       openConnections =
         this.server.pendingRequests + this.server.pendingWebSockets;
     }
-
-    this.server.stop(true);
-    delete this.server;
 
     logger.info(
       `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
