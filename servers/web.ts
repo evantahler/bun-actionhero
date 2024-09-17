@@ -6,7 +6,6 @@ import { config } from "../config";
 import { logger, api } from "../api";
 import { parse } from "node:url";
 import { type HTTP_METHOD } from "../classes/Action";
-import querystring from "node:querystring";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   constructor() {
@@ -132,48 +131,25 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       req.method !== "GET" &&
       req.headers.get("content-type") === "application/json"
     ) {
-      // const bodyString = req.body?.getReader();
-      // console.log({ bodyString });
-
-      // if (bodyString) {
       try {
         const bodyContent = await req.json();
         for (const [key, value] of Object.entries(bodyContent)) {
           params.set(key, value as any);
         }
       } catch (e) {
-        // if (e instanceof Error) {
-        //   if (
-        //     e.message.includes("Unexpected end of JSON input") ||
-        //     e.message.includes("JSON Parse error")
-        //   ) {
-        //     const bodyQuery = querystring.parse(bodyString);
-        //     for (const [key, values] of Object.entries(bodyQuery)) {
-        //       if (values !== undefined) {
-        //         if (Array.isArray(values)) {
-        //           for (const v of values) params.append(key, v);
-        //         } else {
-        //           params.append(key, values);
-        //         }
-        //       }
-        //     }
-        //   } else {
-        //     throw new TypedError({
-        //       message: `cannot parse request body: ${e.message}`,
-        //       type: ErrorType.CONNECTION_ACTION_RUN,
-        //       originalError: e,
-        //     });
-        //   }
-        // } else {
         throw new TypedError({
           message: `cannot parse request body: ${e}`,
           type: ErrorType.CONNECTION_ACTION_RUN,
           originalError: e,
         });
       }
-      // }
-      // }
-    } else if (req.method !== "GET") {
+    } else if (
+      req.method !== "GET" &&
+      (req.headers.get("content-type")?.includes("multipart/form-data") ||
+        req.headers
+          .get("content-type")
+          ?.includes("application/x-www-form-urlencoded"))
+    ) {
       const f = await req.formData();
       f.forEach((value, key) => {
         params.append(key, value);
