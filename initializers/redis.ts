@@ -1,9 +1,12 @@
 import { logger, api } from "../api";
 import { Initializer } from "../classes/Initializer";
+import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import { Redis as RedisClient } from "ioredis";
+import { formatConnectionStringForLogging } from "../util/connectionString";
 
 const namespace = "redis";
+const testKey = `__actionhero_test_key:${config.process.name}`;
 
 declare module "../classes/API" {
   export interface API {
@@ -25,7 +28,20 @@ export class Redis extends Initializer {
 
   async start() {
     api.redis.redis = new RedisClient(config.redis.connectionString);
-    logger.info("redis connection established");
+
+    try {
+      await api.redis.redis.set(testKey, Date.now());
+      await api.redis.redis.expire(testKey, 1);
+    } catch (e) {
+      throw new TypedError({
+        type: ErrorType.SERVER_INITIALIZATION,
+        message: `Cannot connect to redis (${formatConnectionStringForLogging(config.redis.connectionString)}): ${e}`,
+      });
+    }
+
+    logger.info(
+      `redis connection established (${formatConnectionStringForLogging(config.redis.connectionString)})`,
+    );
   }
 
   async stop() {
