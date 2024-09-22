@@ -10,6 +10,11 @@ import {
   type WebsocketActionParams,
 } from "../classes/Action";
 import type { ServerWebSocket } from "bun";
+import type {
+  ClientSubscribeMessage,
+  ClientUnsubscribeMessage,
+  PubSubMessage,
+} from "../initializers/pubsub";
 
 type ConnectionAndWebsocket = {
   connection: Connection;
@@ -17,8 +22,6 @@ type ConnectionAndWebsocket = {
 };
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
-  webSocketConnections: ConnectionAndWebsocket[] = [];
-
   constructor() {
     super("web");
   }
@@ -124,8 +127,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
     //@ts-expect-error (ws.data is not defined in the bun types)
-    const connection = new Connection(this.name, ws.data.ip, ws.data.id);
-    this.webSocketConnections.push({ ws, connection });
+    const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
+    connection.onBroadcastMessageReceived = function (payload: PubSubMessage) {
+      ws.send(JSON.stringify({ message: payload })); // TODO --- BROKEN
+    };
     logger.info(
       `New websocket connection from ${connection.identifier} (${connection.id})`,
     );
@@ -135,19 +140,22 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     message: string | Buffer,
   ) {
-    const index = this.webSocketConnections.findIndex(
+    const { connection } = api.connections.find(
+      "websocket",
       //@ts-expect-error
-      (c) => c.ws.data.id === ws.data.id,
+      ws.data.ip,
+      //@ts-expect-error
+      ws.data.id,
     );
-
-    if (index < 0) return;
-
-    const connection = this.webSocketConnections[index].connection;
 
     try {
       const parsedMessage = JSON.parse(message.toString());
       if (parsedMessage["messageType"] === "action") {
         this.handleWebsocketAction(connection, ws, parsedMessage);
+      } else if (parsedMessage["messageType"] === "subscribe") {
+        this.handleWebsocketSubscribe(connection, ws, parsedMessage);
+      } else if (parsedMessage["messageType"] === "unsubscribe") {
+        this.handleWebsocketUnsubscribe(connection, ws, parsedMessage);
       } else {
         throw new TypedError({
           message: `messageType either missing or unknown`,
@@ -169,15 +177,14 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   handleWebSocketConnectionClose(ws: ServerWebSocket) {
-    const index = this.webSocketConnections.findIndex(
+    const { connection } = api.connections.find(
+      "websocket",
       //@ts-expect-error
-      (c) => c.ws.data.id === ws.data.id,
+      ws.data.ip,
+      //@ts-expect-error
+      ws.data.id,
     );
-
-    if (index < 0) return;
-
-    const connection = this.webSocketConnections[index].connection;
-    this.webSocketConnections.splice(index, 1);
+    connection.destroy();
     logger.info(
       `websocket connection closed from ${connection.identifier} (${connection.id})`,
     );
@@ -218,6 +225,34 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
+  async handleWebsocketSubscribe(
+    connection: Connection,
+    ws: ServerWebSocket,
+    formattedMessage: ClientSubscribeMessage,
+  ) {
+    connection.subscribe(formattedMessage.channel);
+    ws.send(
+      JSON.stringify({
+        messageId: formattedMessage.messageId,
+        subscribed: { channel: formattedMessage.channel },
+      }),
+    );
+  }
+
+  async handleWebsocketUnsubscribe(
+    connection: Connection,
+    ws: ServerWebSocket,
+    formattedMessage: ClientUnsubscribeMessage,
+  ) {
+    connection.unsubscribe(formattedMessage.channel);
+    ws.send(
+      JSON.stringify({
+        messageId: formattedMessage.messageId,
+        unsubscribed: { channel: formattedMessage.channel },
+      }),
+    );
+  }
+
   async handleWebAction(
     req: Request,
     url: ReturnType<typeof parse>,
@@ -234,7 +269,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     let errorStatusCode = 500;
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
-    const connection = new Connection(this.name, ip, id);
+    const connection = new Connection("web", ip, id);
     const actionName = await this.determineActionName(url, httpMethod);
     if (!actionName) errorStatusCode = 404;
 
@@ -300,6 +335,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       httpMethod,
       req.url,
     );
+
+    connection.destroy();
 
     return error
       ? buildError(connection, error, errorStatusCode)

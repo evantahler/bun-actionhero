@@ -5,6 +5,7 @@ import type { MessagesList } from "../actions/message";
 import { useEffect, useState } from "react";
 
 let ws: WebSocket;
+let messageCounter = 0;
 
 export default function ChatCard({
   user,
@@ -26,6 +27,9 @@ export default function ChatCard({
     // Connection opened
     ws.addEventListener("open", (event) => {
       console.log("Websocket connected");
+      ws.send(
+        JSON.stringify({ messageType: "subscribe", channel: "messages" }),
+      );
       setConnected(true);
     });
 
@@ -46,10 +50,13 @@ export default function ChatCard({
       body: { value: string };
     };
 
+    messageCounter++;
+
     ws.send(
       JSON.stringify({
         messageType: "action",
         action: "message:create",
+        messageId: messageCounter,
         params: { body: target.body.value },
       }),
     );
@@ -71,7 +78,7 @@ export default function ChatCard({
 
   useEffect(() => {
     connect();
-    loadMessages();
+    loadMessages(); // load the messages that happened before we joined
     // setInterval(loadMessages, 5000);
   }, []);
 

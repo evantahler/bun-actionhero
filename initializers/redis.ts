@@ -18,20 +18,26 @@ export class Redis extends Initializer {
   constructor() {
     super(namespace);
     this.startPriority = 110;
-    this.stopPriority = 900;
+    this.stopPriority = 990;
   }
 
   async initialize() {
-    const redisContainer = {} as { redis: RedisClient };
+    const redisContainer = {} as {
+      redis: RedisClient;
+      subscription: RedisClient;
+    };
     return redisContainer;
   }
 
   async start() {
     api.redis.redis = new RedisClient(config.redis.connectionString);
+    api.redis.subscription = new RedisClient(config.redis.connectionString);
 
     try {
       await api.redis.redis.set(testKey, Date.now());
-      await api.redis.redis.expire(testKey, 1);
+      await api.redis.redis.del(testKey);
+      await api.redis.subscription.set(testKey, Date.now());
+      await api.redis.subscription.del(testKey);
     } catch (e) {
       throw new TypedError({
         type: ErrorType.SERVER_INITIALIZATION,
@@ -40,14 +46,23 @@ export class Redis extends Initializer {
     }
 
     logger.info(
-      `redis connection established (${formatConnectionStringForLogging(config.redis.connectionString)})`,
+      `redis connections established (${formatConnectionStringForLogging(config.redis.connectionString)})`,
     );
   }
 
   async stop() {
+    let acted = false;
+
     if (api.redis.redis) {
-      await api.redis.redis.quit(); // will wait for all pending commands to complete
-      logger.info("redis connection closed");
+      await api.redis.redis.quit();
+      acted = true;
     }
+
+    if (api.redis.subscription) {
+      await api.redis.subscription.quit();
+      acted = true;
+    }
+
+    if (acted) logger.info("redis connections closed");
   }
 }
