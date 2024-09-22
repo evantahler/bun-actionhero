@@ -1,8 +1,10 @@
 import { Row, Col, Form, Button, Table } from "react-bootstrap";
 import type { AppUser } from "./App";
 import type { ActionResponse } from "../api";
-import type { MessageCrete, MessagesList } from "../actions/message";
+import type { MessagesList } from "../actions/message";
 import { useEffect, useState } from "react";
+
+let ws: WebSocket;
 
 export default function ChatCard({
   user,
@@ -16,43 +18,44 @@ export default function ChatCard({
   const [messages, setMessages] = useState<
     ActionResponse<MessagesList>["messages"]
   >([]);
+  const [connected, setConnected] = useState<boolean>(false);
 
-  let ws: WebSocket;
   function connect() {
-    ws = new WebSocket("");
+    ws = new WebSocket(""); // connect to the server hosting *this* page
 
     // Connection opened
     ws.addEventListener("open", (event) => {
-      ws.send("Hello Server!");
+      console.log("Websocket connected");
+      setConnected(true);
     });
 
     // Listen for messages
     ws.addEventListener("message", (event) => {
-      console.log("Message from server ", event.data);
+      const response = JSON.parse(event.data);
+      console.log("Message from server: ", response);
+
+      if (response.error) setErrorMessage(response.error.message);
     });
   }
 
   async function sendMessage(event: React.SyntheticEvent) {
     event.preventDefault();
+    if (!connected) return setErrorMessage("websocket not connected");
 
     const target = event.target as typeof event.target & {
       body: { value: string };
     };
 
-    const body = new FormData();
-    body.append("body", target.body.value);
-    const response = (await fetch("/api/message", {
-      method: "put",
-      body,
-    }).then((res) => res.json())) as ActionResponse<MessageCrete>;
+    ws.send(
+      JSON.stringify({
+        messageType: "action",
+        action: "message:create",
+        params: { body: target.body.value },
+      }),
+    );
 
-    if (response.error) {
-      setErrorMessage(response.error.message);
-    } else {
-      //@ts-ignore
-      event.target.reset();
-      loadMessages();
-    }
+    //@ts-ignore
+    event.target.reset();
   }
 
   async function loadMessages() {
@@ -82,7 +85,7 @@ export default function ChatCard({
               <Form.Control type="text" placeholder="Message" />
             </Form.Group>
 
-            <Button variant="primary" type="submit">
+            <Button variant="primary" type="submit" disabled={!connected}>
               Send
             </Button>
           </Form>

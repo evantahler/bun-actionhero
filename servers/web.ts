@@ -85,7 +85,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-      return this.handleAction(req, parsedUrl, ip, id);
+      return this.handleWebAction(req, parsedUrl, ip, id);
     } else if (typeof api.next.app) {
       const originalHost = req.headers.get("host");
       if (!originalHost) {
@@ -127,7 +127,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const connection = new Connection(this.name, ws.data.ip, ws.data.id);
     this.webSocketConnections.push({ ws, connection });
     logger.info(
-      `new websocket connection from ${connection.identifier} (${connection.id})`,
+      `New websocket connection from ${connection.identifier} (${connection.id})`,
     );
   }
 
@@ -145,46 +145,25 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const connection = this.webSocketConnections[index].connection;
 
     try {
-      let formattedMessage = JSON.parse(
-        message.toString(),
-      ) as WebsocketActionParams<any>;
-
-      const params = new FormData();
-      for (const [key, value] of Object.entries(formattedMessage.params)) {
-        params.append(key, value);
-      }
-
-      const { response, error } = await connection.act(
-        formattedMessage.action,
-        params,
-        "WEBSOCKET",
-      );
-
-      if (error) {
-        ws.send(
-          JSON.stringify({
-            messageId: formattedMessage.messageId,
-            ...buildErrorPayload(error),
-          }),
-        );
+      const parsedMessage = JSON.parse(message.toString());
+      if (parsedMessage["messageType"] === "action") {
+        this.handleWebsocketAction(connection, ws, parsedMessage);
       } else {
-        ws.send(
-          JSON.stringify({
-            messageId: formattedMessage.messageId,
-            ...response,
-          }),
-        );
+        throw new TypedError({
+          message: `messageType either missing or unknown`,
+          type: ErrorType.CONNECTION_TYPE_NOT_FOUND,
+        });
       }
     } catch (e) {
       ws.send(
-        JSON.stringify(
-          buildErrorPayload(
+        JSON.stringify({
+          error: buildErrorPayload(
             new TypedError({
               message: `${e}`,
               type: ErrorType.CONNECTION_ACTION_RUN,
             }),
           ),
-        ),
+        }),
       );
     }
   }
@@ -204,7 +183,42 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
   }
 
-  async handleAction(
+  async handleWebsocketAction(
+    connection: Connection,
+    ws: ServerWebSocket,
+    formattedMessage: WebsocketActionParams<any>,
+  ) {
+    const params = new FormData();
+    for (const [key, value] of Object.entries(formattedMessage.params)) {
+      params.append(key, value);
+    }
+
+    const { response, error } = await connection.act(
+      formattedMessage.action,
+      params,
+      "WEBSOCKET",
+    );
+
+    if (error) {
+      ws.send(
+        JSON.stringify({
+          error: {
+            messageId: formattedMessage.messageId,
+            ...buildErrorPayload(error),
+          },
+        }),
+      );
+    } else {
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          ...response,
+        }),
+      );
+    }
+  }
+
+  async handleWebAction(
     req: Request,
     url: ReturnType<typeof parse>,
     ip: string,
