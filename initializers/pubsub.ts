@@ -42,7 +42,7 @@ export class PubSub extends Initializer {
   async initialize() {
     async function broadcast(
       channel: string,
-      message: string,
+      message: any,
       sender = "unknown-sender",
     ) {
       const payload: PubSubMessage = { channel, message, sender };
@@ -58,7 +58,7 @@ export class PubSub extends Initializer {
   async start() {
     if (api.redis.subscription) {
       api.redis.subscription.subscribe(redisPubSubChannel);
-      api.redis.subscription.on("message", this.handleMessage);
+      api.redis.subscription.on("message", this.handleMessage.bind(this));
     }
   }
 

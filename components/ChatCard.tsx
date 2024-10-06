@@ -3,6 +3,7 @@ import type { AppUser } from "./App";
 import type { ActionResponse } from "../api";
 import type { MessagesList } from "../actions/message";
 import { useEffect, useState } from "react";
+import pkg from "../package.json";
 
 let ws: WebSocket;
 let messageCounter = 0;
@@ -22,7 +23,7 @@ export default function ChatCard({
   const [connected, setConnected] = useState<boolean>(false);
 
   function connect() {
-    ws = new WebSocket(""); // connect to the server hosting *this* page
+    ws = new WebSocket(window.location.origin, pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
 
     // Connection opened
     ws.addEventListener("open", (event) => {
@@ -39,6 +40,17 @@ export default function ChatCard({
       console.log("Message from server: ", response);
 
       if (response.error) setErrorMessage(response.error.message);
+      if (response.message && response.message.channel === "messages") {
+        setMessages((prevMessages) => {
+          const newMessages = [
+            response.message.message.message as (typeof messages)[number],
+            ...prevMessages,
+          ]
+            .sort((a, b) => b.createdAt - a.createdAt)
+            .slice(0, 10);
+          return newMessages;
+        });
+      }
     });
   }
 
@@ -72,8 +84,9 @@ export default function ChatCard({
 
     if (response.error) {
       setErrorMessage(response.error.message);
+    } else {
+      setMessages(response.messages);
     }
-    setMessages(response.messages);
   }
 
   useEffect(() => {

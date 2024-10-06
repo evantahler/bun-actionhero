@@ -42,7 +42,7 @@ export class MessageCrete implements Action {
 
     await api.pubsub.broadcast(
       "messages",
-      JSON.stringify({ ...serializeMessage(message), user_name: user.name }),
+      { message: serializeMessage(message, user.name) },
       `user:${userId}`,
     );
 

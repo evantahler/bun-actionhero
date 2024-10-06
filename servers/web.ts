@@ -15,6 +15,7 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
+import pkg from "../package.json";
 
 type ConnectionAndWebsocket = {
   connection: Connection;
@@ -81,10 +82,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
 
     const ip = server.requestIP(req)?.address || "unknown-IP";
+    const headers = req.headers;
     const cookies = cookie.parse(req.headers.get("cookie") ?? "");
     const id = cookies[config.session.cookieName];
 
-    if (server.upgrade(req, { data: { ip, id, cookies } })) return; // upgrade the request to a WebSocket
+    if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
@@ -127,9 +129,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
     //@ts-expect-error (ws.data is not defined in the bun types)
+    if (ws.data.headers.get("sec-websocket-protocol") !== pkg.name) return;
+
+    //@ts-expect-error (ws.data is not defined in the bun types)
     const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
     connection.onBroadcastMessageReceived = function (payload: PubSubMessage) {
-      ws.send(JSON.stringify({ message: payload })); // TODO --- BROKEN
+      ws.send(JSON.stringify({ message: payload }));
     };
     logger.info(
       `New websocket connection from ${connection.identifier} (${connection.id})`,
@@ -211,7 +216,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         JSON.stringify({
           error: {
             messageId: formattedMessage.messageId,
-            ...buildErrorPayload(error),
+            error: { ...buildErrorPayload(error) },
           },
         }),
       );
@@ -219,7 +224,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       ws.send(
         JSON.stringify({
           messageId: formattedMessage.messageId,
-          ...response,
+          response: { ...response },
         }),
       );
     }
