@@ -32,15 +32,13 @@ export class Next extends Initializer {
   }
 
   async initialize() {
-    return { socket: path.join(api.rootDir, "next.sock") } as {
+    return {} as {
       app: NextServer;
       server: ReturnType<typeof createServer>;
-      socket: string;
     };
   }
 
   async start() {
-    if (config.next.enabled !== true) return;
     if (config.server.web.enabled !== true) return;
 
     monkeyPatchLogging();
@@ -62,20 +60,16 @@ export class Next extends Initializer {
       const parsedUrl = parse(req.url!, true);
       handle(req, res, parsedUrl);
       logNextRequest(req, res, parsedUrl);
-    }).listen(api[namespace].socket);
+    }).listen(config.server.web.port + 2, config.server.web.host);
 
-    logger.info(`next.js server ready on ${api[namespace].socket}`);
+    logger.info(
+      `next.js server ready on ${config.server.web.host}:${config.server.web.port + 2}`,
+    );
   }
 
   async stop() {
     if (api[namespace].app) {
       await api[namespace].app.close();
-    }
-
-    if (api[namespace].socket) {
-      try {
-        await unlink(api[namespace].socket);
-      } catch (e) {}
     }
   }
 }

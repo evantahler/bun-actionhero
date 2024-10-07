@@ -15,7 +15,8 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import pkg from "../package.json";
+import { createProxyServer, errorMonitor } from "http-proxy";
+import http from "node:http";
 
 type ConnectionAndWebsocket = {
   connection: Connection;
@@ -23,6 +24,8 @@ type ConnectionAndWebsocket = {
 };
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  proxyServer?: ReturnType<(typeof http)["createServer"]>;
+
   constructor() {
     super("web");
   }
@@ -33,12 +36,53 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (config.server.web.enabled !== true) return;
 
     logger.info(
-      `starting web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
+      `starting proxy server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
+    );
+
+    const appProxy = createProxyServer({
+      target: `ws://${config.server.web.host}:${config.server.web.port + 1}`,
+      ws: true,
+    }).on("error", (e) => {
+      logger.error(`appProxy error: ${e}`);
+    });
+
+    const nextProxy = createProxyServer({
+      target: `ws://${config.server.web.host}:${config.server.web.port + 2}`,
+      ws: true,
+    }).on("error", (e) => {
+      logger.error(`nextProxy error: ${e}`);
+    });
+
+    this.proxyServer = http
+      .createServer((req, res) => {
+        if (req.url && req.url.startsWith(config.server.web.apiRoute)) {
+          appProxy.web(req, res);
+        } else {
+          nextProxy.web(req, res);
+        }
+      })
+      .on("upgrade", (req, socket, head) => {
+        if (req.url && req.url.startsWith("/_next/")) {
+          console.log(">>> upgrade NEXT", req.url);
+          nextProxy.ws(req, socket, head);
+        } else {
+          console.log(">>> upgrade APP", req.url);
+          appProxy.ws(req, socket, head);
+        }
+      })
+      .on("error", (e) => {
+        logger.error(`proxy server error: ${e}`);
+      })
+      .listen(config.server.web.port, config.server.web.host);
+
+    logger.info(
+      `starting app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
     );
 
     this.server = Bun.serve({
-      port: config.server.web.port,
+      port: config.server.web.port + 1,
       hostname: config.server.web.host,
+
       // error: (error) => {
       //   return new Response(`Error: ${error.message}`);
       // },
@@ -54,11 +98,20 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async stop() {
-    if (!this.server) return;
-
     //TODO: Graceful shutdown
     // in test, we want to hard-kill the server
-    this.server.stop(true);
+    if (this.proxyServer) {
+      this.proxyServer.close();
+      logger.info(
+        `stopped proxy server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
+      );
+    }
+    if (this.server) {
+      this.server.stop(true);
+      logger.info(
+        `stopped app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
+      );
+    }
 
     // while (this.server.pendingRequests + this.server.pendingWebSockets > 0) {
     //   logger.debug(
@@ -66,10 +119,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     //   );
     //   await Bun.sleep(1000);
     // }
-
-    logger.info(
-      `stopped web server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
-    );
   }
 
   async handleIncomingConnection(
@@ -91,30 +140,30 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const parsedUrl = parse(req.url!, true);
     if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
       return this.handleWebAction(req, parsedUrl, ip, id);
-    } else if (typeof api.next.app) {
-      const originalHost = req.headers.get("host");
-      if (!originalHost) {
-        throw new TypedError({
-          type: ErrorType.CONNECTION_SERVER_ERROR,
-          message: "no host header",
-        });
-      }
+      // } else if (typeof api.next.app) {
+      //   const originalHost = req.headers.get("host");
+      //   if (!originalHost) {
+      //     throw new TypedError({
+      //       type: ErrorType.CONNECTION_SERVER_ERROR,
+      //       message: "no host header",
+      //     });
+      //   }
 
-      // forward the request to the next.js socket
-      const response = await fetch(req.url, {
-        headers: req.headers,
-        method: req.method,
-        body: req.body,
-        // @ts-ignore - This is added by Bun to allow connecting to unix sockets
-        unix: api.next.socket,
-      });
+      //   // forward the request to the next.js socket
+      //   const response = await fetch(req.url, {
+      //     headers: req.headers,
+      //     method: req.method,
+      //     body: req.body,
+      //     // @ts-ignore - This is added by Bun to allow connecting to unix sockets
+      //     unix: api.next.socket,
+      //   });
 
-      response.headers.set("x-server-name", config.process.name);
+      //   response.headers.set("x-server-name", config.process.name);
 
-      response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
-      response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
+      //   response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
+      //   response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
 
-      return response;
+      //   return response;
     } else {
       return buildError(
         undefined,
@@ -128,8 +177,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
-    //@ts-expect-error (ws.data is not defined in the bun types)
-    if (ws.data.headers.get("sec-websocket-protocol") !== pkg.name) return;
+    console.log("handleWebSocketConnectionOpen", ws.data);
 
     //@ts-expect-error (ws.data is not defined in the bun types)
     const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
@@ -189,10 +237,14 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.id,
     );
-    connection.destroy();
-    logger.info(
-      `websocket connection closed from ${connection.identifier} (${connection.id})`,
-    );
+    try {
+      connection.destroy();
+      logger.info(
+        `websocket connection closed from ${connection.identifier} (${connection.id})`,
+      );
+    } catch (e) {
+      logger.error(`Error destroying connection: ${e}`);
+    }
   }
 
   async handleWebsocketAction(
