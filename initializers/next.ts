@@ -27,7 +27,7 @@ export class Next extends Initializer {
     super(namespace);
     // load and start after the webserver
     this.loadPriority = 850;
-    this.startPriority = 510;
+    this.startPriority = 550;
     this.runModes = [RUN_MODE.SERVER];
   }
 

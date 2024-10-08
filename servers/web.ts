@@ -15,13 +15,8 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import { createProxyServer, errorMonitor } from "http-proxy";
+import httpProxy from "http-proxy";
 import http from "node:http";
-
-type ConnectionAndWebsocket = {
-  connection: Connection;
-  ws: ServerWebSocket;
-};
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   proxyServer?: ReturnType<(typeof http)["createServer"]>;
@@ -39,19 +34,35 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       `starting proxy server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
     );
 
-    const appProxy = createProxyServer({
-      target: `ws://${config.server.web.host}:${config.server.web.port + 1}`,
-      ws: true,
-    }).on("error", (e) => {
-      logger.error(`appProxy error: ${e}`);
-    });
+    const appProxy = httpProxy
+      .createProxy({
+        target: {
+          host: config.server.web.host,
+          port: config.server.web.port + 1,
+        },
+        ws: true,
+      })
+      .on("error", (e) => {
+        throw new TypedError({
+          message: `appProxy error: ${e}`,
+          type: ErrorType.SERVER_START,
+        });
+      });
 
-    const nextProxy = createProxyServer({
-      target: `ws://${config.server.web.host}:${config.server.web.port + 2}`,
-      ws: true,
-    }).on("error", (e) => {
-      logger.error(`nextProxy error: ${e}`);
-    });
+    const nextProxy = httpProxy
+      .createProxy({
+        target: {
+          host: config.server.web.host,
+          port: config.server.web.port + 2,
+        },
+        ws: true,
+      })
+      .on("error", (e) => {
+        throw new TypedError({
+          message: `nextProxy error: ${e}`,
+          type: ErrorType.SERVER_START,
+        });
+      });
 
     this.proxyServer = http
       .createServer((req, res) => {
@@ -72,8 +83,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       })
       .on("error", (e) => {
         logger.error(`proxy server error: ${e}`);
-      })
-      .listen(config.server.web.port, config.server.web.host);
+      });
 
     logger.info(
       `starting app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
@@ -95,6 +105,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     });
 
     await Bun.sleep(1);
+    this.proxyServer?.listen(config.server.web.port, config.server.web.host);
   }
 
   async stop() {
