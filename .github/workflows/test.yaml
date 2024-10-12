@@ -13,6 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: bun install
       - run: bun compile
 
   lint:
@@ -20,6 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: bun install
       - run: bun lint
 
   test-backend:
@@ -46,6 +48,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: bun install
       - run: cp .env.example .env
       - run: bun test-backend
 
@@ -54,6 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: bun install
       - run: cp .env.example .env
       - run: bun test-frontend
 

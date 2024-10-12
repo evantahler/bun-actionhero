@@ -13,8 +13,6 @@ COPY . /app
 
 # RUN bun install --production --frozen-lockfile
 RUN cd /app && bun install
-RUN cd /app/backend && bun install
-RUN cd /app/frontend && bun install
 RUN cd /app && bun compile
 
 EXPOSE 3000/tcp

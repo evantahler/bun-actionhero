@@ -11,6 +11,9 @@
   "scripts": {
     "start": "nf start --procfile Procfile",
     "dev": "nf start --procfile dev.Procfile",
+    "postinstall": "bun install-backend && bun install-frontend",
+    "install-backend": "cd backend && bun install",
+    "install-frontend": "cd frontend && bun install",
     "compile-backend": "cd backend && bun compile",
     "compile-frontend": "cd frontend && bun compile",
     "compile": "bun compile-backend && bun compile-frontend",
