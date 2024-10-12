@@ -54,13 +54,21 @@ export class Redis extends Initializer {
     let acted = false;
 
     if (api.redis.redis) {
-      await api.redis.redis.quit();
-      acted = true;
+      try {
+        await api.redis.redis.quit();
+        acted = true;
+      } catch (e) {
+        logger.error(`error closing redis connection: ${e}`);
+      }
     }
 
     if (api.redis.subscription) {
-      await api.redis.subscription.quit();
-      acted = true;
+      try {
+        await api.redis.subscription.quit();
+        acted = true;
+      } catch (e) {
+        logger.error(`error closing redis subscription connection: ${e}`);
+      }
     }
 
     if (acted) logger.info("redis connections closed");
