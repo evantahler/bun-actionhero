@@ -3,10 +3,10 @@ import { StatusCard } from "./StatusCard";
 import { SessionCreateCard } from "./SessionCreateCard";
 import { SignUpCard } from "./SignUpCard";
 import { useEffect, useState } from "react";
-import type { ActionResponse } from "../api";
+import type { ActionResponse } from "../../backend/api";
 import InfoBar from "./InfoBar";
 import ChatCard from "./ChatCard";
-import type { UserView } from "../actions/user";
+import type { UserView } from "../../backend/actions/user";
 
 export type AppUser = ActionResponse<UserView>["user"] | null;
 

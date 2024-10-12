@@ -1,5 +1,5 @@
 import os from "node:os";
-import { Action, api, Connection, RUN_MODE } from "./../api";
+import { Action, api, Connection, RUN_MODE } from "../api";
 import { Command } from "commander";
 import { TypedError } from "./../classes/TypedError";
 import { ExitCode } from "./../classes/ExitCode";

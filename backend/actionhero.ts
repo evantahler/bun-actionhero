@@ -1,6 +1,6 @@
 #! /usr/bin/env bun
 
-import pkg from "./package.json";
+import pkg from "../package.json";
 import { Action, api, logger } from "./api";
 import { Command } from "commander";
 import { globLoader } from "./util/glob";

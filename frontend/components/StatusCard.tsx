@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card } from "react-bootstrap";
-import type { ActionResponse } from "../api";
-import type { Status } from "../actions/status";
+import type { ActionResponse } from "../../backend/api";
+import type { Status } from "../../backend/actions/status";
 
 export const StatusCard = () => {
   const [status, setStatus] = useState<ActionResponse<Status>>();

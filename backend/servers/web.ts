@@ -15,7 +15,6 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import httpProxy from "http-proxy";
 import http from "node:http";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
@@ -31,66 +30,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (config.server.web.enabled !== true) return;
 
     logger.info(
-      `starting proxy server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
-    );
-
-    const appProxy = httpProxy
-      .createProxy({
-        target: {
-          host: config.server.web.host,
-          port: config.server.web.port + 1,
-        },
-        ws: true,
-      })
-      .on("error", (e) => {
-        throw new TypedError({
-          message: `appProxy error: ${e}`,
-          type: ErrorType.SERVER_START,
-        });
-      });
-
-    const nextProxy = httpProxy
-      .createProxy({
-        target: {
-          host: config.server.web.host,
-          port: config.server.web.port + 2,
-        },
-        ws: true,
-      })
-      .on("error", (e) => {
-        throw new TypedError({
-          message: `nextProxy error: ${e}`,
-          type: ErrorType.SERVER_START,
-        });
-      });
-
-    this.proxyServer = http
-      .createServer((req, res) => {
-        if (req.url && req.url.startsWith(config.server.web.apiRoute)) {
-          appProxy.web(req, res);
-        } else {
-          nextProxy.web(req, res);
-        }
-      })
-      .on("upgrade", (req, socket, head) => {
-        if (req.url && req.url.startsWith("/_next/")) {
-          console.log(">>> upgrade NEXT", req.url);
-          nextProxy.ws(req, socket, head);
-        } else {
-          console.log(">>> upgrade APP", req.url);
-          appProxy.ws(req, socket, head);
-        }
-      })
-      .on("error", (e) => {
-        logger.error(`proxy server error: ${e}`);
-      });
-
-    logger.info(
-      `starting app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
+      `starting app server @ ${config.server.web.host}:${config.server.web.port}`,
     );
 
     this.server = Bun.serve({
-      port: config.server.web.port + 1,
+      port: config.server.web.port,
       hostname: config.server.web.host,
 
       // error: (error) => {
@@ -105,7 +49,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     });
 
     await Bun.sleep(1);
-    this.proxyServer?.listen(config.server.web.port, config.server.web.host);
   }
 
   async stop() {
@@ -138,7 +81,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   ) {
     const isCorrectUrl = checkApplicationUrl(req);
     if (!isCorrectUrl) {
-      return Response.redirect(config.server.web.applicationUrl + req.url, 302);
+      return Response.redirect(config.server.web.applicationUrl, 302);
     }
 
     const ip = server.requestIP(req)?.address || "unknown-IP";
@@ -149,42 +92,42 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
-    if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
-      return this.handleWebAction(req, parsedUrl, ip, id);
-      // } else if (typeof api.next.app) {
-      //   const originalHost = req.headers.get("host");
-      //   if (!originalHost) {
-      //     throw new TypedError({
-      //       type: ErrorType.CONNECTION_SERVER_ERROR,
-      //       message: "no host header",
-      //     });
-      //   }
+    // if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
+    return this.handleWebAction(req, parsedUrl, ip, id);
+    // } else if (typeof api.next.app) {
+    //   const originalHost = req.headers.get("host");
+    //   if (!originalHost) {
+    //     throw new TypedError({
+    //       type: ErrorType.CONNECTION_SERVER_ERROR,
+    //       message: "no host header",
+    //     });
+    //   }
 
-      //   // forward the request to the next.js socket
-      //   const response = await fetch(req.url, {
-      //     headers: req.headers,
-      //     method: req.method,
-      //     body: req.body,
-      //     // @ts-ignore - This is added by Bun to allow connecting to unix sockets
-      //     unix: api.next.socket,
-      //   });
+    //   // forward the request to the next.js socket
+    //   const response = await fetch(req.url, {
+    //     headers: req.headers,
+    //     method: req.method,
+    //     body: req.body,
+    //     // @ts-ignore - This is added by Bun to allow connecting to unix sockets
+    //     unix: api.next.socket,
+    //   });
 
-      //   response.headers.set("x-server-name", config.process.name);
+    //   response.headers.set("x-server-name", config.process.name);
 
-      //   response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
-      //   response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
+    //   response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
+    //   response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
 
-      //   return response;
-    } else {
-      return buildError(
-        undefined,
-        new TypedError({
-          message: "static server not enabled",
-          type: ErrorType.CONNECTION_SERVER_ERROR,
-        }),
-        404,
-      );
-    }
+    //   return response;
+    // } else {
+    //   return buildError(
+    //     undefined,
+    //     new TypedError({
+    //       message: "static server not enabled",
+    //       type: ErrorType.CONNECTION_SERVER_ERROR,
+    //     }),
+    //     404,
+    //   );
+    // }
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {

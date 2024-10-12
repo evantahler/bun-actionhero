@@ -1,4 +1,4 @@
-import pkg from "../package.json";
+import pkg from "../../package.json";
 import { api } from "../api";
 import { Initializer } from "../classes/Initializer";
 
