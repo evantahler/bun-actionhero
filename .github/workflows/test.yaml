@@ -8,11 +8,12 @@ on:
       - main
 
 jobs:
-  build:
+  compile:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
+      - run: cp .env.example .env
       - run: bun install
       - run: bun compile
 
@@ -63,6 +64,6 @@ jobs:
 
   complete:
     runs-on: ubuntu-latest
-    needs: [build, lint, test-backend, test-frontend]
+    needs: [compile, lint, test-backend, test-frontend]
     steps:
       - run: echo "Done!"
