@@ -12,7 +12,7 @@
     "start": "bun actionhero.ts start",
     "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
-    "prepare": "bun build actionhero.ts --compile --outfile actionhero",
+    "compile": "bun build actionhero.ts --compile --outfile actionhero",
     "lint": "prettier --check .",
     "pretty": "prettier --write ."
   },

@@ -11,9 +11,9 @@
   "scripts": {
     "start": "nf start --procfile Procfile",
     "dev": "nf start --procfile dev.Procfile",
-    "prepare-backend": "cd backend && bun prepare",
-    "prepare-frontend": "cd frontend && bun prepare",
-    "prepare": "bun run prepare-backend && bun run prepare-frontend",
+    "compile-backend": "cd backend && bun compile",
+    "compile-frontend": "cd frontend && bun compile",
+    "compile": "bun run compile-backend && bun run compile-frontend",
     "test-backend": "cd backend && bun test",
     "test-frontend": "cd frontend && bun test",
     "test": "bun run test-backend && bun run test-frontend",

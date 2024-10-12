@@ -131,8 +131,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
-    console.log("handleWebSocketConnectionOpen", ws.data);
-
     //@ts-expect-error (ws.data is not defined in the bun types)
     const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
     connection.onBroadcastMessageReceived = function (payload: PubSubMessage) {

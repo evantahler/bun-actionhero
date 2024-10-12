@@ -23,7 +23,7 @@ export default function ChatCard({
   const [connected, setConnected] = useState<boolean>(false);
 
   function connect() {
-    ws = new WebSocket(window.location.origin, pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
+    ws = new WebSocket(window.location.origin + "/api", pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
 
     // Connection opened
     ws.addEventListener("open", (event) => {

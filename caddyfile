@@ -1,4 +1,4 @@
-bun.localhost, localhost:8000  {
+:{$PORT}  {
   route /api/* {
       reverse_proxy 0.0.0.0:8080
   }
