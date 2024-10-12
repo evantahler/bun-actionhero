@@ -15,11 +15,8 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import http from "node:http";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
-  proxyServer?: ReturnType<(typeof http)["createServer"]>;
-
   constructor() {
     super("web");
   }
@@ -54,12 +51,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async stop() {
     //TODO: Graceful shutdown
     // in test, we want to hard-kill the server
-    if (this.proxyServer) {
-      this.proxyServer.close();
-      logger.info(
-        `stopped proxy server @ ${config.server.web.applicationUrl} (via bind @ ${config.server.web.host}:${config.server.web.port})`,
-      );
-    }
     if (this.server) {
       this.server.stop(true);
       logger.info(
@@ -73,6 +64,9 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     //   );
     //   await Bun.sleep(1000);
     // }
+
+    // TODO: this is needed for tests to pass...
+    await Bun.sleep(100);
   }
 
   async handleIncomingConnection(
