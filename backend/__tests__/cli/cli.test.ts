@@ -9,10 +9,6 @@ beforeAll(async () => {
   await api.stop();
 });
 
-beforeEach(async () => {
-  await Bun.sleep(100);
-});
-
 describe("CLI", () => {
   test("help describes the CLI and actions", async () => {
     const { stdout, stderr, exitCode } =
