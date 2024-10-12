@@ -1,5 +1,5 @@
 import { $ } from "bun";
-import { test, expect, describe, beforeAll } from "bun:test";
+import { test, expect, describe, beforeAll, beforeEach } from "bun:test";
 import pkg from "./../../package.json";
 import { api } from "../../api";
 
@@ -7,6 +7,10 @@ beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
   await api.stop();
+});
+
+beforeEach(async () => {
+  await Bun.sleep(100);
 });
 
 describe("CLI", () => {
