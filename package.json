@@ -13,17 +13,16 @@
     "dev": "nf start --procfile dev.Procfile",
     "compile-backend": "cd backend && bun compile",
     "compile-frontend": "cd frontend && bun compile",
-    "compile": "bun run compile-backend && bun run compile-frontend",
+    "compile": "bun compile-backend && bun compile-frontend",
     "test-backend": "cd backend && bun test",
     "test-frontend": "cd frontend && bun test",
-    "test": "bun run test-backend && bun run test-frontend",
     "lint-backend": "cd backend && bun lint",
     "lint-frontend": "cd frontend && bun lint",
-    "lint": "bun run lint-backend && bun run lint-frontend",
+    "lint": "bun lint-backend && bun lint-frontend",
     "pretty-backend": "cd backend && bun pretty",
     "pretty-frontend": "cd frontend && bun pretty",
-    "pretty": "bun run pretty-backend && bun run pretty-frontend",
-    "ci": "bun run lint && bun run build && bun test"
+    "pretty": "bun pretty-backend && bun pretty-frontend",
+    "ci": "bun lint && bun compile && bun test-backend && bun test-frontend"
   },
   "dependencies": {
     "foreman": "^3.0.1"
