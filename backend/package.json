@@ -1,0 +1,36 @@
+{
+  "name": "bun-actionhero-backend",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "bin": {
+    "actionhero": "actionhero.ts"
+  },
+  "scripts": {
+    "start": "bun actionhero.ts start",
+    "dev": "bun --watch actionhero.ts start",
+    "migrations": "bun run migrations.ts",
+    "compile": "bun build actionhero.ts --compile --outfile actionhero",
+    "lint": "prettier --check .",
+    "pretty": "prettier --write ."
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.30.10",
+    "ioredis": "^5.4.1",
+    "pg": "^8.12.0",
+    "typescript": "^5.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.1.8",
+    "@types/cookie": "^0.6.0",
+    "@types/formidable": "^3.4.5",
+    "@types/pg": "^8.11.8",
+    "drizzle-kit": "^0.20.18",
+    "prettier": "^3.3.3"
+  }
+}

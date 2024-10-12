@@ -1,0 +1,27 @@
+{
+  "name": "bun-actionhero-frontend",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "scripts": {
+    "dev": "bun run next dev -p 5200",
+    "start": "bun run next start -p 5200",
+    "compile": "bun run next build",
+    "lint": "prettier --check .",
+    "pretty": "prettier --write ."
+  },
+  "dependencies": {
+    "next": "^14.2.7",
+    "react": "^18.3.1",
+    "react-bootstrap": "^2.10.4",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "22.7.5",
+    "@types/react-dom": "^18.3.0",
+    "prettier": "^3.3.3"
+  }
+}

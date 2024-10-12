@@ -1,0 +1,11 @@
+:{$PORT}  {
+  route /api/* {
+      reverse_proxy 0.0.0.0:8080
+  }
+  route /api {
+      reverse_proxy 0.0.0.0:8080
+  }
+  route * {
+      reverse_proxy 0.0.0.0:5200
+  }
+}

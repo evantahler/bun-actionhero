@@ -1,5 +1,5 @@
 {
-  "name": "bun-actionhero",
+  "name": "bun-actionhero-backend",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
@@ -9,35 +9,28 @@
     "actionhero": "actionhero.ts"
   },
   "scripts": {
-    "migrations": "bun run migrations.ts",
-    "build": "bun run build-backend && bun run build-frontend",
-    "build-backend": "bun build actionhero.ts --compile --outfile actionhero",
-    "build-frontend": "bun run next build",
-    "lint": "prettier --check .",
-    "pretty": "prettier --write .",
-    "ci": "bun run lint && bun run build && bun test"
+    "start": "nf start --procfile Procfile",
+    "dev": "nf start --procfile dev.Procfile",
+    "postinstall": "bun install-backend && bun install-frontend",
+    "install-backend": "cd backend && bun install",
+    "install-frontend": "cd frontend && bun install",
+    "compile-backend": "cd backend && bun compile",
+    "compile-frontend": "cd frontend && bun compile",
+    "compile": "bun compile-backend && bun compile-frontend",
+    "test-backend": "cd backend && bun test",
+    "test-frontend": "cd frontend && bun test",
+    "lint-backend": "cd backend && bun lint",
+    "lint-frontend": "cd frontend && bun lint",
+    "lint": "bun lint-backend && bun lint-frontend",
+    "pretty-backend": "cd backend && bun pretty",
+    "pretty-frontend": "cd frontend && bun pretty",
+    "pretty": "bun pretty-backend && bun pretty-frontend",
+    "ci": "bun lint && bun compile && bun test-backend && bun test-frontend"
   },
   "dependencies": {
-    "colors": "^1.4.0",
-    "commander": "^12.1.0",
-    "cookie": "^0.6.0",
-    "drizzle-orm": "^0.30.10",
-    "formidable": "^3.5.1",
-    "ioredis": "^5.4.1",
-    "next": "^14.2.7",
-    "pg": "^8.12.0",
-    "react": "^18.3.1",
-    "react-bootstrap": "^2.10.4",
-    "react-dom": "^18.3.1",
-    "typescript": "^5.4.3"
+    "foreman": "^3.0.1"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.8",
-    "@types/cookie": "^0.6.0",
-    "@types/formidable": "^3.4.5",
-    "@types/pg": "^8.11.8",
-    "@types/react-dom": "^18.3.0",
-    "drizzle-kit": "^0.20.18",
     "prettier": "^3.3.3"
   }
 }
