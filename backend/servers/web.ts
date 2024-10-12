@@ -45,7 +45,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       },
     });
 
-    await Bun.sleep(1);
+    await Bun.sleep(10);
   }
 
   async stop() {
@@ -64,9 +64,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     //   );
     //   await Bun.sleep(1000);
     // }
-
-    // TODO: this is needed for tests to pass...
-    await Bun.sleep(100);
   }
 
   async handleIncomingConnection(
