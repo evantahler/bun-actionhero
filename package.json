@@ -9,9 +9,11 @@
     "actionhero": "actionhero.ts"
   },
   "scripts": {
-    "build-backend": "cd backend && bun build",
-    "build-frontend": "cd frontend && bun build",
-    "build": "bun run build-backend && bun run build-frontend",
+    "start": "nf start --procfile Procfile",
+    "dev": "nf start --procfile dev.Procfile",
+    "prepare-backend": "cd backend && bun prepare",
+    "prepare-frontend": "cd frontend && bun prepare",
+    "prepare": "bun run prepare-backend && bun run prepare-frontend",
     "test-backend": "cd backend && bun test",
     "test-frontend": "cd frontend && bun test",
     "test": "bun run test-backend && bun run test-frontend",
@@ -23,7 +25,9 @@
     "pretty": "bun run pretty-backend && bun run pretty-frontend",
     "ci": "bun run lint && bun run build && bun test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "foreman": "^3.0.1"
+  },
   "devDependencies": {
     "prettier": "^3.3.3"
   }

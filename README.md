@@ -34,6 +34,7 @@ To install dependencies:
 
 ```bash
 bun install
+brew install caddy
 ```
 
 To run:
@@ -43,9 +44,8 @@ To run:
 cp .env.example .env
 createdb bun
 
-# run the app
-bun run --watch actionhero.ts start # this will hot-reload the server when server files change
-bun run actionhero.ts start # when working on the front-end, we can rely on next.js' hot-reloading instead of bun's
+# run the proxy, frontened, and backend
+bun dev # this will hot-reload the server when server files change
 ```
 
 To test:
@@ -58,29 +58,29 @@ createdb bun-test
 bun test
 
 # run a single test file
+cd backend
 bun test __tests__/actions/user.test.ts
 
 # run all all the stuff that CI does
-bun ci
+bun test # from the root
 ```
 
 To lint:
 
 ```bash
 # To test
-bun run prettier --check .
+bun lint
 # To Fix
-bun run prettier --write .
+bun pretty
 ```
 
 ## Production Builds
 
 ```bash
-# install only prod deps
-bun install --production --frozen-lockfile
-# pre-compile the front-end
-bun run next build
+# pre-compile the front-end and backend
+bun prepare
 # in .env, set NODE_ENV=production and set next.dev=false
+bun start
 ```
 
 ## Databases and Migrations
@@ -101,6 +101,10 @@ Run an action from the CLI:
 ```
 
 ## Intentional changes from ActionHero
+
+**Multiple Applications + Proxy**
+
+- We use Caddy as a reverse proxy to serve both the frontend and backend - 2 Bun applications. This allows each app to do what it does best.
 
 **Actions, Tasks, and CLI Commands**
 

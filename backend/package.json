@@ -9,8 +9,10 @@
     "actionhero": "actionhero.ts"
   },
   "scripts": {
+    "start": "bun actionhero.ts start",
+    "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
-    "build": "bun build actionhero.ts --compile --outfile actionhero",
+    "prepare": "bun build actionhero.ts --compile --outfile actionhero",
     "lint": "prettier --check .",
     "pretty": "prettier --write ."
   },
