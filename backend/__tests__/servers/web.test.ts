@@ -34,35 +34,3 @@ describe("actions", () => {
     expect(response.error?.stack).toContain("/bun-actionhero/");
   });
 });
-
-describe("assets", () => {
-  test("the web server can serve a static asset", async () => {
-    const res = await fetch(url + "/assets/images/actionhero.png");
-    expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toEqual("image/png");
-    const body = await res.text();
-    expect(body).toContain("PNG"); // binary...
-  });
-
-  test("the web server can handle missing assets gracefully", async () => {
-    const res = await fetch(url + "/assets/missing.png");
-    expect(res.status).toBe(404);
-    expect(res.headers.get("Content-Type")).toContain("text/html");
-  });
-});
-
-describe("pages", () => {
-  test("the web server can serve a react page pre-rendered", async () => {
-    const res = await fetch(url + "/");
-    expect(res.status).toBe(200);
-    expect(res.headers.get("Content-Type")).toContain("text/html");
-    const text = await res.text();
-    expect(text).toContain("Hello World");
-  });
-
-  test("the web server can handle missing pages gracefully", async () => {
-    const res = await fetch(url + "/missing.html");
-    expect(res.status).toBe(404);
-    expect(res.headers.get("Content-Type")).toContain("text/html");
-  });
-});

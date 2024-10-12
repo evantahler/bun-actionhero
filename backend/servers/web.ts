@@ -92,42 +92,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
-    // if (parsedUrl.path?.startsWith(`${config.server.web.apiRoute}/`)) {
     return this.handleWebAction(req, parsedUrl, ip, id);
-    // } else if (typeof api.next.app) {
-    //   const originalHost = req.headers.get("host");
-    //   if (!originalHost) {
-    //     throw new TypedError({
-    //       type: ErrorType.CONNECTION_SERVER_ERROR,
-    //       message: "no host header",
-    //     });
-    //   }
-
-    //   // forward the request to the next.js socket
-    //   const response = await fetch(req.url, {
-    //     headers: req.headers,
-    //     method: req.method,
-    //     body: req.body,
-    //     // @ts-ignore - This is added by Bun to allow connecting to unix sockets
-    //     unix: api.next.socket,
-    //   });
-
-    //   response.headers.set("x-server-name", config.process.name);
-
-    //   response.headers.delete("date"); // both the Bun and Next servers try to set date - we only want one
-    //   response.headers.delete("content-encoding"); // we've already un-zipped the response, if it was
-
-    //   return response;
-    // } else {
-    //   return buildError(
-    //     undefined,
-    //     new TypedError({
-    //       message: "static server not enabled",
-    //       type: ErrorType.CONNECTION_SERVER_ERROR,
-    //     }),
-    //     404,
-    //   );
-    // }
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
