@@ -16,6 +16,8 @@ import type {
   PubSubMessage,
 } from "../initializers/pubsub";
 
+const MAX_STARTUP_ATTEMPTS = 5;
+
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   constructor() {
     super("web");
@@ -30,22 +32,29 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       `starting app server @ ${config.server.web.host}:${config.server.web.port}`,
     );
 
-    this.server = Bun.serve({
-      port: config.server.web.port,
-      hostname: config.server.web.host,
+    let startupAttempts = 0;
+    while (startupAttempts < MAX_STARTUP_ATTEMPTS) {
+      try {
+        this.server = Bun.serve({
+          port: config.server.web.port,
+          hostname: config.server.web.host,
 
-      // error: (error) => {
-      //   return new Response(`Error: ${error.message}`);
-      // },
-      fetch: this.handleIncomingConnection.bind(this),
-      websocket: {
-        open: this.handleWebSocketConnectionOpen.bind(this),
-        message: this.handleWebSocketConnectionMessage.bind(this),
-        close: this.handleWebSocketConnectionClose.bind(this),
-      },
-    });
-
-    await Bun.sleep(10);
+          // error: (error) => {
+          //   return new Response(`Error: ${error.message}`);
+          // },
+          fetch: this.handleIncomingConnection.bind(this),
+          websocket: {
+            open: this.handleWebSocketConnectionOpen.bind(this),
+            message: this.handleWebSocketConnectionMessage.bind(this),
+            close: this.handleWebSocketConnectionClose.bind(this),
+          },
+        });
+        break;
+      } catch (e) {
+        await Bun.sleep(1000);
+        startupAttempts++;
+      }
+    }
   }
 
   async stop() {
