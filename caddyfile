@@ -1,4 +1,4 @@
-:{$PORT}  {
+:{$PORT}, ${CADDY_DEVELOPMENT_URL}  {
   route /api/* {
       reverse_proxy 0.0.0.0:8080
   }
