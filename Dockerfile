@@ -10,6 +10,8 @@ RUN apt update && apt install caddy -y
 ENV NODE_ENV=production
 
 COPY . /app
+# we want to the host ENV for caddy
+RUN rm /app/.env
 
 # RUN bun install --production --frozen-lockfile
 RUN cd /app && bun install
