@@ -5,6 +5,7 @@ import {
   Action,
   Connection,
   type ActionParams,
+  RUN_MODE,
 } from "../api";
 import {
   Queue,
@@ -28,6 +29,7 @@ declare module "../classes/API" {
 export class Resque extends Initializer {
   constructor() {
     super(namespace);
+
     this.loadPriority = 250;
     this.startPriority = 150;
     this.stopPriority = 900;
@@ -258,15 +260,23 @@ export class Resque extends Initializer {
     }
 
     await this.startQueue();
-    await this.startScheduler();
-    await this.startMultiWorker();
+
+    if (api.runMode === RUN_MODE.SERVER) {
+      await this.startScheduler();
+      await this.startMultiWorker();
+    }
+
     await Bun.sleep(10);
   }
 
   async stop() {
     await this.stopScheduler();
-    await this.stopMultiWorker();
-    await this.stopQueue();
+
+    if (api.runMode === RUN_MODE.SERVER) {
+      await this.stopMultiWorker();
+      await this.stopQueue();
+    }
+
     await Bun.sleep(10);
   }
 }
