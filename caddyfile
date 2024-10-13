@@ -1,11 +1,11 @@
 :{$PORT}, {$WEB_SERVER_APPLICATION_URL} {
-  route /api/* {
-      reverse_proxy 0.0.0.0:8080
-  }
-  route /api {
-      reverse_proxy 0.0.0.0:8080
-  }
-  route * {
-      reverse_proxy 0.0.0.0:5200
-  }
+	route /api/* {
+		reverse_proxy 0.0.0.0:8080
+	}
+	route /api {
+		reverse_proxy 0.0.0.0:8080
+	}
+	route * {
+		reverse_proxy 0.0.0.0:5200
+	}
 }
