@@ -1,3 +1,3 @@
 proxy: caddy run --config caddyfile --envfile .env
-backend: cd backend && bun dev
-frontend: cd frontend && bun dev
+api: cd backend && bun dev
+web: cd frontend && bun dev
