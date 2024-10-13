@@ -1,4 +1,8 @@
 :{$PORT}, {$APPLICATION_URL} {
+	log {
+		output file /dev/null
+	}
+
 	route /api/* {
 		reverse_proxy localhost:8080
 	}
