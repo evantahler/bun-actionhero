@@ -149,7 +149,7 @@ export class Resque extends Initializer {
       );
     });
     api.resque.multiWorker.on("error", (error, workerId, queue, job) => {
-      logger.info(
+      logger.warn(
         `[resque:worker] job error, ${workerId}, ${queue}, ${job?.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${error}`,
       );
     });
@@ -260,11 +260,13 @@ export class Resque extends Initializer {
     await this.startQueue();
     await this.startScheduler();
     await this.startMultiWorker();
+    await Bun.sleep(10);
   }
 
   async stop() {
     await this.stopScheduler();
     await this.stopMultiWorker();
     await this.stopQueue();
+    await Bun.sleep(10);
   }
 }
