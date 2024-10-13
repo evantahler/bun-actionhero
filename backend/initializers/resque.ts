@@ -145,12 +145,12 @@ export class Resque extends Initializer {
 
     api.resque.multiWorker.on("failure", (workerId, queue, job, failure) => {
       logger.warn(
-        `[resque:worker] job failed, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}, ${failure}`,
+        `[resque:worker] job failed, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}: ${failure}`,
       );
     });
     api.resque.multiWorker.on("error", (error, workerId, queue, job) => {
       logger.info(
-        `[resque:worker] job error, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}`,
+        `[resque:worker] job error, ${workerId}, ${queue}, ${job?.class}, ${JSON.stringify(job.args[0])}: ${error}`,
       );
     });
 
