@@ -1,4 +1,4 @@
-:{$PORT}, {$WEB_SERVER_APPLICATION_URL} {
+:{$PORT}, {$APPLICATION_URL} {
 	route /api/* {
 		reverse_proxy localhost:8080
 	}

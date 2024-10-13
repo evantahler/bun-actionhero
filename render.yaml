@@ -26,11 +26,9 @@ services:
         value: "true"
       - key: LOG_INCLUDE_TIMESTAMPS
         value: "false"
-      - key: NEXT_DEV
-        value: "false"
-      # - key: WEB_SERVER_APPLICATION_URL
+      # - key: APPLICATION_URL
       #   value: "false"
-      - key: WEB_SERVER_PORT
+      - key: PORT
         value: 10000
       - key: NODE_ENV
         value: production

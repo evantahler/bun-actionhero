@@ -79,11 +79,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     req: Request,
     server: ReturnType<typeof Bun.serve>,
   ) {
-    const isCorrectUrl = checkApplicationUrl(req);
-    if (!isCorrectUrl) {
-      return Response.redirect(config.server.web.applicationUrl, 302);
-    }
-
     const ip = server.requestIP(req)?.address || "unknown-IP";
     const headers = req.headers;
     const cookies = cookie.parse(req.headers.get("cookie") ?? "");
@@ -389,21 +384,6 @@ function buildErrorPayload(error: TypedError) {
     value: error.value !== undefined ? error.value : undefined,
     stack: error.stack,
   };
-}
-
-function checkApplicationUrl(req: Request) {
-  if (config.server.web.applicationUrl.length > 3) {
-    const hostHeader = req.headers.get("host");
-    const forwardHeader = req.headers.get("x-forwarded-proto");
-
-    const requestHost = forwardHeader
-      ? forwardHeader + "://" + hostHeader
-      : "http://" + hostHeader;
-
-    if (config.server.web.applicationUrl !== requestHost) return false;
-  }
-
-  return true;
 }
 
 const EOL = "\r\n";
