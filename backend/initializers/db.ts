@@ -23,6 +23,7 @@ declare module "../classes/API" {
 export class DB extends Initializer {
   constructor() {
     super(namespace);
+    this.loadPriority = 100;
     this.startPriority = 100;
     this.stopPriority = 910;
   }
