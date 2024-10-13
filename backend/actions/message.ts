@@ -112,8 +112,38 @@ export class MessagesCleanup implements Action {
       .delete(messages)
       .where(lt(messages.createdAt, new Date(Date.now() - params.age)))
       .returning();
+
     return {
-      messages: _messages.map((m) => serializeMessage(m)),
+      messagesDeleted: _messages.length,
     };
+  }
+}
+
+export class MessagesHello implements Action {
+  name = "messages:hello";
+  description = "broadcast a hello message to all users in the chat room";
+  task = { frequency: 1000 * 60, queue: "default" }; // run the task every minute
+  inputs = {};
+  async run() {
+    const [message] = await api.db.db
+      .insert(messages)
+      .values({
+        body: "Hello! The current time is " + new Date().toISOString(),
+        user_id: api.application.defaultUser.id,
+      })
+      .returning();
+
+    const serializedMessage = serializeMessage(
+      message,
+      api.application.defaultUser.name,
+    );
+
+    await api.pubsub.broadcast(
+      "messages",
+      { message: serializedMessage },
+      `user:${api.application.defaultUser.id}`,
+    );
+
+    return { message: serializedMessage.body };
   }
 }

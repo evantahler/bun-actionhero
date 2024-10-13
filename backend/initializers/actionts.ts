@@ -310,6 +310,10 @@ export class Actions extends Initializer {
     return api.resque.queue.cleanOldWorkers(age);
   };
 
+  /**
+   * Ensures that an action which has a frequency is either running, or already enqueued.
+   * Will throw an error if redis cannot be reached.
+   */
   enqueueRecurrent = async (action: Action) => {
     if (action.task && action.task.frequency && action.task.frequency > 0) {
       await api[namespace].del(action.task.queue, action.name);
@@ -325,18 +329,22 @@ export class Actions extends Initializer {
     }
   };
 
-  enqueueAllRecurrent = async (actionName: string) => {
+  /**
+   * This is run automatically at boot for all actions which have a frequency, calling `enqueueRecurrentTask`
+   * Will throw an error if redis cannot be reached.
+   */
+  enqueueAllRecurrent = async () => {
     const enqueuedTasks: string[] = [];
     for (const action of api.actions.actions) {
       if (action.task && action.task.frequency && action.task.frequency > 0) {
         try {
-          const toRun = await api[namespace].enqueue(actionName, {});
+          const toRun = await api[namespace].enqueue(action.name, {});
           if (toRun === true) {
             logger.info(`enqueued recurrent job ${action.name}`);
-            enqueuedTasks.push(actionName);
+            enqueuedTasks.push(action.name);
           }
         } catch (error) {
-          api[namespace].checkForRepeatRecurringTaskEnqueue(actionName, error);
+          api[namespace].checkForRepeatRecurringTaskEnqueue(action.name, error);
         }
       }
     }

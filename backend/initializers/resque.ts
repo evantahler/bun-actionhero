@@ -13,7 +13,9 @@ import {
   type ParsedJob,
   type Job,
 } from "node-resque";
+import { randomUUID } from "crypto";
 import { Initializer } from "../classes/Initializer";
+import { TypedError } from "../classes/TypedError";
 
 const namespace = "resque";
 
@@ -85,6 +87,7 @@ export class Resque extends Initializer {
       );
 
       api.resque.scheduler.start();
+      await api.actions.enqueueAllRecurrent();
     }
   };
 
@@ -141,7 +144,7 @@ export class Resque extends Initializer {
     });
 
     api.resque.multiWorker.on("failure", (workerId, queue, job, failure) => {
-      logger.info(
+      logger.warn(
         `[resque:worker] job failed, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}, ${failure}`,
       );
     });
@@ -155,7 +158,7 @@ export class Resque extends Initializer {
       "success",
       (workerId, queue, job: ParsedJob, result, duration) => {
         logger.info(
-          `[resque:worker] job success, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${result} (${duration}ms)`,
+          `[resque:worker] job success, ${workerId}, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${JSON.stringify(result)} (${duration}ms)`,
         );
       },
     );
@@ -194,16 +197,25 @@ export class Resque extends Initializer {
       plugins: [],
       pluginOptions: {},
 
-      // perform: action.run.bind(action),
-      perform: async function (
-        params: ActionParams<typeof action>,
-        connection: Connection,
-      ) {
+      perform: async function (params: ActionParams<typeof action>) {
+        const connection = new Connection("resque", `job:${randomUUID()}}`);
+        const paramsAsFormData = new FormData();
+
+        if (typeof params.entries === "function") {
+          for (const [key, value] of params.entries()) {
+            paramsAsFormData.append(key, value);
+          }
+        }
+
         let response: Awaited<ReturnType<(typeof action)["run"]>>;
+        let error: TypedError | undefined;
         try {
-          response = await action.run(params, connection);
-          await api.actions.enqueueRecurrent(action);
-        } catch (error) {
+          const payload = await connection.act(action.name, paramsAsFormData);
+          response = payload.response;
+          error = payload.error;
+
+          if (error) throw error;
+        } finally {
           if (
             action.task &&
             action.task.frequency &&
@@ -211,7 +223,6 @@ export class Resque extends Initializer {
           ) {
             await api.actions.enqueueRecurrent(action);
           }
-          throw error;
         }
         return response;
       },
