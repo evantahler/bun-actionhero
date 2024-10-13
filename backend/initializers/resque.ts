@@ -265,8 +265,6 @@ export class Resque extends Initializer {
       await this.startScheduler();
       await this.startMultiWorker();
     }
-
-    await Bun.sleep(10);
   }
 
   async stop() {
@@ -276,7 +274,5 @@ export class Resque extends Initializer {
       await this.stopMultiWorker();
       await this.stopScheduler();
     }
-
-    await Bun.sleep(10);
   }
 }
