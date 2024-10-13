@@ -178,6 +178,7 @@ export class Resque extends Initializer {
     if (api.resque.multiWorker && config.tasks.minTaskProcessors > 0) {
       return api.resque.multiWorker.stop();
     }
+    await Bun.sleep(100);
   };
 
   /** Load all actions as tasks and wrap them for node-resque jobs */
@@ -270,11 +271,11 @@ export class Resque extends Initializer {
   }
 
   async stop() {
-    await this.stopScheduler();
+    await this.stopQueue();
 
     if (api.runMode === RUN_MODE.SERVER) {
       await this.stopMultiWorker();
-      await this.stopQueue();
+      await this.stopScheduler();
     }
 
     await Bun.sleep(10);
