@@ -6,8 +6,8 @@
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
   "scripts": {
-    "dev": "bun run next dev -p 5200",
-    "start": "bun run next start -p 5200",
+    "dev": "bun run next dev -p 5200 --hostname localhost",
+    "start": "bun run next start -p 5200 --hostname localhost",
     "compile": "bun run next build",
     "lint": "prettier --check .",
     "pretty": "prettier --write ."
