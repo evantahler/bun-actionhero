@@ -19,6 +19,7 @@ export class API {
   stopped: boolean;
   bootTime: number;
   logger: Logger;
+  runMode: RUN_MODE;
   initializers: Initializer[];
 
   // allow arbitrary properties to be set on the API, to be added and typed later
@@ -65,6 +66,7 @@ export class API {
   async start(runMode: RUN_MODE = RUN_MODE.SERVER) {
     this.stopped = false;
     this.started = false;
+    this.runMode = runMode;
     if (!this.initialized) await this.initialize();
 
     this.logger.warn("Starting process");

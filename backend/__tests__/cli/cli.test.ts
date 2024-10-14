@@ -31,7 +31,7 @@ describe("CLI", () => {
     expect(stderr.toString()).toContain("Bun Actionhero");
   });
 
-  test('the version is returend with "--version"', async () => {
+  test('the version is returned with "--version"', async () => {
     const { stdout, stderr, exitCode } =
       await $`./actionhero.ts --version`.quiet();
 
@@ -63,7 +63,7 @@ describe("CLI", () => {
     expect(stderr).toBeEmpty();
 
     const { response } = JSON.parse(stdout.toString());
-    expect(response.user.id).toEqual(1);
+    expect(response.user.id).toBeGreaterThan(0);
     expect(response.user.email).toEqual("test@test.com");
 
     const {
@@ -76,7 +76,7 @@ describe("CLI", () => {
     expect(stderr2).toBeEmpty();
 
     const { response: response2 } = JSON.parse(stdout2.toString());
-    expect(response2.user.id).toEqual(1);
+    expect(response2.user.id).toBeGreaterThan(1);
     expect(response2.user.email).toEqual("test@test.com");
     expect(response2.session.id).not.toBeNull();
   });

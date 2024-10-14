@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, lt } from "drizzle-orm";
 import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { serializeMessage } from "../ops/MessageOps";
@@ -93,5 +93,57 @@ export class MessagesList implements Action {
         serializeMessage(m, m.user_name ? m.user_name : undefined),
       ),
     };
+  }
+}
+
+export class MessagesCleanup implements Action {
+  name = "messages:cleanup";
+  description = "cleanup messages older than 24 hours";
+  task = { frequency: 1000 * 60 * 60, queue: "default" }; // run the task every hour
+  inputs = {
+    age: {
+      required: true,
+      formatter: ensureNumber,
+      default: 1000 * 60 * 60 * 24, // 24 hours
+    },
+  };
+  async run(params: ActionParams<MessagesCleanup>) {
+    const _messages = await api.db.db
+      .delete(messages)
+      .where(lt(messages.createdAt, new Date(Date.now() - params.age)))
+      .returning();
+
+    return {
+      messagesDeleted: _messages.length,
+    };
+  }
+}
+
+export class MessagesHello implements Action {
+  name = "messages:hello";
+  description = "broadcast a hello message to all users in the chat room";
+  task = { frequency: 1000 * 60, queue: "default" }; // run the task every minute
+  inputs = {};
+  async run() {
+    const [message] = await api.db.db
+      .insert(messages)
+      .values({
+        body: "Hello! The current time is " + new Date().toISOString(),
+        user_id: api.application.defaultUser.id,
+      })
+      .returning();
+
+    const serializedMessage = serializeMessage(
+      message,
+      api.application.defaultUser.name,
+    );
+
+    await api.pubsub.broadcast(
+      "messages",
+      { message: serializedMessage },
+      `user:${api.application.defaultUser.id}`,
+    );
+
+    return { message: serializedMessage.body };
   }
 }
