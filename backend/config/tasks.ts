@@ -7,11 +7,8 @@ export const configTasks = {
   // queues: async () => { return ["queueA", "queueB"]; } as string[] | (() => Promise<string[]>)>,
   // how long to sleep between jobs / scheduler checks
   timeout: 5000,
-  // at minimum, how many parallel taskProcessors should this node spawn?
-  // (have number > 0 to enable, and < 1 to disable)
-  minTaskProcessors: 1,
-  // at maximum, how many parallel taskProcessors should this node spawn?
-  maxTaskProcessors: 5,
+  // how many parallel workers we run?
+  taskProcessors: await loadFromEnvIfSet("TASK_PROCESSORS", 1),
   // how often should we check the event loop to spawn more taskProcessors?
   checkTimeout: 500,
   // how many ms would constitute an event loop delay to halt taskProcessors spawning?
