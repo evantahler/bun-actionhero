@@ -185,9 +185,9 @@ export class Actions extends Initializer {
    * * stop   The index of the last job to return.
    */
   queued = (
-    queue: string,
-    start: number,
-    stop: number,
+    queue: string = DEFAULT_QUEUE,
+    start: number = 0,
+    stop: number = 100,
   ): Promise<Array<TaskInputs>> => {
     return api.resque.queue.queued(queue, start, stop);
   };

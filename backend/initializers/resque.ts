@@ -49,7 +49,7 @@ export class Resque extends Initializer {
     await api.resque.queue.connect();
   };
 
-  stopQueue = () => {
+  stopQueue = async () => {
     if (api.resque.queue) {
       return api.resque.queue.end();
     }
@@ -253,11 +253,25 @@ export class Resque extends Initializer {
     const resqueContainer = {
       jobs: await this.loadJobs(),
       workers: [] as Worker[],
+      startQueue: this.startQueue,
+      stopQueue: this.stopQueue,
+      startScheduler: this.startScheduler,
+      stopScheduler: this.stopScheduler,
+      startWorkers: this.startWorkers,
+      stopWorkers: this.stopWorkers,
+      wrapActionAsJob: this.wrapActionAsJob,
     } as {
       queue: Queue;
       scheduler: Scheduler;
       workers: Worker[];
       jobs: Awaited<ReturnType<Resque["loadJobs"]>>;
+      startQueue: () => Promise<void>;
+      stopQueue: () => Promise<void>;
+      startScheduler: () => Promise<void>;
+      stopScheduler: () => Promise<void>;
+      startWorkers: () => Promise<void>;
+      stopWorkers: () => Promise<void>;
+      wrapActionAsJob: (action: Action) => Job<any>;
     };
 
     return resqueContainer;

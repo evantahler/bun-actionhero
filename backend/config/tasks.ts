@@ -6,7 +6,7 @@ export const configTasks = {
   // Or, rather than providing a static list of `queues`, you can define a method that returns the list of queues.
   // queues: async () => { return ["queueA", "queueB"]; } as string[] | (() => Promise<string[]>)>,
   // how long to sleep between jobs / scheduler checks
-  timeout: 5000,
+  timeout: await loadFromEnvIfSet("TASK_TIMEOUT", 5000),
   // how many parallel workers we run?
   taskProcessors: await loadFromEnvIfSet("TASK_PROCESSORS", 1),
   // how often should we check the event loop to spawn more taskProcessors?
