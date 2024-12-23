@@ -163,8 +163,13 @@ export class Resque extends Initializer {
     }
 
     for (const worker of api.resque.workers) {
-      await worker.connect();
-      await worker.start();
+      try {
+        await worker.connect();
+        await worker.start();
+      } catch (error) {
+        logger.fatal(`[resque:${worker.name}] ${error}`);
+        throw error;
+      }
     }
   };
 
@@ -172,6 +177,7 @@ export class Resque extends Initializer {
     for (const worker of api.resque.workers) {
       await worker.end();
     }
+    api.resque.workers = [];
   };
 
   /** Load all actions as tasks and wrap them for node-resque jobs */
