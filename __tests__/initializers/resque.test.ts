@@ -8,8 +8,8 @@ import {
   beforeEach,
   afterEach,
 } from "bun:test";
-import { ensureString } from "../../util/formatters";
-import { DEFAULT_QUEUE } from "../../classes/Action";
+import { ensureString } from "../../backend/util/formatters";
+import { DEFAULT_QUEUE } from "../../backend/classes/Action";
 
 beforeAll(async () => {
   await api.initialize();

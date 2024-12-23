@@ -9,29 +9,29 @@
     "actionhero": "actionhero.ts"
   },
   "scripts": {
-    "start": "nf start --procfile Procfile",
-    "dev": "nf start --procfile dev.Procfile",
-    "postinstall": "bun install-backend && bun install-frontend",
-    "install-backend": "cd backend && bun install",
-    "install-frontend": "cd frontend && bun install",
-    "compile-backend": "cd backend && bun compile",
-    "compile-frontend": "cd frontend && bun compile",
-    "compile": "bun compile-backend && bun compile-frontend",
-    "test-backend": "cd backend && bun test",
-    "test-frontend": "cd frontend && bun test",
-    "lint-backend": "cd backend && bun lint",
-    "lint-frontend": "cd frontend && bun lint",
-    "lint": "bun lint-backend && bun lint-frontend",
-    "pretty-backend": "cd backend && bun pretty",
-    "pretty-frontend": "cd frontend && bun pretty",
-    "pretty": "bun pretty-backend && bun pretty-frontend",
-    "ci": "bun lint && bun compile && bun test-backend && bun test-frontend"
+    "start": "bun actionhero.ts start",
+    "dev": "bun --watch actionhero.ts start",
+    "migrations": "bun run migrations.ts",
+    "compile": "bun build actionhero.ts --compile --outfile actionhero",
+    "lint": "prettier --check .",
+    "pretty": "prettier --write ."
   },
   "dependencies": {
-    "foreman": "^3.0.1"
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.30.10",
+    "ioredis": "^5.4.2",
+    "node-resque": "^9.3.7",
+    "pg": "^8.12.0",
+    "typescript": "^5.4.3"
   },
   "devDependencies": {
     "@types/bun": "^1.1.8",
+    "@types/cookie": "^0.6.0",
+    "@types/formidable": "^3.4.5",
+    "@types/pg": "^8.11.8",
+    "drizzle-kit": "^0.20.18",
     "prettier": "^3.3.3"
   }
 }
