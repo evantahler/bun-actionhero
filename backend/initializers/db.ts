@@ -3,7 +3,7 @@ import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { sql } from "drizzle-orm";
+import { DefaultLogger, LogWriter, sql } from "drizzle-orm";
 import { Pool } from "pg";
 import path from "path";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
@@ -23,6 +23,7 @@ declare module "../classes/API" {
 export class DB extends Initializer {
   constructor() {
     super(namespace);
+    this.loadPriority = 100;
     this.startPriority = 100;
     this.stopPriority = 910;
   }
@@ -43,7 +44,15 @@ export class DB extends Initializer {
       connectionString: config.database.connectionString,
     });
 
-    api.db.db = drizzle(pool);
+    class DrizzleLogger implements LogWriter {
+      write(message: string) {
+        logger.debug(message);
+      }
+    }
+
+    api.db.db = drizzle(pool, {
+      logger: new DefaultLogger({ writer: new DrizzleLogger() }),
+    });
 
     try {
       await api.db.db.execute(sql`SELECT NOW()`);
