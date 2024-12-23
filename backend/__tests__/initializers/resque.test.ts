@@ -6,6 +6,7 @@ import {
   beforeAll,
   afterAll,
   beforeEach,
+  afterEach,
 } from "bun:test";
 import { ensureString } from "../../util/formatters";
 import { DEFAULT_QUEUE } from "../../classes/Action";
@@ -88,7 +89,7 @@ test("actions can be enqueued later", async () => {
 });
 
 describe("with workers and scheduler", () => {
-  afterAll(async () => {
+  afterEach(async () => {
     await api.resque.stopWorkers();
     await api.resque.stopScheduler();
   });
@@ -122,8 +123,8 @@ describe("with workers and scheduler", () => {
       };
     }
     const instance = new RecurringTestAction();
-    api.actions.actions.push(instance);
     api.resque.jobs[instance.name] = api.resque.wrapActionAsJob(instance);
+    api.actions.actions.push(instance);
 
     await api.resque.startWorkers();
     await api.resque.startScheduler();
