@@ -29,7 +29,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (config.server.web.enabled !== true) return;
 
     logger.info(
-      `starting app server @ ${config.server.web.host}:${config.server.web.port}`,
+      `starting app server @ http://${config.server.web.host}:${config.server.web.port}`,
     );
 
     let startupAttempts = 0;

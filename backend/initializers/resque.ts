@@ -50,7 +50,9 @@ export class Resque extends Initializer {
   };
 
   stopQueue = () => {
-    if (api.resque.queue) return api.resque.queue.end();
+    if (api.resque.queue) {
+      return api.resque.queue.end();
+    }
   };
 
   startScheduler = async () => {
@@ -95,7 +97,9 @@ export class Resque extends Initializer {
   };
 
   stopScheduler = async () => {
-    if (api.resque.scheduler) return api.resque.scheduler.end();
+    if (api.resque.scheduler && api.resque.scheduler.connection.connected) {
+      await api.resque.scheduler.end();
+    }
   };
 
   startWorkers = async () => {
@@ -174,7 +178,9 @@ export class Resque extends Initializer {
   };
 
   stopWorkers = async () => {
-    for (const worker of api.resque.workers) {
+    while (true) {
+      const worker = api.resque.workers.pop();
+      if (!worker) break;
       await worker.end();
     }
     api.resque.workers = [];
@@ -267,11 +273,11 @@ export class Resque extends Initializer {
   }
 
   async stop() {
-    await this.stopQueue();
-
     if (api.runMode === RUN_MODE.SERVER) {
       await this.stopWorkers();
       await this.stopScheduler();
     }
+
+    await this.stopQueue();
   }
 }
