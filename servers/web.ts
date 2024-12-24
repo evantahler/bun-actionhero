@@ -5,10 +5,7 @@ import { Server } from "../classes/Server";
 import { config } from "../config";
 import { logger, api } from "../api";
 import { parse } from "node:url";
-import {
-  type HTTP_METHOD,
-  type WebsocketActionParams,
-} from "../classes/Action";
+import { ActionParams, type HTTP_METHOD } from "../classes/Action";
 import type { ServerWebSocket } from "bun";
 import type {
   ClientSubscribeMessage,
@@ -162,10 +159,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async handleWebsocketAction(
     connection: Connection,
     ws: ServerWebSocket,
-    formattedMessage: WebsocketActionParams<any>,
+    formattedMessage: ActionParams<any>,
   ) {
     const params = new FormData();
     for (const [key, value] of Object.entries(formattedMessage.params)) {
+      // @ts-ignore
       params.append(key, value);
     }
 
