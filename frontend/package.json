@@ -10,7 +10,7 @@
     "start": "bun run next start -p 5200 --hostname localhost",
     "compile": "bun run next build",
     "lint": "prettier --check .",
-    "pretty": "prettier --write ."
+    "format": "prettier --write ."
   },
   "dependencies": {
     "next": "^14.2.7",

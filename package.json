@@ -17,15 +17,16 @@
     "compile-backend": "cd backend && bun compile",
     "compile-frontend": "cd frontend && bun compile",
     "compile": "bun compile-backend && bun compile-frontend",
+    "tests": "bun test-backend && bun test-frontend",
     "test-backend": "cd backend && bun test",
     "test-frontend": "cd frontend && bun test",
     "lint-backend": "cd backend && bun lint",
     "lint-frontend": "cd frontend && bun lint",
     "lint": "bun lint-backend && bun lint-frontend",
-    "pretty-backend": "cd backend && bun pretty",
-    "pretty-frontend": "cd frontend && bun pretty",
-    "pretty": "bun pretty-backend && bun pretty-frontend",
-    "ci": "bun lint && bun compile && bun test-backend && bun test-frontend"
+    "format-backend": "cd backend && bun format",
+    "format-frontend": "cd frontend && bun format",
+    "format": "bun format-backend && bun format-frontend",
+    "ci": "bun lint && bun compile && bun tests"
   },
   "dependencies": {
     "foreman": "^3.0.1"
