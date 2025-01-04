@@ -54,8 +54,10 @@ To test:
 # one time db setup
 createdb bun-test
 
-# run the tests
-bun test
+# run all tests
+bun ci # runs linting, compilation, and all tests
+# or
+bun tests # runs just the tests
 
 # run a single test file
 cd backend
