@@ -14,7 +14,7 @@
     "migrations": "bun run migrations.ts",
     "compile": "bun build actionhero.ts --compile --outfile actionhero",
     "lint": "prettier --check .",
-    "pretty": "prettier --write ."
+    "format": "prettier --write ."
   },
   "dependencies": {
     "colors": "^1.4.0",
