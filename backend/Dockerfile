@@ -1,10 +1,9 @@
 FROM oven/bun:1 AS base
 
 ENV PORT=8080
+ENV NODE_ENV=production
 
 WORKDIR /api
-
-ENV NODE_ENV=production
 
 COPY . /api
 

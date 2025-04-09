@@ -1,16 +1,15 @@
 FROM oven/bun:1 AS base
 
-ENV PORT=8080
+ENV PORT=3000
+ENV NODE_ENV=production
 
 WORKDIR /frontend
-
-ENV NODE_ENV=production
 
 COPY . /frontend
 
 # RUN bun install --production --frozen-lockfile
 RUN bun install
-RUN bun compile
+RUN bun compileNext
 
 EXPOSE $PORT/tcp
 ENTRYPOINT [ "bun", "start" ]
