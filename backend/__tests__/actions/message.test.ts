@@ -52,7 +52,7 @@ describe("message:create", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ body: "Hello, world!" }),
     });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(401);
     const response = (await res.json()) as ActionResponse<MessageCrete>;
     expect(response.error?.message).toEqual("Session not found");
   });
@@ -66,7 +66,7 @@ describe("message:create", () => {
       },
       body: JSON.stringify({ body: "Hello, world!" }),
     });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(401);
     const response = (await res.json()) as ActionResponse<MessageCrete>;
     expect(response.error?.message).toEqual("Session not found");
   });

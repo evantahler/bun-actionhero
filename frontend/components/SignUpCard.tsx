@@ -1,9 +1,9 @@
 import { Button, Form } from "react-bootstrap";
-import type { ActionResponse } from "../../backend/api";
-import type { UserCreate } from "../../backend/actions/user";
+import type { ActionResponse } from "../types/backend/api";
+import type { UserCreate } from "../types/backend/actions/user";
 import React from "react";
 import type { AppUser } from "./App";
-
+import { wrappedFetch } from "../utils/client";
 export const SignUpCard = ({
   setUser,
   setSuccessMessage,
@@ -26,10 +26,10 @@ export const SignUpCard = ({
     body.append("email", target.email.value);
     body.append("name", target.name.value);
     body.append("password", target.password.value);
-    const response = (await fetch("/api/user", {
-      method: "put",
+    const response = await wrappedFetch<ActionResponse<UserCreate>>("/user", {
+      method: "PUT",
       body,
-    }).then((res) => res.json())) as ActionResponse<UserCreate>;
+    });
 
     if (response.error) {
       setErrorMessage(response.error.message);

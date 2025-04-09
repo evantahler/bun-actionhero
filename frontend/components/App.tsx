@@ -3,11 +3,11 @@ import { StatusCard } from "./StatusCard";
 import { SessionCreateCard } from "./SessionCreateCard";
 import { SignUpCard } from "./SignUpCard";
 import { useEffect, useState } from "react";
-import type { ActionResponse } from "../../backend/api";
+import type { ActionResponse } from "../types/backend/api";
 import InfoBar from "./InfoBar";
 import ChatCard from "./ChatCard";
-import type { UserView } from "../../backend/actions/user";
-
+import type { UserView } from "../types/backend/actions/user";
+import { wrappedFetch } from "../utils/client";
 export type AppUser = ActionResponse<UserView>["user"] | null;
 
 export default function App() {
@@ -20,16 +20,9 @@ export default function App() {
   }, []);
 
   async function hydrateUser() {
-    const response = (await fetch("/api/user").then((res) =>
-      res.json(),
-    )) as ActionResponse<UserView>;
-
-    if (response.error) {
-      console.log(response.error);
-    } else {
-      setSuccessMessage(`Welcome back, ${response.user.name}!`);
-      setUser(response.user);
-    }
+    const response = await wrappedFetch<ActionResponse<UserView>>("/user");
+    setSuccessMessage(`Welcome back, ${response.user.name}!`);
+    setUser(response.user);
   }
 
   return (

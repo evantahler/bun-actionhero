@@ -1,3 +1,2 @@
-proxy: caddy run --config caddyfile
-api: cd backend && bun start
-web: cd frontend && bun start
+api: cd backend && bun dev
+web: cd frontend && bun dev

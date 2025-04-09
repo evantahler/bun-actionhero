@@ -16,7 +16,7 @@ export { type Inputs } from "./classes/Inputs";
 export { Logger } from "./classes/Logger";
 export { Server } from "./classes/Server";
 
-declare module globalThis {
+declare namespace globalThis {
   let api: API;
   let logger: Logger;
   let config: typeof Config;

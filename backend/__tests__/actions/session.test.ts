@@ -50,7 +50,7 @@ describe("session:create", () => {
       }),
     });
     const response = (await res.json()) as ActionResponse<SessionCreate>;
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(406);
     expect(response.error?.message).toEqual("This is not a valid email");
   });
 

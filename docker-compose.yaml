@@ -1,0 +1,70 @@
+x-common-env: &commonEnv
+  POSTGRES_USER: bun
+  POSTGRES_PASSWORD: bun
+  POSTGRES_DB: bun
+  # backend-specific
+  PORT: 8080
+  DATABASE_URL: postgresql://bun:bun@db:5432/bun
+  REDIS_URL: redis://redis:6379
+  # frontend-specific
+  NEXT_PUBLIC_API_URL: http://localhost:8080
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      <<: *commonEnv
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "bun", "-d", "bun"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:6
+    restart: always
+    ports:
+      - "6379:6379"
+    environment:
+      <<: *commonEnv
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "ping"]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    network_mode: host
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      <<: *commonEnv
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    network_mode: host
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      <<: *commonEnv
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:
+  redis_data:
