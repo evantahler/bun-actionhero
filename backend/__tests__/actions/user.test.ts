@@ -61,7 +61,7 @@ describe("user:create", () => {
       }),
     });
     const response = (await res.json()) as ActionResponse<UserCreate>;
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(406);
     expect(response.error?.message.toLowerCase()).toMatch(
       /this field is required and must be at least 3 characters long/,
     );
@@ -78,7 +78,7 @@ describe("user:edit", () => {
       body: JSON.stringify({ name: "new name" }),
     });
     const response = (await res.json()) as ActionResponse<UserEdit>;
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(401);
     expect(response.error?.message).toMatch(/Session not found/);
   });
 
