@@ -8,7 +8,7 @@ import { addActionToProgram } from "./util/cli";
 import { watch } from "fs";
 
 const program = new Command();
-program.name(pkg.name).description(pkg.description).version(pkg.version);
+program.name("actionhero").description(pkg.description).version(pkg.version);
 
 program
   .command("start")

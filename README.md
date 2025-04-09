@@ -13,40 +13,71 @@ I still believe in many of the ideas of Actionhero, which itself was an attempt 
 ### The key components of this project remain:
 
 - Transport-agnostic Actions (HTTP, WebSockets, CLI, etc)
-- Built-in support for background tasks (node-resuqe)
-- Built-in support for caches (redis/actionhero-cache)
+- Built-in support for background tasks (via [node-resque](https://github.com/actionhero/node-resque))
 - Built in, strongly-typed API support connecting the backend to the frontend
 - (new) Built-in support for ORM/models/migrations (replacing the `ah-sequelize-plugin`, which adds drizzleORM to the mix; optionally using SQLite locally)
 - (new) Built-in support page rendering (replacing the `ah-next-plugin`, which adds Next.js to the mix)
 
 ### Why Bun?
 
-- TS/JS is still the best language
+TS/JS is still the best language for any web API. However, node.js has stalled and is not moving forward. Bun is a modern, fast, and easy to use package manager that is a great fit for this project which includes:
+
 - Bundling
 - Testing
 - Module Resolution
 - Amazing Packager
 - Great DX.
 
-## Getting Started
+## Project Structure
 
-To install dependencies:
+- **root**: a slim package.json which wraps the api and frontend directories. This is for convenience when developing. The regular commands `bun install`, `bun dev`, `bun tests`, etc will work from the root, but note the `s` at the end of `bun tests`.
+- **api**: The actionhero server.
+- **frontend**: The frontend next.jsapplication.
+
+## Local Development
+
+Install Dependencies (macOS):
+
+```bash
+# install bun
+curl -fsSL https://bun.sh/install | bash
+
+# install postgres
+brew install postgresql
+
+# install redis
+brew install redis
+
+# start postgres and redis
+brew services start postgresql
+brew services start redis
+
+# create a database
+createdb bun
+```
+
+To install packages:
 
 ```bash
 bun install
-brew install caddy
+```
+
+Set environment variables:
+
+```bash
+cp api/.env.example api/.env
+cp frontend/.env.example frontend/.env
+# update as needed
 ```
 
 To run:
 
 ```bash
-# one-time env setup
-cp .env.example .env
-createdb bun
-
-# run the proxy, frontened, and backend
-bun dev # this will hot-reload the server when server files change
+# run both the front-end and back-end from the root directory
+bun dev
 ```
+
+Both the front-end and back-end will hot-reload when files change!
 
 To test:
 
@@ -57,14 +88,11 @@ createdb bun-test
 # run all tests
 bun ci # runs linting, compilation, and all tests
 # or
-bun tests # runs just the tests
+bun tests # runs just the tests (note the s at the end)
 
 # run a single test file
 cd backend
 bun test __tests__/actions/user.test.ts
-
-# run all all the stuff that CI does
-bun test # from the root
 ```
 
 To lint:
@@ -80,7 +108,7 @@ bun pretty
 
 ```bash
 # pre-compile the front-end and backend
-bun prepare
+bun compile
 # in .env, set NODE_ENV=production and set next.dev=false
 bun start
 ```
@@ -91,59 +119,82 @@ This project uses Drizzle as the ORM. Migrations are derived from the schemas. T
 
 ## Actions, CLI Commands, and Tasks
 
-Unlike Actionhero, we've removed the distinction between Actions, CLI commands, and Tasks. They are all the same thing now! You can run any action from the CLI, and any action can be scheduled as a task. Each action gains a `type` property to define its purpose. The same input validation and responses are used for each, just like how Actions work for both web and websocket requests.
+Unlike Actionhero, we've removed the distinction between Actions, CLI commands, and Tasks. They are all the same thing now! You can run any action from the CLI, and any action can be scheduled as a task. The same input validation and responses are used for each, just like how Actions work for both web and websocket requests.
 
 Run an action from the CLI:
 
 ```bash
 # I like using -q (hide logging output) and then piping the response through jq
+
  ./actionhero.ts "user:create" --name evan --email "evantahler@gmail.com" --password password -q | jq
 
 # use the --help flag to learn more
 ```
 
+### Web Actions
+
+Add a `web` property to the action to enable it to be called via HTTP:
+
+```ts
+web = { route: "/message", method: HTTP_METHOD.PUT };
+```
+
+### CLI Actions
+
+Enabled by default
+
+### Websocket Actions
+
+Enabled by default
+
+### Task Actions
+
+Actions which have a `task` property can be scheduled as a task. A `queue` property is required, and a `frequency` property is optional to automatically schedule these tasks in a cron-like manner.
+
+```ts
+task = { queue: "default", frequency: 1000 * 60 * 60 }; // run the task every hour
+```
+
 ## Intentional changes from ActionHero
 
-**Multiple Applications + Proxy**
+**Multiple Applications**
 
-- We use Caddy as a reverse proxy to serve both the frontend and backend - 2 Bun applications. This allows each app to do what it does best.
+Rather than bundling in the frontend into the backend, we are running two separate Bun applications. This allows each app to do what it does best, and for you to deploy them independently. e.g. perhaps you want to host the frontend on Vercel, or statically compile it.
+
+In development, we use `node-foreman` and `Procfile` to run both the frontend and backend at the same time.
 
 **Actions, Tasks, and CLI Commands**
 
-- All 'controllers' are the same now! Actions are used for tasks and command line execution now, and configured for each purpose via properties. This should simplify things, and encourage reusability even more.
-
-**Process**
-
-- No more pifiles.
+All 'controllers' are the same now! Actions are used for tasks and command line execution now, and configured for each purpose via properties. This should simplify things, and encourage reusability even more.
 
 **Logger**
 
-- simplified logger. No more winston - only STDOUT and STDERR remain
+Simplified logger. No more winston - only STDOUT and STDERR remain. Basic logging levels are supported, and colors and timestamps are optional.
+
+**Process**
+
+No more `pidfiles`.
 
 **Config**
 
-- Config remains statically defined at boot. However, there's now per-env overwrites based on NODE_ENV (e.g. `logger.level.test` trumps `logger.level` when NDOE_ENV=test.)
+Config remains statically defined at boot. However, there's now per-env overwrites based on NODE_ENV (e.g. `logger.level.test` trumps `logger.level` when `NODE_ENV=test`.)
 
 **Middleware**
 
-- TODO, but there will be some changes...
+⚠️ TODO, but there will be some changes...
 
 **Routes**
 
-- Actions define their own routes as regular expression matchers (no `routes.ts`)
+Actions define their own routes as regular expression matchers (no `routes.ts`)
 
 **CLI**
 
-- CLI runs regular actions, not special CLI controllers.
+CLI runs regular actions, not special CLI controllers.
 
 **Testing**
 
-- No mock server. Let's make real API requests. Now that bun has `fetch` included, it's easy.
+No mock server. Let's make real API requests. Now that bun has `fetch` included, it's easy!
 
 **ORM**
 
-- we use drizzle for the ORM and migrations.
-
-**React and Frontend**
-
-- We bundle next.js into the project.
+We use drizzle for the ORM and migrations.
