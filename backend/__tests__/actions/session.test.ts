@@ -21,7 +21,7 @@ afterAll(async () => {
   await api.stop();
 });
 
-describe("session:crate", () => {
+describe("session:create", () => {
   test("returns user when matched", async () => {
     const res = await fetch(url + "/api/session", {
       method: "PUT",
