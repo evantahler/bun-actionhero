@@ -241,6 +241,7 @@ describe("actions", () => {
         }),
       );
 
+      await Bun.sleep(10);
       while (messages1.length < 5 || messages2.length < 4) {
         await Bun.sleep(10);
       }
@@ -263,6 +264,7 @@ describe("actions", () => {
         }),
       );
 
+      await Bun.sleep(10);
       while (messages1.length < 6 || messages2.length < 6) {
         await Bun.sleep(10);
       }
