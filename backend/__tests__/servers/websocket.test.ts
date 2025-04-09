@@ -241,7 +241,6 @@ describe("actions", () => {
         }),
       );
 
-      await Bun.sleep(10);
       while (messages1.length < 5 || messages2.length < 4) {
         await Bun.sleep(10);
       }
@@ -255,36 +254,42 @@ describe("actions", () => {
         }),
       );
 
-      socket2.send(
-        JSON.stringify({
-          messageType: "action",
-          action: "message:create",
-          messageId: "B",
-          params: { body: "Polo" },
-        }),
-      );
-
-      await Bun.sleep(10);
       while (messages1.length < 6 || messages2.length < 6) {
         await Bun.sleep(10);
       }
 
-      const chatMessage1A = JSON.parse(messages1[3].data);
-      const chatMessage2A = JSON.parse(messages2[3].data);
-      const chatMessage1B = JSON.parse(messages1[4].data);
-      const chatMessage2B = JSON.parse(messages2[4].data);
-      const chatMessage1C = JSON.parse(messages1[5].data);
-      const chatMessage2C = JSON.parse(messages2[5].data);
+      // messages may arrive out of order
+      let sendResponse1: Record<string, any> | null = null;
+      let sendResponse2: Record<string, any> | null = null;
+      let receivedMessages1: Record<string, any>[] = [];
+      let receivedMessages2: Record<string, any>[] = [];
 
-      // senders
-      expect(chatMessage1A.response.message.body).toEqual("Marco");
-      expect(chatMessage2B.response.message.body).toEqual("Polo");
+      for (const message of messages1.slice(3)) {
+        const parsedMessage = JSON.parse(message.data);
+        if (parsedMessage.messageId) sendResponse1 = parsedMessage;
+        else receivedMessages1.push(parsedMessage);
+      }
 
-      // receivers
-      expect(chatMessage2A.message.message.message.body).toEqual("Marco");
-      expect(chatMessage1B.message.message.message.body).toEqual("Marco");
-      expect(chatMessage2C.message.message.message.body).toEqual("Polo");
-      expect(chatMessage1C.message.message.message.body).toEqual("Polo");
+      for (const message of messages2.slice(3)) {
+        const parsedMessage = JSON.parse(message.data);
+        if (parsedMessage.messageId) sendResponse2 = parsedMessage;
+        else receivedMessages2.push(parsedMessage);
+      }
+
+      expect(sendResponse1?.response.message.body).toEqual("Marco");
+      expect(sendResponse2?.response.message.body).toEqual("Polo");
+
+      expect(receivedMessages1.length).toEqual(2);
+      expect(receivedMessages2.length).toEqual(2);
+
+      expect(receivedMessages1[0].message.message.message.body).toEqual(
+        "Marco",
+      );
+      expect(receivedMessages2[0].message.message.message.body).toEqual(
+        "Marco",
+      );
+      expect(receivedMessages1[1].message.message.message.body).toEqual("Polo");
+      expect(receivedMessages2[1].message.message.message.body).toEqual("Polo");
 
       socket1.close();
       socket2.close();
