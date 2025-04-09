@@ -16,7 +16,7 @@ I still believe in many of the ideas of Actionhero, which itself was an attempt 
 - Built-in support for background tasks (node-resuqe)
 - Built-in support for caches (redis/actionhero-cache)
 - Built in, strongly-typed API support connecting the backend to the frontend
-- (new) Built-in support for ORM/models/migrations (replacing the `ah-sequelize-plugin`, which adds Sequelize to the mix; optionally using SQLite locally)
+- (new) Built-in support for ORM/models/migrations (replacing the `ah-sequelize-plugin`, which adds drizzleORM to the mix; optionally using SQLite locally)
 - (new) Built-in support page rendering (replacing the `ah-next-plugin`, which adds Next.js to the mix)
 
 ### Why Bun?
