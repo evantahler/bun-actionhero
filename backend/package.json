@@ -1,5 +1,5 @@
 {
-  "name": "bun-actionhero-backend",
+  "name": "actionhero",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
@@ -12,9 +12,11 @@
     "start": "bun actionhero.ts start",
     "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
-    "compile": "bun build actionhero.ts --compile --outfile actionhero",
+    "compile": "bun buildExecutable && bun types",
+    "buildExecutable": "bun build actionhero.ts --compile --outfile actionhero",
     "lint": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "types": "rm -rf types && tsc -skipLibCheck true --emitDeclarationOnly --outDir types --declarationMap --declaration --esModuleInterop true --module esnext --moduleResolution bundler --target esnext actionhero.ts api.ts actions/.index.ts"
   },
   "dependencies": {
     "colors": "^1.4.0",
@@ -27,7 +29,7 @@
     "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.9",
+    "@types/bun": "latest",
     "@types/cookie": "^0.6.0",
     "@types/formidable": "^3.4.5",
     "@types/pg": "^8.11.11",

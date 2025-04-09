@@ -14,6 +14,8 @@ export async function globLoader<T>(searchDir: string) {
 
   for (const glob of globs) {
     for await (const file of glob.scan(dir)) {
+      if (file.startsWith(".")) continue;
+
       const fullPath = path.join(dir, file);
       const modules = (await import(fullPath)) as {
         [key: string]: new () => T;

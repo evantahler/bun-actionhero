@@ -1,6 +1,6 @@
 import { Button, Form } from "react-bootstrap";
-import type { ActionResponse } from "../../backend/api";
-import type { UserCreate } from "../../backend/actions/user";
+import type { ActionResponse } from "../types/backend/api";
+import type { UserCreate } from "../types/backend/actions/user";
 import React from "react";
 import type { AppUser } from "./App";
 import { wrappedFetch } from "../utils/client";

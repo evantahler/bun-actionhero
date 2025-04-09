@@ -1,13 +1,10 @@
 {
-  "name": "bun-actionhero-backend",
+  "name": "bun-actionhero",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
-  "bin": {
-    "actionhero": "actionhero.ts"
-  },
   "scripts": {
     "dev": "nf start --procfile Procfile",
     "postinstall": "bun install-backend && bun install-frontend",

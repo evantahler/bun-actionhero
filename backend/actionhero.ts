@@ -1,6 +1,6 @@
 #! /usr/bin/env bun
 
-import pkg from "../package.json";
+import pkg from "./package.json";
 import { Action, api, logger } from "./api";
 import { Command } from "commander";
 import { globLoader } from "./util/glob";
@@ -8,7 +8,7 @@ import { addActionToProgram } from "./util/cli";
 import { watch } from "fs";
 
 const program = new Command();
-program.name("actionhero").description(pkg.description).version(pkg.version);
+program.name(pkg.name).description(pkg.description).version(pkg.version);
 
 program
   .command("start")

@@ -30,9 +30,9 @@ TS/JS is still the best language for any web API. However, node.js has stalled a
 
 ## Project Structure
 
-- **root**: a slim package.json which wraps the api and frontend directories. This is for convenience when developing. The regular commands `bun install`, `bun dev`, `bun tests`, etc will work from the root, but note the `s` at the end of `bun tests`.
-- **api**: The actionhero server.
-- **frontend**: The frontend next.jsapplication.
+- **root**: a slim package.json which wraps the backend and frontend directories. This is for convenience when developing. The regular commands `bun install`, `bun dev`, `bun tests`, etc will work from the root, but note the `s` at the end of `bun tests`.
+- **backend**: The actionhero server.
+- **frontend**: The frontend next.js application.
 
 ## Local Development
 
@@ -65,7 +65,7 @@ bun install
 Set environment variables:
 
 ```bash
-cp api/.env.example api/.env
+cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 # update as needed
 ```
@@ -198,3 +198,15 @@ No mock server. Let's make real API requests. Now that bun has `fetch` included,
 **ORM**
 
 We use drizzle for the ORM and migrations.
+
+**Cache**
+
+The actionhero cache layer has been removed. Instead, use redis directly... it's still part of the stack.
+
+**Sessions**
+
+Sessions are handled via cookies, and now a first-class part of the API. Session data is stored in redis.
+
+## Production Deployment
+
+Each application has its own Dockerfile, and a docker-compose.yml file to run them together. You probably won't use this in production directly, but it shows you an example of how to deploy the project.

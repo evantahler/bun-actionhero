@@ -1,9 +1,9 @@
 import { Row, Col, Form, Button, Table } from "react-bootstrap";
 import type { AppUser } from "./App";
-import type { ActionResponse } from "../../backend/api";
-import type { MessagesList } from "../../backend/actions/message";
+import type { ActionResponse } from "../types/backend/api";
+import type { MessagesList } from "../types/backend/actions/message";
 import { useEffect, useState } from "react";
-import pkg from "../../package.json";
+import pkg from "../package.json";
 import { wrappedFetch } from "../utils/client";
 
 let ws: WebSocket;
