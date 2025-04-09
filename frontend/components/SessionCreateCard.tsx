@@ -3,6 +3,7 @@ import type { ActionResponse } from "../../backend/api";
 import type { SessionCreate } from "../../backend/actions/session";
 import React from "react";
 import type { AppUser } from "./App";
+import { wrappedFetch } from "../utils/client";
 
 export const SessionCreateCard = ({
   setUser,
@@ -24,14 +25,18 @@ export const SessionCreateCard = ({
     const body = new FormData();
     body.append("email", target.email.value);
     body.append("password", target.password.value);
-    const response = (await fetch("/api/session", {
-      method: "put",
-      body,
-    }).then((res) => res.json())) as ActionResponse<SessionCreate>;
+    const response = await wrappedFetch<ActionResponse<SessionCreate>>(
+      "/session",
+      {
+        method: "PUT",
+        body,
+      },
+      (error) => {
+        setErrorMessage(error.message);
+      },
+    );
 
-    if (response.error) {
-      setErrorMessage(response.error.message);
-    } else {
+    if (response) {
       setSuccessMessage(`Welcome back, ${response.user.name}!`);
       setUser(response.user);
     }

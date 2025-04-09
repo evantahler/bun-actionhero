@@ -1,6 +1,6 @@
 import cookie from "cookie";
 import { Connection } from "../classes/Connection";
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
 import { Server } from "../classes/Server";
 import { config } from "../config";
 import { logger, api } from "../api";
@@ -242,6 +242,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const connection = new Connection("web", ip, id);
+
+    // Handle OPTIONS requests.
+    // As we don't really know what action the client wants (HTTP Method is always OPTIONS), we just return a 200 response.
+    if (httpMethod === "OPTIONS") return buildResponse(connection, {});
+
     const actionName = await this.determineActionName(url, httpMethod);
     if (!actionName) errorStatusCode = 404;
 
@@ -310,6 +315,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     connection.destroy();
 
+    if (error && ErrorStatusCodes[error.type]) {
+      errorStatusCode = ErrorStatusCodes[error.type];
+    }
+
     return error
       ? buildError(connection, error, errorStatusCode)
       : buildResponse(connection, response);
@@ -347,11 +356,14 @@ const buildHeaders = (connection?: Connection) => {
   const headers: Record<string, string> = {};
 
   headers["Content-Type"] = "application/json";
-  headers["x-server-name"] = config.process.name;
+  headers["X-SERVER-NAME"] = config.process.name;
+  headers["Access-Control-Allow-Origin"] = config.server.web.allowedOrigins;
+  headers["Access-Control-Allow-Methods"] = config.server.web.allowedMethods;
+  headers["Access-Control-Allow-Credentials"] = "true";
 
   if (connection) {
     headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/`; //HttpOnly; SameSite=Strict;
+      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly`;
   }
 
   return headers;

@@ -7,7 +7,7 @@ import type { ActionResponse } from "../../backend/api";
 import InfoBar from "./InfoBar";
 import ChatCard from "./ChatCard";
 import type { UserView } from "../../backend/actions/user";
-
+import { wrappedFetch } from "../utils/client";
 export type AppUser = ActionResponse<UserView>["user"] | null;
 
 export default function App() {
@@ -20,13 +20,8 @@ export default function App() {
   }, []);
 
   async function hydrateUser() {
-    const response = (await fetch("/api/user").then((res) =>
-      res.json(),
-    )) as ActionResponse<UserView>;
-
-    if (response.error) {
-      console.log(response.error);
-    } else {
+    const response = await wrappedFetch<ActionResponse<UserView>>("/user");
+    if (response) {
       setSuccessMessage(`Welcome back, ${response.user.name}!`);
       setUser(response.user);
     }

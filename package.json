@@ -9,8 +9,7 @@
     "actionhero": "actionhero.ts"
   },
   "scripts": {
-    "start": "nf start --procfile Procfile",
-    "dev": "nf start --procfile dev.Procfile",
+    "dev": "nf start --procfile Procfile",
     "postinstall": "bun install-backend && bun install-frontend",
     "install-backend": "cd backend && bun install",
     "install-frontend": "cd frontend && bun install",

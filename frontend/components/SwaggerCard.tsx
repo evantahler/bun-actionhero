@@ -6,7 +6,7 @@ export const SwaggerCard = () => {
   useEffect(() => {
     SwaggerUIBundle({
       dom_id: "#swaggerContainer",
-      url: `/api/swagger`,
+      url: `${process.env.NEXT_PUBLIC_API_URL}/swagger`,
       presets: [
         SwaggerUIBundle.presets.apis,
         SwaggerUIBundle.SwaggerUIStandalonePreset,

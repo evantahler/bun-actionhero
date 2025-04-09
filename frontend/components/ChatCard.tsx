@@ -4,6 +4,7 @@ import type { ActionResponse } from "../../backend/api";
 import type { MessagesList } from "../../backend/actions/message";
 import { useEffect, useState } from "react";
 import pkg from "../../package.json";
+import { wrappedFetch } from "../utils/client";
 
 let ws: WebSocket;
 let messageCounter = 0;
@@ -23,7 +24,7 @@ export default function ChatCard({
   const [connected, setConnected] = useState<boolean>(false);
 
   function connect() {
-    ws = new WebSocket(window.location.origin + "/api", pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
+    ws = new WebSocket(process.env.NEXT_PUBLIC_API_URL + "/api", pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
 
     // Connection opened
     ws.addEventListener("open", (event) => {
@@ -78,13 +79,17 @@ export default function ChatCard({
   }
 
   async function loadMessages() {
-    const response = (await fetch("/api/messages/list").then((res) =>
-      res.json(),
+    const response = (await wrappedFetch<ActionResponse<MessagesList>>(
+      "/messages/list",
+      {
+        method: "GET",
+      },
+      (error) => {
+        setErrorMessage(error.message);
+      },
     )) as ActionResponse<MessagesList>;
 
-    if (response.error) {
-      setErrorMessage(response.error.message);
-    } else {
+    if (response) {
       setMessages(response.messages);
     }
   }
@@ -92,7 +97,6 @@ export default function ChatCard({
   useEffect(() => {
     connect();
     loadMessages(); // load the messages that happened before we joined
-    // setInterval(loadMessages, 5000);
   }, []);
 
   return (

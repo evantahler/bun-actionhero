@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, Card } from "react-bootstrap";
 import type { ActionResponse } from "../../backend/api";
 import type { Status } from "../../backend/actions/status";
+import { wrappedFetch } from "../utils/client";
 
 export const StatusCard = () => {
   const [status, setStatus] = useState<ActionResponse<Status>>();
@@ -10,10 +11,8 @@ export const StatusCard = () => {
   }, []);
 
   const loadStatus = async () => {
-    const response = (await fetch("/api/status").then((res) =>
-      res.json(),
-    )) as ActionResponse<Status>;
-    setStatus(response);
+    const response = await wrappedFetch<ActionResponse<Status>>("/status");
+    if (response) setStatus(response);
   };
 
   return (
