@@ -68,7 +68,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
             formattedParams,
             this,
           );
-          if (middlewareResponse?.updatedParams)
+          if (middlewareResponse && middlewareResponse?.updatedParams)
             formattedParams = middlewareResponse.updatedParams;
         }
       }
@@ -81,7 +81,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
             formattedParams,
             this,
           );
-          if (middlewareResponse?.updatedResponse)
+          if (middlewareResponse && middlewareResponse?.updatedResponse)
             response = middlewareResponse.updatedResponse;
         }
       }
