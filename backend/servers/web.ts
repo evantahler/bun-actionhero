@@ -55,21 +55,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async stop() {
-    //TODO: Graceful shutdown
-    // in test, we want to hard-kill the server
     if (this.server) {
       this.server.stop(true);
       logger.info(
         `stopped app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
       );
     }
-
-    // while (this.server.pendingRequests + this.server.pendingWebSockets > 0) {
-    //   logger.debug(
-    //     `server stop pending pendingRequests:${this.server.pendingRequests}, pendingWebSockets:${this.server.pendingWebSockets}`,
-    //   );
-    //   await Bun.sleep(1000);
-    // }
   }
 
   async handleIncomingConnection(

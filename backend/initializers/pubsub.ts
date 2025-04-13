@@ -6,7 +6,7 @@ const namespace = "pubsub";
 const redisPubSubChannel = `actionhero:pubsub:${pkg.name}`;
 
 // TODO: Presence (connections in room), including join/leave
-// TODO: Auth (key/values to check access
+// TODO: Auth (key/values) to check access
 
 export type PubSubMessage = {
   channel: string;
