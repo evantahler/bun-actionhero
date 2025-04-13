@@ -1,15 +1,17 @@
 FROM oven/bun:1 AS base
 
-ENV PORT=3000
 ENV NODE_ENV=production
+ARG NEXT_PUBLIC_API_URL=http://localhost:8080
 
 WORKDIR /frontend
 
-COPY . /frontend
-
+COPY package.json .
+COPY bun.lockb .
 # RUN bun install --production --frozen-lockfile
 RUN bun install
+
+COPY . /frontend
+
 RUN bun compileNext
 
-EXPOSE $PORT/tcp
 ENTRYPOINT [ "bun", "start" ]

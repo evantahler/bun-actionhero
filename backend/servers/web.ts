@@ -26,10 +26,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   async start() {
     if (config.server.web.enabled !== true) return;
 
-    logger.info(
-      `starting app server @ http://${config.server.web.host}:${config.server.web.port}`,
-    );
-
     let startupAttempts = 0;
     while (startupAttempts < MAX_STARTUP_ATTEMPTS) {
       try {
@@ -47,6 +43,9 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
             close: this.handleWebSocketConnectionClose.bind(this),
           },
         });
+        logger.info(
+          `started app server @ http://${config.server.web.host}:${config.server.web.port}`,
+        );
         break;
       } catch (e) {
         await Bun.sleep(1000);
