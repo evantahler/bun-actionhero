@@ -12,7 +12,7 @@
     "compileNext": "bun run next build",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "types": "bun --cwd ../backend types && rm -rf ./types && cp -r ../backend/types ./types"
+    "types": "bun --cwd ../backend types && rm -rf ./types && mkdir -p ./types && cp -r ../backend/types ./types/backend"
   },
   "dependencies": {
     "next": "^14.2.7",
