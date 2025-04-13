@@ -279,18 +279,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       f.forEach((value, key) => {
         params.append(key, value);
       });
-
-      // // TODO: FILES
-
-      // // for (const [key, values] of Object.entries(files)) {
-      // //   if (values !== undefined) {
-      // //     if (Array.isArray(values)) {
-      // //       for (const v of values) params.append(key, v);
-      // //     } else {
-      // //       params.append(key, values);
-      // //     }
-      // //   }
-      // // }
     }
 
     if (url.query) {
