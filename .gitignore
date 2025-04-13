@@ -7,4 +7,3 @@ next.sock
 backend/.env
 frontend/.env
 types
-backend-types
