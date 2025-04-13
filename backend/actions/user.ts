@@ -10,7 +10,7 @@ import {
   passwordValidator,
 } from "../util/validators";
 import { ErrorType, TypedError } from "../classes/TypedError";
-import { ensureSession } from "../util/session";
+import { SessionMiddleware } from "../middleware/session";
 
 export class UserCreate implements Action {
   name = "user:create";
@@ -69,6 +69,7 @@ export class UserEdit implements Action {
   name = "user:edit";
   description = "Edit an existing user";
   web = { route: "/user", method: HTTP_METHOD.POST };
+  middleware = [SessionMiddleware];
   inputs = {
     name: {
       required: false,
@@ -92,8 +93,6 @@ export class UserEdit implements Action {
   };
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
-    ensureSession(connection, "userId");
-
     const { name, email, password } = params;
     const updates = {} as Record<string, string>;
     if (name) updates.name = name;
@@ -113,12 +112,11 @@ export class UserEdit implements Action {
 export class UserView implements Action {
   name = "user:view";
   description = "View yourself";
+  middleware = [SessionMiddleware];
   web = { route: "/user", method: HTTP_METHOD.GET };
   inputs = {};
 
   async run(params: ActionParams<UserView>, connection: Connection) {
-    ensureSession(connection, "userId");
-
     const [user] = await api.db.db
       .select()
       .from(users)

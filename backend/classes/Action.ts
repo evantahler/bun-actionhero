@@ -18,6 +18,7 @@ export type ActionConstructorInputs = {
   name: string;
   description?: string;
   inputs?: Inputs;
+  middleware?: ActionMiddleware[];
   web?: {
     route?: RegExp | string;
     method?: HTTP_METHOD;
@@ -28,10 +29,27 @@ export type ActionConstructorInputs = {
   };
 };
 
+export type ActionMiddlewareResponse = {
+  updatedParams?: ActionParams<Action>;
+  updatedResponse?: any;
+};
+
+export type ActionMiddleware = {
+  runBefore?: (
+    params: ActionParams<Action>,
+    connection: Connection,
+  ) => Promise<ActionMiddlewareResponse | void>;
+  runAfter?: (
+    params: ActionParams<Action>,
+    connection: Connection,
+  ) => Promise<ActionMiddlewareResponse | void>;
+};
+
 export abstract class Action {
   name: string;
   description?: string;
   inputs: Inputs;
+  middleware?: ActionMiddleware[];
   web?: {
     route: RegExp | string;
     method: HTTP_METHOD;
@@ -45,6 +63,7 @@ export abstract class Action {
     this.name = args.name;
     this.description = args.description ?? `An Action: ${this.name}`;
     this.inputs = args.inputs ?? ({} as Inputs);
+    this.middleware = args.middleware ?? [];
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
       method: args.web?.method ?? HTTP_METHOD.GET,

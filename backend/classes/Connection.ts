@@ -60,8 +60,31 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       // load the session once, if it hasn't been loaded yet
       if (!this.sessionLoaded) await this.loadSession();
 
-      const formattedParams = await this.formatParams(params, action);
+      let formattedParams = await this.formatParams(params, action);
+
+      for (const middleware of action.middleware ?? []) {
+        if (middleware.runBefore) {
+          const middlewareResponse = await middleware.runBefore(
+            formattedParams,
+            this,
+          );
+          if (middlewareResponse?.updatedParams)
+            formattedParams = middlewareResponse.updatedParams;
+        }
+      }
+
       response = await action.run(formattedParams, this);
+
+      for (const middleware of action.middleware ?? []) {
+        if (middleware.runAfter) {
+          const middlewareResponse = await middleware.runAfter(
+            formattedParams,
+            this,
+          );
+          if (middlewareResponse?.updatedResponse)
+            response = middlewareResponse.updatedResponse;
+        }
+      }
     } catch (e) {
       loggerResponsePrefix = "ERROR";
       error =
