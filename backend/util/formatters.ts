@@ -84,3 +84,8 @@ export function ensureObjectOrArray<T extends Array<any> | Object>(
     return param as T extends Array<any> ? any[] : Record<string, any>;
   }
 }
+
+export function ensureFile(param: File | string) {
+  if (param instanceof File) return param;
+  throw new Error(`${param} cannot be converted to a file`);
+}

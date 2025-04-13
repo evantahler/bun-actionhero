@@ -5,3 +5,4 @@ export * from "./session";
 export * from "./status";
 export * from "./swagger";
 export * from "./user";
+export * from "./files";
