@@ -39,7 +39,7 @@ export class Signals extends Initializer {
     const timeout = setTimeout(this.onTimeout, config.process.shutdownTimeout);
     await api.stop();
     clearTimeout(timeout);
-    if (logging) logger.warn("Bye!");
+    if (logging) logger.warn("👋  Bye!");
     if (finalMessage) {
       if (exitCode === ExitCode.success) {
         console.log(finalMessage);

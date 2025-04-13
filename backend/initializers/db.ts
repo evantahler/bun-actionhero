@@ -29,7 +29,10 @@ export class DB extends Initializer {
   }
 
   async initialize() {
-    const dbContainer = {} as { db: ReturnType<typeof drizzle> };
+    const dbContainer = {} as {
+      db: ReturnType<typeof drizzle>;
+      pool: Pool;
+    };
     return Object.assign(
       {
         generateMigrations: this.generateMigrations,
@@ -40,7 +43,7 @@ export class DB extends Initializer {
   }
 
   async start() {
-    const pool = new Pool({
+    api.db.pool = new Pool({
       connectionString: config.database.connectionString,
     });
 
@@ -50,7 +53,7 @@ export class DB extends Initializer {
       }
     }
 
-    api.db.db = drizzle(pool, {
+    api.db.db = drizzle(api.db.pool, {
       logger: new DefaultLogger({ writer: new DrizzleLogger() }),
     });
 
@@ -82,9 +85,8 @@ export class DB extends Initializer {
 
   async stop() {
     if (api.db.db) {
-      // TODO: no exit method on drizzle?
-      // await api.db.db.close();
-      // logger.info("database connection closed");
+      await api.db.pool.end();
+      logger.info("database connection closed");
     }
   }
 

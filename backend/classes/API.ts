@@ -38,7 +38,7 @@ export class API {
   }
 
   async initialize() {
-    this.logger.warn("Initializing process");
+    this.logger.warn("--- 🔄  Initializing process ---");
     this.initialized = false;
 
     await this.findInitializers();
@@ -60,7 +60,7 @@ export class API {
     }
 
     this.initialized = true;
-    this.logger.warn("Initializing complete");
+    this.logger.warn("--- 🔄  Initializing complete ---");
   }
 
   async start(runMode: RUN_MODE = RUN_MODE.SERVER) {
@@ -69,7 +69,7 @@ export class API {
     this.runMode = runMode;
     if (!this.initialized) await this.initialize();
 
-    this.logger.warn("Starting process");
+    this.logger.warn("--- 🔼  Starting process ---");
 
     this.sortInitializers("startPriority");
 
@@ -95,7 +95,7 @@ export class API {
     }
 
     this.started = true;
-    this.logger.warn("Starting complete");
+    this.logger.warn("--- 🔼  Starting complete ---");
   }
 
   async stop() {
@@ -104,7 +104,7 @@ export class API {
       return;
     }
 
-    this.logger.warn("Stopping process");
+    this.logger.warn("--- 🔽  Stopping process ---");
 
     this.sortInitializers("stopPriority");
 
@@ -124,7 +124,7 @@ export class API {
 
     this.stopped = true;
     this.started = false;
-    this.logger.warn("Stopping complete");
+    this.logger.warn("--- 🔽  Stopping complete ---");
   }
 
   async restart() {
