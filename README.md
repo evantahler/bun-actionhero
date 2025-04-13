@@ -181,7 +181,11 @@ Config remains statically defined at boot. However, there's now per-env overwrit
 
 **Middleware**
 
-⚠️ TODO, but there will be some changes...
+Middleware is applied to actions as an array of `ActionMiddleware` objects. Middleware is run before and after the action is run if the `.runBefore` and `.runAfter` methods are defined. Middleware can be used for authentication, authorization, logging, and more. Optionally, middleware can throw an error to halt execution of the action. Middleware can also modify the params or the response.
+
+```ts
+middleware = [SessionMiddleware];
+```
 
 **Routes**
 

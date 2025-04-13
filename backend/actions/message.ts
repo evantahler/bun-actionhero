@@ -4,14 +4,15 @@ import { HTTP_METHOD } from "../classes/Action";
 import { serializeMessage } from "../ops/MessageOps";
 import { messages } from "../schema/messages";
 import { ensureNumber, ensureString } from "../util/formatters";
-import { ensureSession } from "../util/session";
 import { messageValidator } from "../util/validators";
 import { users } from "../schema/users";
 import type { SessionImpl } from "./session";
+import { SessionMiddleware } from "../middleware/session";
 
 export class MessageCrete implements Action {
   name = "message:create";
   description = "Create a message";
+  middleware = [SessionMiddleware];
   web = { route: "/message", method: HTTP_METHOD.PUT };
   inputs = {
     body: {
@@ -26,7 +27,6 @@ export class MessageCrete implements Action {
     params: ActionParams<MessageCrete>,
     connection: Connection<SessionImpl>,
   ) {
-    ensureSession(connection, "userId");
     const userId = connection!.session!.data.userId!;
 
     const [message] = await api.db.db
@@ -53,6 +53,7 @@ export class MessageCrete implements Action {
 export class MessagesList implements Action {
   name = "messages:list";
   description = "List messages";
+  middleware = [SessionMiddleware];
   web = { route: "/messages/list", method: HTTP_METHOD.GET };
   inputs = {
     limit: {
@@ -71,8 +72,6 @@ export class MessagesList implements Action {
     params: ActionParams<MessagesList>,
     connection: Connection<SessionImpl>,
   ) {
-    ensureSession(connection, "userId");
-
     const _messages = await api.db.db
       .select({
         id: messages.id,
