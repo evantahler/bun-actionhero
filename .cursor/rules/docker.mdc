@@ -1,0 +1,63 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Docker Operations
+
+Docker-related commands and configurations.
+
+## Development
+
+### Build and Run
+```bash
+docker-compose up --build
+```
+
+### Stop Containers
+```bash
+docker-compose down
+```
+
+## Production
+
+### Build Images
+```bash
+docker-compose -f docker-compose.prod.yml build
+```
+
+### Run Production
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+## Container Management
+
+### View Logs
+```bash
+docker-compose logs -f
+```
+
+### Access Container Shell
+```bash
+docker-compose exec backend bash
+```
+
+## Database Operations
+
+### Backup Database
+```bash
+docker-compose exec db pg_dump -U postgres bun > backup.sql
+```
+
+### Restore Database
+```bash
+docker-compose exec -T db psql -U postgres bun < backup.sql
+```
+
+## Best Practices
+- Use environment variables for configuration
+- Keep containers up to date
+- Monitor resource usage
+- Use proper networking
+- Implement proper logging

@@ -1,0 +1,19 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Bun Commands
+
+Common Bun commands for this project.
+
+## Commands
+
+- `bun install` - Install Dependencies
+- `bun dev` - Run Development Server
+- `bun tests` - Run Tests
+- `bun ci` - Run CI (lint, compile, test)
+- `bun lint` - Run Linter
+- `bun pretty` - Format Code
+- `bun compile` - Compile for Production
+- `bun start` - Start Production Server
