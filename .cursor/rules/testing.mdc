@@ -1,0 +1,48 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Testing
+
+Information about running and writing tests.
+
+## Running Tests
+
+### All Tests
+```bash
+bun tests
+```
+
+### CI Pipeline
+```bash
+bun ci
+```
+Runs linting, compilation, and all tests
+
+### Single Test File
+```bash
+cd backend
+bun test __tests__/actions/user.test.ts
+```
+
+## Test Structure
+- Tests are located in `__tests__` directories
+- Action tests are in `backend/__tests__/actions/`
+- Each test file corresponds to an action file
+
+## Writing Tests
+- Use `test()` for individual test cases
+- Use `describe()` for grouping related tests
+- Use `expect()` for assertions
+- Tests should be independent and not rely on each other
+
+## Test Database
+- Tests use a separate database: `bun-test`
+- Database is automatically created when needed
+- Each test should clean up after itself
+
+## Debugging Tests
+- Add `console.log()` statements
+- Use Cursor's debugger
+- Run specific test files to isolate issues

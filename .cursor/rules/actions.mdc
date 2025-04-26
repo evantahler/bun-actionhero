@@ -1,0 +1,43 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# Running Actions
+
+How to run actions from the command line interface.
+
+## Basic Usage
+
+Actions can be run from the CLI using the `actionhero.ts` script in the backend directory:
+
+```bash
+cd backend
+./actionhero.ts "actionName" [options] -q | jq
+```
+
+## Examples
+
+### Check Server Status
+```bash
+./actionhero.ts "status" -q | jq
+```
+
+This will return server information including:
+- Server name
+- Process ID
+- Version
+- Uptime
+- Memory usage
+
+## Options
+
+- `-q`: Hide logging output
+- `--help`: Show help information for the action
+- `| jq`: Format the JSON response nicely (requires jq to be installed)
+
+## Notes
+
+- All actions can be run from the CLI
+- The same input validation and responses are used as when running actions via HTTP or WebSocket
+- Actions can also be scheduled as tasks if they have a `task` property
