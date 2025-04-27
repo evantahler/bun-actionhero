@@ -1,5 +1,6 @@
 import Head from "next/head";
 import React from "react";
+import { Alert } from "react-bootstrap";
 
 export type LayoutProps = {
   title: string;
@@ -25,7 +26,9 @@ export const SwaggerLayout = (props: React.PropsWithChildren<LayoutProps>) => {
         <title>{props.title}</title>
       </Head>
 
-      {props.children}
+      <Alert variant="info" className="swagger-alert">
+        {props.children}
+      </Alert>
     </>
   );
 };
