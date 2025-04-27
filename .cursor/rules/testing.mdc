@@ -9,33 +9,31 @@ Information about running and writing tests.
 
 ## Running Tests
 
-### All Tests
-```bash
-bun tests
-```
-
-### CI Pipeline
-```bash
-bun ci
-```
-Runs linting, compilation, and all tests
-
-### Single Test File
+### Backend Tests
 ```bash
 cd backend
-bun test __tests__/actions/user.test.ts
+bun test                           # Run all tests
+bun test __tests__/path/file.test.ts  # Run specific test file
+```
+
+### Frontend Tests
+```bash
+cd frontend
+bun test                           # Run all tests
+bun test __tests__/path/file.test.ts  # Run specific test file
 ```
 
 ## Test Structure
-- Tests are located in `__tests__` directories
-- Action tests are in `backend/__tests__/actions/`
-- Each test file corresponds to an action file
-
-## Writing Tests
-- Use `test()` for individual test cases
-- Use `describe()` for grouping related tests
-- Use `expect()` for assertions
-- Tests should be independent and not rely on each other
+- Tests must be run from their respective directories (backend or frontend)
+- For HTTP tests:
+  - DELETE/POST/PUT requests need a body (at least "{}")
+  - GET requests should not include a body
+  - Include "Content-Type": "application/json" in headers when sending JSON
+  - For authenticated endpoints, include session cookie in headers
+- Clean up test data in afterAll blocks
+- Use beforeAll for test setup and data creation
+- Test both success and failure cases
+- Verify side effects (e.g., checking session destruction by attempting protected endpoint access)
 
 ## Test Database
 - Tests use a separate database: `bun-test`

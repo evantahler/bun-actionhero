@@ -7,6 +7,7 @@ import { serializeUser, checkPassword } from "../ops/UserOps";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { HTTP_METHOD } from "../classes/Action";
 import type { SessionData } from "../initializers/session";
+import { SessionMiddleware } from "../middleware/session";
 
 export type SessionImpl = { userId?: number };
 
@@ -65,4 +66,20 @@ export class SessionCreate implements Action {
       session: connection.session!,
     };
   };
+}
+
+export class SessionDestroy implements Action {
+  name = "session:destroy";
+  description = "Destroy a session";
+  web = { route: "/session", method: HTTP_METHOD.DELETE };
+  middleware = [SessionMiddleware];
+  inputs = {};
+
+  async run(
+    params: ActionParams<SessionDestroy>,
+    connection: Connection<SessionImpl>,
+  ) {
+    await api.session.destroy(connection);
+    return { success: true };
+  }
 }

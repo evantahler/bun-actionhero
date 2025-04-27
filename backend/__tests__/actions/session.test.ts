@@ -82,3 +82,56 @@ describe("session:create", () => {
     expect(response.error?.message).toEqual("Password does not match");
   });
 });
+
+describe("session:destroy", () => {
+  let session: ActionResponse<SessionCreate>["session"];
+
+  beforeAll(async () => {
+    const sessionRes = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "mario@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const sessionResponse =
+      (await sessionRes.json()) as ActionResponse<SessionCreate>;
+    session = sessionResponse.session;
+  });
+
+  test("successfully destroys a session", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "DELETE",
+      headers: {
+        Cookie: `${session.cookieName}=${session.id}`,
+        "Content-Type": "application/json",
+      },
+      body: "{}",
+    });
+    const response = await res.json();
+    expect(res.status).toBe(200);
+    expect(response.success).toBe(true);
+
+    // Verify session is actually destroyed by trying to access a protected endpoint
+    const userRes = await fetch(url + "/api/user", {
+      method: "GET",
+      headers: {
+        Cookie: `${session.cookieName}=${session.id}`,
+        "Content-Type": "application/json",
+      },
+    });
+    expect(userRes.status).toBe(401);
+  });
+
+  test("fails without a session", async () => {
+    const res = await fetch(url + "/api/session", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+    });
+    const response = await res.json();
+    expect(res.status).toBe(401);
+    expect(response.error?.message).toMatch(/Session not found/);
+  });
+});

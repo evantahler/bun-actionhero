@@ -1,4 +1,4 @@
-import { Row, Col } from "react-bootstrap";
+import { Row, Col, Button, Table } from "react-bootstrap";
 import { StatusCard } from "./StatusCard";
 import { SessionCreateCard } from "./SessionCreateCard";
 import { SignUpCard } from "./SignUpCard";
@@ -8,6 +8,7 @@ import InfoBar from "./InfoBar";
 import ChatCard from "./ChatCard";
 import type { UserView } from "../types/backend/actions/user";
 import { wrappedFetch } from "../utils/client";
+
 export type AppUser = ActionResponse<UserView>["user"] | null;
 
 export default function App() {
@@ -20,9 +21,23 @@ export default function App() {
   }, []);
 
   async function hydrateUser() {
-    const response = await wrappedFetch<ActionResponse<UserView>>("/user");
-    setSuccessMessage(`Welcome back, ${response.user.name}!`);
-    setUser(response.user);
+    try {
+      const response = await wrappedFetch<ActionResponse<UserView>>("/user");
+      setSuccessMessage(`Welcome back, ${response.user.name}!`);
+      setUser(response.user);
+    } catch (error) {
+      setUser(null);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await wrappedFetch("/session", { method: "DELETE" });
+      setUser(null);
+      setSuccessMessage("You have been logged out successfully");
+    } catch (error) {
+      setErrorMessage("Failed to log out");
+    }
   }
 
   return (
@@ -48,11 +63,30 @@ export default function App() {
         </Col>
         <Col>
           {user ? (
-            <ChatCard
-              user={user}
-              setSuccessMessage={setSuccessMessage}
-              setErrorMessage={setErrorMessage}
-            />
+            <>
+              <Table>
+                <tbody>
+                  <tr>
+                    <td className="text-start">Signed in as {user.name}</td>
+                    <td className="text-end">
+                      <Button
+                        size="sm"
+                        variant="outline-secondary"
+                        onClick={handleLogout}
+                      >
+                        Sign out
+                      </Button>
+                    </td>
+                  </tr>
+                </tbody>
+              </Table>
+
+              <ChatCard
+                user={user}
+                setSuccessMessage={setSuccessMessage}
+                setErrorMessage={setErrorMessage}
+              />
+            </>
           ) : (
             <Row>
               <Col>
