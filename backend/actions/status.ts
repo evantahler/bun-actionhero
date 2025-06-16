@@ -1,11 +1,12 @@
-import { api, Action, type Inputs } from "../api";
+import { z } from "zod";
+import { api, Action } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
 
 export class Status implements Action {
   name = "status";
   description = "Return the status of the server";
-  inputs = {};
+  inputs = z.object({});
   web = { route: "/status", method: HTTP_METHOD.GET };
 
   async run() {

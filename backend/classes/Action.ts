@@ -2,6 +2,7 @@ import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
 import type { Input } from "./Input";
 import type { TypedError } from "./TypedError";
+import { z } from "zod";
 
 export enum HTTP_METHOD {
   "GET" = "GET",
@@ -17,7 +18,7 @@ export const DEFAULT_QUEUE = "default";
 export type ActionConstructorInputs = {
   name: string;
   description?: string;
-  inputs?: Inputs;
+  inputs?: Inputs | z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route?: RegExp | string;
@@ -48,7 +49,7 @@ export type ActionMiddleware = {
 export abstract class Action {
   name: string;
   description?: string;
-  inputs: Inputs;
+  inputs: Inputs | z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route: RegExp | string;
@@ -81,14 +82,19 @@ export abstract class Action {
    * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
    */
   abstract run(
-    params: ActionParams<typeof this>,
-    connection: Connection, // ): ActionResponse<typeof this>;
+    params: any,
+    connection?: Connection,
   ): Promise<any>;
 }
 
-export type ActionParams<A extends Action> = {
-  [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
-};
+export type ActionParams<A extends Action> = A["inputs"] extends z.ZodType<any>
+  ? z.infer<A["inputs"]>
+  : A["inputs"] extends Inputs
+  ? {
+      [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
+    }
+  : Record<string, unknown>;
+
 type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
   a: any,
 ) => any

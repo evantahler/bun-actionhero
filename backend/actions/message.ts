@@ -1,10 +1,9 @@
 import { desc, eq, lt } from "drizzle-orm";
+import { z } from "zod";
 import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { serializeMessage } from "../ops/MessageOps";
 import { messages } from "../schema/messages";
-import { ensureNumber, ensureString } from "../util/formatters";
-import { messageValidator } from "../util/validators";
 import { users } from "../schema/users";
 import type { SessionImpl } from "./session";
 import { SessionMiddleware } from "../middleware/session";
@@ -14,14 +13,9 @@ export class MessageCrete implements Action {
   description = "Create a message";
   middleware = [SessionMiddleware];
   web = { route: "/message", method: HTTP_METHOD.PUT };
-  inputs = {
-    body: {
-      required: true,
-      validator: messageValidator,
-      formatter: ensureString,
-      description: "The message",
-    },
-  };
+  inputs = z.object({
+    body: z.string().min(1, "Message body is required").max(1000, "Message must be less than 1000 characters"),
+  });
 
   async run(
     params: ActionParams<MessageCrete>,
@@ -55,18 +49,10 @@ export class MessagesList implements Action {
   description = "List messages";
   middleware = [SessionMiddleware];
   web = { route: "/messages/list", method: HTTP_METHOD.GET };
-  inputs = {
-    limit: {
-      required: true,
-      formatter: ensureNumber,
-      default: 10,
-    },
-    offset: {
-      required: true,
-      formatter: ensureNumber,
-      default: 0,
-    },
-  };
+  inputs = z.object({
+    limit: z.coerce.number().int().min(1).max(100).default(10),
+    offset: z.coerce.number().int().min(0).default(0),
+  });
 
   async run(
     params: ActionParams<MessagesList>,
@@ -99,13 +85,9 @@ export class MessagesCleanup implements Action {
   name = "messages:cleanup";
   description = "cleanup messages older than 24 hours";
   task = { frequency: 1000 * 60 * 60, queue: "default" }; // run the task every hour
-  inputs = {
-    age: {
-      required: true,
-      formatter: ensureNumber,
-      default: 1000 * 60 * 60 * 24, // 24 hours
-    },
-  };
+  inputs = z.object({
+    age: z.coerce.number().int().min(1000).default(1000 * 60 * 60 * 24), // 24 hours
+  });
   async run(params: ActionParams<MessagesCleanup>) {
     const _messages = await api.db.db
       .delete(messages)
@@ -122,7 +104,7 @@ export class MessagesHello implements Action {
   name = "messages:hello";
   description = "broadcast a hello message to all users in the chat room";
   task = { frequency: 1000 * 60, queue: "default" }; // run the task every minute
-  inputs = {};
+  inputs = z.object({});
   async run() {
     const [message] = await api.db.db
       .insert(messages)

@@ -1,23 +1,15 @@
-import { Action, ActionParams, type Inputs } from "../api";
+import { z } from "zod";
+import { Action, ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
-import { ensureFile, ensureString } from "../util/formatters";
 
 export class FileUpload implements Action {
   name = "fileUpload";
   description = "A sample action that handles file uploads";
   web = { route: "/file", method: HTTP_METHOD.POST };
-  inputs = {
-    file: {
-      required: true,
-      description: "The file to upload",
-      formatter: ensureFile,
-    },
-    stringParam: {
-      required: true,
-      description: "A string parameter",
-      formatter: ensureString,
-    },
-  };
+  inputs = z.object({
+    file: z.instanceof(File, { message: "File is required" }),
+    stringParam: z.string().min(1, "String parameter is required"),
+  });
 
   async run(params: ActionParams<FileUpload>) {
     return {

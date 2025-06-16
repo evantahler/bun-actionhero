@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Action, config, api } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
@@ -32,7 +33,7 @@ type SwaggerPath = {
 export class Swagger implements Action {
   name = "swagger";
   description = "Return API documentation in the OpenAPI specification";
-  inputs = {};
+  inputs = z.object({});
   web = { route: "/swagger", method: HTTP_METHOD.GET };
 
   async run() {
@@ -85,37 +86,106 @@ function buildSwaggerPaths() {
       produces: ["application/json"],
       responses: swaggerResponses,
       security: [],
-      parameters: Object.keys(action.inputs)
-        .sort()
-        .map((inputName) => {
-          return {
-            // in: action?.web?.route.toString().includes(`:${inputName}`)
-            //   ? "path"
-            //   : "query",
-            in: "formData",
-            name: inputName,
-            type:
-              typeof action.inputs[inputName].formatter === "function"
-                ? "string" // not really true, but helps the swagger validator
-                : "string",
-            required: action.inputs[inputName].required ?? false,
-            //  ||
-            // route.path.includes(`:${inputName}`)
-            //   ? true
-            //   : false
-            default:
-              action.inputs[inputName].default !== null &&
-              action.inputs[inputName].default !== undefined
-                ? typeof action.inputs[inputName].default === "object"
-                  ? JSON.stringify(action.inputs[inputName].default)
-                  : typeof action.inputs[inputName].default === "function"
-                    ? action.inputs[inputName].default()
-                    : `${action.inputs[inputName].default}`
-                : undefined,
-          };
-        }),
+      parameters: getActionParameters(action),
     };
   }
 
   return swaggerPaths;
+}
+
+function getActionParameters(action: any) {
+  // Handle Zod schemas
+  if (action.inputs && typeof action.inputs.parse === "function") {
+    const zodSchema = action.inputs;
+    const shape = zodSchema.shape || {};
+    
+    return Object.keys(shape)
+      .sort()
+      .map((inputName) => {
+        const fieldSchema = shape[inputName];
+        return {
+          in: "formData",
+          name: inputName,
+          type: getZodFieldType(fieldSchema),
+          required: !isZodOptional(fieldSchema),
+          default: getZodDefault(fieldSchema),
+        };
+      });
+  }
+
+  // Handle legacy inputs format
+  if (action.inputs && typeof action.inputs === "object") {
+    return Object.keys(action.inputs)
+      .sort()
+      .map((inputName) => {
+        return {
+          in: "formData",
+          name: inputName,
+          type:
+            typeof action.inputs[inputName].formatter === "function"
+              ? "string" // not really true, but helps the swagger validator
+              : "string",
+          required: action.inputs[inputName].required ?? false,
+          default:
+            action.inputs[inputName].default !== null &&
+            action.inputs[inputName].default !== undefined
+              ? typeof action.inputs[inputName].default === "object"
+                ? JSON.stringify(action.inputs[inputName].default)
+                : typeof action.inputs[inputName].default === "function"
+                  ? action.inputs[inputName].default()
+                  : `${action.inputs[inputName].default}`
+              : undefined,
+        };
+      });
+  }
+
+  return [];
+}
+
+function getZodFieldType(fieldSchema: any): string {
+  if (!fieldSchema) return "string";
+  
+  const typeName = fieldSchema._def?.typeName;
+  switch (typeName) {
+    case "ZodString":
+      return "string";
+    case "ZodNumber":
+      return "number";
+    case "ZodBoolean":
+      return "boolean";
+    case "ZodArray":
+      return "array";
+    case "ZodObject":
+      return "object";
+    case "ZodOptional":
+      return getZodFieldType(fieldSchema._def.innerType);
+    case "ZodDefault":
+      return getZodFieldType(fieldSchema._def.innerType);
+    case "ZodEffects":
+      return getZodFieldType(fieldSchema._def.schema);
+    default:
+      return "string";
+  }
+}
+
+function isZodOptional(fieldSchema: any): boolean {
+  if (!fieldSchema) return true;
+  
+  const typeName = fieldSchema._def?.typeName;
+  if (typeName === "ZodOptional") return true;
+  if (typeName === "ZodDefault") return true;
+  
+  return false;
+}
+
+function getZodDefault(fieldSchema: any): any {
+  if (!fieldSchema) return undefined;
+  
+  const typeName = fieldSchema._def?.typeName;
+  if (typeName === "ZodDefault") {
+    const defaultValue = fieldSchema._def.defaultValue;
+    return typeof defaultValue === "function" ? defaultValue() : defaultValue;
+  }
+  
+  return undefined;
 }

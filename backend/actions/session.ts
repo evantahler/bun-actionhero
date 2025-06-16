@@ -1,8 +1,7 @@
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { api, type Action, type ActionParams, Connection } from "../api";
 import { users } from "../schema/users";
-import { ensureString } from "../util/formatters";
-import { emailValidator, passwordValidator } from "../util/validators";
 import { serializeUser, checkPassword } from "../ops/UserOps";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { HTTP_METHOD } from "../classes/Action";
@@ -15,21 +14,10 @@ export class SessionCreate implements Action {
   name = "session:create";
   description = "Create a session";
   web = { route: "/session", method: HTTP_METHOD.PUT };
-  inputs = {
-    email: {
-      required: true,
-      validator: emailValidator,
-      formatter: ensureString,
-      description: "The user's email",
-    },
-    password: {
-      required: true,
-      validator: passwordValidator,
-      formatter: ensureString,
-      secret: true,
-      description: "The user's password",
-    },
-  };
+  inputs = z.object({
+    email: z.string().email("Invalid email address").toLowerCase(),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+  });
 
   // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it
   run = async (
@@ -42,7 +30,7 @@ export class SessionCreate implements Action {
     const [user] = await api.db.db
       .select()
       .from(users)
-      .where(eq(users.email, params.email.toLowerCase()));
+      .where(eq(users.email, params.email));
 
     if (!user) {
       throw new TypedError({
@@ -73,7 +61,7 @@ export class SessionDestroy implements Action {
   description = "Destroy a session";
   web = { route: "/session", method: HTTP_METHOD.DELETE };
   middleware = [SessionMiddleware];
-  inputs = {};
+  inputs = z.object({});
 
   async run(
     params: ActionParams<SessionDestroy>,
