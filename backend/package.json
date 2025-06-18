@@ -19,6 +19,7 @@
     "types": "rm -rf types && tsc -skipLibCheck true --emitDeclarationOnly --outDir types --declarationMap --declaration --esModuleInterop true --module esnext --moduleResolution bundler --target esnext actionhero.ts api.ts actions/.index.ts"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
     "colors": "^1.4.0",
     "commander": "^12.1.0",
     "cookie": "^0.6.0",
