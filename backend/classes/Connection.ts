@@ -6,6 +6,7 @@ import { ErrorType, TypedError } from "./TypedError";
 import type { SessionData } from "../initializers/session";
 import { randomUUID } from "crypto";
 import type { PubSubMessage } from "../initializers/pubsub";
+import "../util/zodSecretsMixin";
 
 export class Connection<T extends Record<string, any> = Record<string, any>> {
   type: string;
@@ -232,10 +233,26 @@ const REDACTED = "[[secret]]" as const;
 
 const sanitizeParams = (params: FormData, action: Action | undefined) => {
   const sanitizedParams: Record<string, any> = {};
+
+  // Get secret fields from the action's zod schema if it exists
+  const secretFields = new Set<string>();
+  if (action?.inputs && typeof action.inputs === "object") {
+    const zodSchema = action.inputs as any;
+    if (zodSchema._def?.typeName === "ZodObject" && zodSchema.shape) {
+      for (const [fieldName, fieldSchema] of Object.entries(zodSchema.shape)) {
+        if ((fieldSchema as any)._def?.isSecret) {
+          secretFields.add(fieldName);
+        }
+      }
+    }
+  }
+
   params.forEach((v, k) => {
-    // For now, we don't have a way to mark fields as secret in zod schemas
-    // This could be added later with a custom zod extension if needed
-    sanitizedParams[k] = v;
+    if (secretFields.has(k)) {
+      sanitizedParams[k] = REDACTED;
+    } else {
+      sanitizedParams[k] = v;
+    }
   });
 
   return sanitizedParams;

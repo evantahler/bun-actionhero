@@ -3,6 +3,7 @@ import { api, type ActionResponse } from "../../api";
 import type { UserCreate, UserEdit } from "../../actions/user";
 import { config } from "../../config";
 import type { SessionCreate } from "../../actions/session";
+import { logger } from "../../api";
 
 const url = config.server.web.applicationUrl;
 
@@ -67,6 +68,41 @@ describe("user:create", () => {
     );
     expect(response.error?.key).toEqual("name");
     expect(response.error?.value).toEqual("x");
+  });
+
+  test("secret fields are redacted in logs", async () => {
+    // Mock the logger to capture log messages
+    const originalInfo = logger.info;
+    const logMessages: string[] = [];
+    logger.info = (message: string) => {
+      logMessages.push(message);
+    };
+
+    try {
+      const formData = new FormData();
+      formData.append("name", "Test User");
+      formData.append("email", "test@example.com");
+      formData.append("password", "secretpassword123");
+
+      const res = await fetch(url + "/api/user", {
+        method: "PUT",
+        body: formData,
+      });
+
+      // Find the log message that contains the action execution
+      const actionLogMessage = logMessages.find(
+        (msg) => msg.includes("[ACTION:") && msg.includes("user:create"),
+      );
+
+      expect(actionLogMessage).toBeDefined();
+      expect(actionLogMessage).toContain('"name":"Test User"');
+      expect(actionLogMessage).toContain('"email":"test@example.com"');
+      expect(actionLogMessage).toContain('"password":"[[secret]]"');
+      expect(actionLogMessage).not.toContain('"password":"secretpassword123"');
+    } finally {
+      // Restore original logger
+      logger.info = originalInfo;
+    }
   });
 });
 

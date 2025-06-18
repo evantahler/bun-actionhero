@@ -155,6 +155,23 @@ Actions which have a `task` property can be scheduled as a task. A `queue` prope
 task = { queue: "default", frequency: 1000 * 60 * 60 }; // run the task every hour
 ```
 
+## Marking Secret Fields in Action Inputs
+
+You can mark sensitive fields in your zod schemas as secret using the custom `.secret()` mixin. This is useful for fields like passwords, API keys, or tokens that should never be logged or exposed in logs.
+
+**How to use:**
+
+```ts
+inputs = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).secret(), // This field will be redacted in logs
+});
+```
+
+When an action is executed, any field marked with `.secret()` will be replaced with `[[secret]]` in logs and not exposed in any logging output, even if the action fails or validation errors occur.
+
+This works for any zod field type (string, number, etc). Simply chain `.secret()` to the field definition.
+
 ## Intentional changes from ActionHero
 
 **Multiple Applications**
