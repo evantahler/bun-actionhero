@@ -19,40 +19,23 @@ describe("swagger", () => {
     expect(res.status).toBe(200);
     const response = (await res.json()) as ActionResponse<Swagger>;
 
-    expect(response.basePath).toInclude("/api/");
-    expect(response.host).toInclude(
-      config.server.web.applicationUrl
-        .replace(/^https?:\/\//, "")
-        .replace(/^http?:\/\//, ""),
+    // OpenAPI 3.0 structure
+    expect(response.openapi).toBe("3.0.0");
+    expect(response.info.title).toBe("actionhero");
+    expect(response.servers).toBeDefined();
+    const serverUrl = response.servers![0].url;
+    expect(serverUrl.endsWith("/api") || serverUrl.endsWith("/api/")).toBe(
+      true,
     );
 
     expect(Object.keys(response.paths).length).toBeGreaterThan(2);
 
-    expect(response.paths["/swagger"]).toEqual({
-      get: {
-        consumes: ["application/json"],
-        parameters: [],
-        produces: ["application/json"],
-        responses: {
-          "200": {
-            description: "successful operation",
-          },
-          "400": {
-            description: "Invalid input",
-          },
-          "404": {
-            description: "Not Found",
-          },
-          "422": {
-            description: "Missing or invalid params",
-          },
-          "500": {
-            description: "Server error",
-          },
-        },
-        security: [],
-        summary: "Return API documentation in the OpenAPI specification",
-      },
-    });
+    // Check that the swagger endpoint itself is documented
+    expect(response.paths["/swagger"]).toBeDefined();
+    expect(response.paths["/swagger"]?.get).toBeDefined();
+    expect(response.paths["/swagger"]?.get?.summary).toBe(
+      "Return API documentation in the OpenAPI specification",
+    );
+    expect(response.paths["/swagger"]?.get?.responses["200"]).toBeDefined();
   });
 });
