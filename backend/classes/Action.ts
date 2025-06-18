@@ -1,6 +1,4 @@
-import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
-import type { Input } from "./Input";
 import type { TypedError } from "./TypedError";
 import { z } from "zod";
 
@@ -18,7 +16,7 @@ export const DEFAULT_QUEUE = "default";
 export type ActionConstructorInputs = {
   name: string;
   description?: string;
-  inputs?: Inputs | z.ZodType<any>;
+  inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route?: RegExp | string;
@@ -49,7 +47,7 @@ export type ActionMiddleware = {
 export abstract class Action {
   name: string;
   description?: string;
-  inputs?: Inputs | z.ZodType<any>;
+  inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route: RegExp | string;
@@ -90,17 +88,7 @@ export abstract class Action {
 export type ActionParams<A extends Action> =
   A["inputs"] extends z.ZodType<any>
     ? z.infer<A["inputs"]>
-    : A["inputs"] extends Inputs
-      ? {
-          [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
-        }
-      : Record<string, unknown>;
-
-type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
-  a: any,
-) => any
-  ? ReturnType<I["formatter"]>
-  : unknown;
+    : Record<string, unknown>;
 
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
   Partial<{ error?: TypedError }>;

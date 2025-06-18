@@ -233,11 +233,9 @@ const REDACTED = "[[secret]]" as const;
 const sanitizeParams = (params: FormData, action: Action | undefined) => {
   const sanitizedParams: Record<string, any> = {};
   params.forEach((v, k) => {
-    if (action && action?.inputs[k]?.secret === true) {
-      sanitizedParams[k] = REDACTED;
-    } else {
-      sanitizedParams[k] = v;
-    }
+    // For now, we don't have a way to mark fields as secret in zod schemas
+    // This could be added later with a custom zod extension if needed
+    sanitizedParams[k] = v;
   });
 
   return sanitizedParams;

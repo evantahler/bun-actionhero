@@ -11,8 +11,6 @@ export {
 export { API, RUN_MODE } from "./classes/API";
 export { Connection } from "./classes/Connection";
 export { Initializer } from "./classes/Initializer";
-export { type Input } from "./classes/Input";
-export { type Inputs } from "./classes/Inputs";
 export { Logger } from "./classes/Logger";
 export { Server } from "./classes/Server";
 

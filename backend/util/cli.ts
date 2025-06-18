@@ -41,16 +41,6 @@ The server will be initialized and started, except for initialized with the skip
       }
     }
   }
-  // Handle legacy inputs format
-  else if (action.inputs && typeof action.inputs === "object") {
-    for (const [name, input] of Object.entries(action.inputs)) {
-      if (input.required) {
-        command.requiredOption(`--${name} <value>`, input.description);
-      } else {
-        command.option(`--${name} [value]`, input.description);
-      }
-    }
-  }
 
   command.option(
     "-q, --quiet",

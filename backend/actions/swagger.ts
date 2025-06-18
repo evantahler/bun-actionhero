@@ -112,32 +112,6 @@ function getActionParameters(action: any) {
       });
   }
 
-  // Handle legacy inputs format
-  if (action.inputs && typeof action.inputs === "object") {
-    return Object.keys(action.inputs)
-      .sort()
-      .map((inputName) => {
-        return {
-          in: "formData",
-          name: inputName,
-          type:
-            typeof action.inputs[inputName].formatter === "function"
-              ? "string" // not really true, but helps the swagger validator
-              : "string",
-          required: action.inputs[inputName].required ?? false,
-          default:
-            action.inputs[inputName].default !== null &&
-            action.inputs[inputName].default !== undefined
-              ? typeof action.inputs[inputName].default === "object"
-                ? JSON.stringify(action.inputs[inputName].default)
-                : typeof action.inputs[inputName].default === "function"
-                  ? action.inputs[inputName].default()
-                  : `${action.inputs[inputName].default}`
-              : undefined,
-        };
-      });
-  }
-
   return [];
 }
 

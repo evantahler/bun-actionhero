@@ -117,7 +117,6 @@ describe("with workers and scheduler", () => {
     class RecurringTestAction implements Action {
       name = "recurring_test_action";
       task = { frequency: 100, queue: DEFAULT_QUEUE };
-      inputs = {};
       run = async () => {
         runs.push(Date.now());
       };
