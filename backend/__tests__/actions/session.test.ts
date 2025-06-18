@@ -60,7 +60,7 @@ describe("session:create", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "bowser@example.com",
-        password: "xxx",
+        password: "password123",
       }),
     });
     const response = (await res.json()) as ActionResponse<SessionCreate>;
@@ -74,7 +74,7 @@ describe("session:create", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: "mario@example.com",
-        password: "yoshi",
+        password: "wrongpassword123",
       }),
     });
     const response = (await res.json()) as ActionResponse<SessionCreate>;

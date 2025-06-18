@@ -179,84 +179,52 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   private async formatParams(params: FormData, action: Action) {
     if (!action.inputs) return {} as ActionParams<Action>;
 
-    const formattedParams = {} as ActionParams<Action>;
+    // Convert FormData to a plain object for processing
+    const rawParams: Record<string, any> = {};
+    params.forEach((value, key) => {
+      rawParams[key] = value;
+    });
 
-    for (const [key, paramDefinition] of Object.entries(action.inputs)) {
-      let value = params.get(key); // TODO: handle getAll for multiple values
-
+    // Handle zod schema inputs
+    if (
+      typeof action.inputs === "object" &&
+      action.inputs &&
+      "safeParse" in action.inputs
+    ) {
+      // This is a zod schema
       try {
-        if (
-          (value === null || value === undefined) &&
-          paramDefinition.default !== undefined &&
-          paramDefinition.default !== null
-        ) {
-          value =
-            typeof paramDefinition.default === "function"
-              ? paramDefinition.default(value)
-              : paramDefinition.default;
+        const result = (action.inputs as any).safeParse(rawParams);
+        if (!result.success) {
+          // Get the first validation error
+          const firstError = result.error.errors[0];
+          const key = firstError.path[0];
+          const value = rawParams[key];
+          let message = firstError.message;
+          if (message === "Required") {
+            message = `Missing required param: ${key}`;
+          }
+          throw new TypedError({
+            message,
+            type: ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
+            key,
+            value,
+          });
         }
+        return result.data as ActionParams<Action>;
       } catch (e) {
+        if (e instanceof TypedError) {
+          throw e;
+        }
         throw new TypedError({
-          message: `Error creating default value for for param ${key}: ${e}`,
-          type: ErrorType.CONNECTION_ACTION_PARAM_DEFAULT,
+          message: `Error validating params: ${e}`,
+          type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
           originalError: e,
         });
       }
-
-      if (
-        paramDefinition.required === true &&
-        (value === undefined || value === null)
-      ) {
-        throw new TypedError({
-          message: `Missing required param: ${key}`,
-          type: ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
-          key,
-        });
-      }
-
-      if (paramDefinition.formatter && value !== undefined && value !== null) {
-        try {
-          value = paramDefinition.formatter(value);
-        } catch (e) {
-          throw new TypedError({
-            message: `${e}`,
-            type: ErrorType.CONNECTION_ACTION_PARAM_FORMATTING,
-            key,
-            value,
-            originalError: e,
-          });
-        }
-      }
-
-      if (paramDefinition.validator && value !== undefined && value !== null) {
-        let validationResponse: string | boolean | Error = false;
-
-        try {
-          validationResponse = paramDefinition.validator(value);
-        } catch (e) {
-          if (e instanceof Error) validationResponse = e;
-        }
-
-        if (
-          validationResponse instanceof Error ||
-          validationResponse === false
-        ) {
-          throw new TypedError({
-            message:
-              validationResponse instanceof Error
-                ? validationResponse.message
-                : `Validation failed for param ${key}`,
-            type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
-            key,
-            value,
-          });
-        }
-      }
-
-      formattedParams[key] = value as any;
     }
 
-    return formattedParams;
+    // If we get here, inputs is not a zod schema, return empty object
+    return {} as ActionParams<Action>;
   }
 }
 
@@ -265,11 +233,9 @@ const REDACTED = "[[secret]]" as const;
 const sanitizeParams = (params: FormData, action: Action | undefined) => {
   const sanitizedParams: Record<string, any> = {};
   params.forEach((v, k) => {
-    if (action && action?.inputs[k]?.secret === true) {
-      sanitizedParams[k] = REDACTED;
-    } else {
-      sanitizedParams[k] = v;
-    }
+    // For now, we don't have a way to mark fields as secret in zod schemas
+    // This could be added later with a custom zod extension if needed
+    sanitizedParams[k] = v;
   });
 
   return sanitizedParams;

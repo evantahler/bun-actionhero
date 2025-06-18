@@ -1,7 +1,6 @@
-import type { Inputs } from "./Inputs";
 import type { Connection } from "./Connection";
-import type { Input } from "./Input";
 import type { TypedError } from "./TypedError";
+import { z } from "zod";
 
 export enum HTTP_METHOD {
   "GET" = "GET",
@@ -17,7 +16,7 @@ export const DEFAULT_QUEUE = "default";
 export type ActionConstructorInputs = {
   name: string;
   description?: string;
-  inputs?: Inputs;
+  inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route?: RegExp | string;
@@ -48,7 +47,7 @@ export type ActionMiddleware = {
 export abstract class Action {
   name: string;
   description?: string;
-  inputs: Inputs;
+  inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route: RegExp | string;
@@ -62,7 +61,7 @@ export abstract class Action {
   constructor(args: ActionConstructorInputs) {
     this.name = args.name;
     this.description = args.description ?? `An Action: ${this.name}`;
-    this.inputs = args.inputs ?? ({} as Inputs);
+    this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
@@ -81,19 +80,15 @@ export abstract class Action {
    * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
    */
   abstract run(
-    params: ActionParams<typeof this>,
-    connection: Connection, // ): ActionResponse<typeof this>;
+    params: ActionParams<Action>,
+    connection?: Connection,
   ): Promise<any>;
 }
 
-export type ActionParams<A extends Action> = {
-  [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
-};
-type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
-  a: any,
-) => any
-  ? ReturnType<I["formatter"]>
-  : unknown;
+export type ActionParams<A extends Action> =
+  A["inputs"] extends z.ZodType<any>
+    ? z.infer<A["inputs"]>
+    : Record<string, unknown>;
 
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
   Partial<{ error?: TypedError }>;

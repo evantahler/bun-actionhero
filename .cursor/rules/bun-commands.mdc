@@ -14,6 +14,6 @@ Common Bun commands for this project.
 - `bun tests` - Run Tests
 - `bun ci` - Run CI (lint, compile, test)
 - `bun lint` - Run Linter
-- `bun pretty` - Format Code
+- `bun format` - Format Code
 - `bun compile` - Compile for Production
 - `bun start` - Start Production Server

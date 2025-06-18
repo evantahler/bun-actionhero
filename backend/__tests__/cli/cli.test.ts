@@ -57,7 +57,7 @@ describe("CLI", () => {
 
   test("create user and session via the CLI as integration test", async () => {
     const { stdout, stderr, exitCode } =
-      await $`./actionhero.ts "user:create" --name test --email test@test.com --password test`.quiet();
+      await $`./actionhero.ts "user:create" --name test --email test@test.com --password testpass123`.quiet();
 
     expect(exitCode).toBe(0);
     expect(stderr).toBeEmpty();
@@ -70,7 +70,7 @@ describe("CLI", () => {
       stdout: stdout2,
       stderr: stderr2,
       exitCode: exitCode2,
-    } = await $`./actionhero.ts "session:create" --email test@test.com --password test`.quiet();
+    } = await $`./actionhero.ts "session:create" --email test@test.com --password testpass123`.quiet();
 
     expect(exitCode2).toBe(0);
     expect(stderr2).toBeEmpty();

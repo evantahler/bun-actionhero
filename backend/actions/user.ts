@@ -1,14 +1,9 @@
 import { eq } from "drizzle-orm";
+import { z } from "zod";
 import { api, Action, type ActionParams, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { hashPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";
-import { ensureString } from "../util/formatters";
-import {
-  emailValidator,
-  nameValidator,
-  passwordValidator,
-} from "../util/validators";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { SessionMiddleware } from "../middleware/session";
 
@@ -16,33 +11,33 @@ export class UserCreate implements Action {
   name = "user:create";
   description = "Create a new user";
   web = { route: "/user", method: HTTP_METHOD.PUT };
-  inputs = {
-    name: {
-      required: true,
-      validator: nameValidator,
-      formatter: ensureString,
-      description: "The user's name",
-    },
-    email: {
-      required: true,
-      validator: emailValidator,
-      formatter: ensureString,
-      description: "The user's email",
-    },
-    password: {
-      required: true,
-      validator: passwordValidator,
-      formatter: ensureString,
-      secret: true,
-      description: "The user's password",
-    },
-  };
+  inputs = z.object({
+    name: z
+      .string()
+      .min(3, "This field is required and must be at least 3 characters long")
+      .max(256, "Name must be less than 256 characters")
+      .describe("The user's name"),
+    email: z
+      .string()
+      .min(3, "This field is required and must be at least 3 characters long")
+      .refine(
+        (val) => val.includes("@") && val.includes("."),
+        "This is not a valid email",
+      )
+      .transform((val) => val.toLowerCase())
+      .describe("The user's email"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(256, "Password must be less than 256 characters")
+      .describe("The user's password"),
+  });
 
   async run(params: ActionParams<UserCreate>) {
     const [existingUser] = await api.db.db
       .select()
       .from(users)
-      .where(eq(users.email, params.email.toLowerCase()))
+      .where(eq(users.email, params.email))
       .limit(1);
 
     if (existingUser) {
@@ -56,7 +51,7 @@ export class UserCreate implements Action {
       .insert(users)
       .values({
         name: params.name,
-        email: params.email.toLowerCase(),
+        email: params.email,
         password_hash: await hashPassword(params.password),
       })
       .returning();
@@ -70,33 +65,17 @@ export class UserEdit implements Action {
   description = "Edit an existing user";
   web = { route: "/user", method: HTTP_METHOD.POST };
   middleware = [SessionMiddleware];
-  inputs = {
-    name: {
-      required: false,
-      validator: nameValidator,
-      formatter: ensureString,
-      description: "The user's name",
-    },
-    email: {
-      required: false,
-      validator: emailValidator,
-      formatter: ensureString,
-      description: "The user's email",
-    },
-    password: {
-      required: false,
-      validator: passwordValidator,
-      formatter: ensureString,
-      secret: true,
-      description: "The user's password",
-    },
-  };
+  inputs = z.object({
+    name: z.string().min(1).max(256).optional(),
+    email: z.string().email().toLowerCase().optional(),
+    password: z.string().min(8).max(256).optional(),
+  });
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
     const { name, email, password } = params;
     const updates = {} as Record<string, string>;
     if (name) updates.name = name;
-    if (email) updates.email = email.toLowerCase();
+    if (email) updates.email = email;
     if (password) updates.password_hash = await hashPassword(password);
 
     const [user] = await api.db.db
@@ -114,7 +93,6 @@ export class UserView implements Action {
   description = "View yourself";
   middleware = [SessionMiddleware];
   web = { route: "/user", method: HTTP_METHOD.GET };
-  inputs = {};
 
   async run(params: ActionParams<UserView>, connection: Connection) {
     const [user] = await api.db.db

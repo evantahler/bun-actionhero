@@ -139,7 +139,7 @@ describe("actions", () => {
           params: {
             name: "Marco",
             email: "marco@example.com",
-            password: "abc123",
+            password: "abc12345",
           },
         }),
       );
@@ -152,7 +152,7 @@ describe("actions", () => {
           params: {
             name: "Polo",
             email: "polo@example.com",
-            password: "abc123",
+            password: "abc12345",
           },
         }),
       );
@@ -180,7 +180,7 @@ describe("actions", () => {
           messageId: 2,
           params: {
             email: "marco@example.com",
-            password: "abc123",
+            password: "abc12345",
           },
         }),
       );
@@ -192,7 +192,7 @@ describe("actions", () => {
           messageId: 2,
           params: {
             email: "polo@example.com",
-            password: "abc123",
+            password: "abc12345",
           },
         }),
       );
