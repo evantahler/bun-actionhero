@@ -5,14 +5,14 @@ export default defineConfig({
     command: "cd .. && bun dev",
     port: 3000,
     timeout: 120 * 1000, // 2 minutes
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     env: {
       CI: process.env.CI,
-      // NODE_ENV: "test",
     },
   },
   testDir: "__tests__",
   use: {
     baseURL: "http://localhost:3000",
   },
+  workers: process.env.CI ? 1 : undefined, // Single worker in CI, default in development
 });
