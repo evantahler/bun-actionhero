@@ -13,7 +13,8 @@
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "types": "bun --cwd ../backend types && rm -rf ./types && mkdir -p ./types && cp -r ../backend/types ./types/backend",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "next": "^14.2.7",

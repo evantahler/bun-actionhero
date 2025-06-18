@@ -5,7 +5,11 @@ export default defineConfig({
     command: "cd .. && bun dev",
     port: 3000,
     timeout: 120 * 1000, // 2 minutes
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
+    env: {
+      CI: process.env.CI,
+      // NODE_ENV: "test",
+    },
   },
   testDir: "__tests__",
   use: {

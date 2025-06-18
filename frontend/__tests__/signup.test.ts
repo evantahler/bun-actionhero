@@ -47,33 +47,6 @@ test.describe("Sign Up Functionality", () => {
     ).not.toBeVisible();
   });
 
-  // test("should show error message for duplicate email", async ({ page }) => {
-  //   const testName = "DuplicateUser";
-  //   const testEmail = "duplicate@example.com";
-  //   const testPassword = "testpassword123";
-
-  //   const signUpForm = page.locator("form").nth(1);
-
-  //   // First sign up
-  //   await signUpForm.locator("#name").fill(testName);
-  //   await signUpForm.locator("#email").fill(testEmail);
-  //   await signUpForm.locator("#password").fill(testPassword);
-  //   await signUpForm.getByRole("button", { name: "Submit" }).click();
-
-  //   // Wait for success and sign out
-  //   await expect(page.getByText(`Hello ${testName}!`)).toBeVisible();
-  //   await page.getByRole("button", { name: "Sign out" }).click();
-
-  //   // Try to sign up with same email again
-  //   await signUpForm.locator("#name").fill("AnotherUser");
-  //   await signUpForm.locator("#email").fill(testEmail);
-  //   await signUpForm.locator("#password").fill("differentpassword");
-  //   await signUpForm.getByRole("button", { name: "Submit" }).click();
-
-  //   // Should show error message
-  //   await expect(page.getByText(/error/i)).toBeVisible();
-  // });
-
   test("should validate required fields", async ({ page }) => {
     const signUpForm = page.locator("form").nth(1);
 
