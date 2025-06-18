@@ -12,9 +12,25 @@ export class UserCreate implements Action {
   description = "Create a new user";
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({
-    name: z.string().min(1, "Name is required").max(256, "Name must be less than 256 characters"),
-    email: z.string().email("Invalid email address").toLowerCase(),
-    password: z.string().min(8, "Password must be at least 8 characters").max(256, "Password must be less than 256 characters"),
+    name: z
+      .string()
+      .min(3, "This field is required and must be at least 3 characters long")
+      .max(256, "Name must be less than 256 characters")
+      .describe("The user's name"),
+    email: z
+      .string()
+      .min(3, "This field is required and must be at least 3 characters long")
+      .refine(
+        (val) => val.includes("@") && val.includes("."),
+        "This is not a valid email",
+      )
+      .transform((val) => val.toLowerCase())
+      .describe("The user's email"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .max(256, "Password must be less than 256 characters")
+      .describe("The user's password"),
   });
 
   async run(params: ActionParams<UserCreate>) {

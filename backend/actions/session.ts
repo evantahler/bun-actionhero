@@ -15,8 +15,19 @@ export class SessionCreate implements Action {
   description = "Create a session";
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = z.object({
-    email: z.string().email("Invalid email address").toLowerCase(),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    email: z
+      .string()
+      .min(3, "This field is required and must be at least 3 characters long")
+      .refine(
+        (val) => val.includes("@") && val.includes("."),
+        "This is not a valid email",
+      )
+      .transform((val) => val.toLowerCase())
+      .describe("The user's email"),
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters")
+      .describe("The user's password"),
   });
 
   // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it

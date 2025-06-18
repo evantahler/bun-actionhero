@@ -14,7 +14,11 @@ export class MessageCrete implements Action {
   middleware = [SessionMiddleware];
   web = { route: "/message", method: HTTP_METHOD.PUT };
   inputs = z.object({
-    body: z.string().min(1, "Message body is required").max(1000, "Message must be less than 1000 characters"),
+    body: z
+      .string()
+      .min(1, "Message body is required")
+      .max(1000, "Message must be less than 1000 characters")
+      .describe("The message body"),
   });
 
   async run(
@@ -86,7 +90,11 @@ export class MessagesCleanup implements Action {
   description = "cleanup messages older than 24 hours";
   task = { frequency: 1000 * 60 * 60, queue: "default" }; // run the task every hour
   inputs = z.object({
-    age: z.coerce.number().int().min(1000).default(1000 * 60 * 60 * 24), // 24 hours
+    age: z.coerce
+      .number()
+      .int()
+      .min(1000)
+      .default(1000 * 60 * 60 * 24), // 24 hours
   });
   async run(params: ActionParams<MessagesCleanup>) {
     const _messages = await api.db.db

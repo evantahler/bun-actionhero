@@ -19,15 +19,20 @@ The server will be initialized and started, except for initialized with the skip
   // Handle Zod schemas
   if (action.inputs && typeof action.inputs.parse === "function") {
     const zodSchema = action.inputs as any;
-    
+
     // Only process if it's a ZodObject with a shape property
-    if (zodSchema._def && zodSchema._def.typeName === "ZodObject" && zodSchema.shape) {
+    if (
+      zodSchema._def &&
+      zodSchema._def.typeName === "ZodObject" &&
+      zodSchema.shape
+    ) {
       const shape = zodSchema.shape;
-      
+
       for (const [name, fieldSchema] of Object.entries(shape)) {
         const isRequired = !isZodOptional(fieldSchema);
-        const description = getZodDescription(fieldSchema) || `${name} parameter`;
-        
+        const description =
+          getZodDescription(fieldSchema) || `${name} parameter`;
+
         if (isRequired) {
           command.requiredOption(`--${name} <value>`, description);
         } else {
@@ -35,7 +40,7 @@ The server will be initialized and started, except for initialized with the skip
         }
       }
     }
-  } 
+  }
   // Handle legacy inputs format
   else if (action.inputs && typeof action.inputs === "object") {
     for (const [name, input] of Object.entries(action.inputs)) {
@@ -114,16 +119,43 @@ function exitWithError(error: string | Error) {
 
 function isZodOptional(fieldSchema: any): boolean {
   if (!fieldSchema) return true;
-  
+
   const typeName = fieldSchema._def?.typeName;
   if (typeName === "ZodOptional") return true;
   if (typeName === "ZodDefault") return true;
-  
+
   return false;
 }
 
 function getZodDescription(fieldSchema: any): string | undefined {
   if (!fieldSchema) return undefined;
-  
-  return fieldSchema._def?.description;
+
+  // First try to get the explicit description
+  const description = fieldSchema._def?.description;
+  if (description) return description;
+
+  // If no description, try to extract from error messages
+  const typeName = fieldSchema._def?.typeName;
+
+  // For string fields, try to get the error message from validators
+  if (typeName === "ZodString") {
+    const validators = fieldSchema._def?.checks;
+    if (validators && validators.length > 0) {
+      // Look for min/max length or email validators
+      for (const validator of validators) {
+        if (validator.kind === "min" && validator.message) {
+          return validator.message;
+        }
+        if (validator.kind === "max" && validator.message) {
+          return validator.message;
+        }
+        if (validator.kind === "email" && validator.message) {
+          return validator.message;
+        }
+      }
+    }
+  }
+
+  // Fallback to a generic description based on the field name
+  return undefined;
 }

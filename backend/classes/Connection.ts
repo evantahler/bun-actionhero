@@ -179,10 +179,57 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   private async formatParams(params: FormData, action: Action) {
     if (!action.inputs) return {} as ActionParams<Action>;
 
+    // Convert FormData to a plain object for processing
+    const rawParams: Record<string, any> = {};
+    params.forEach((value, key) => {
+      rawParams[key] = value;
+    });
+
+    // Handle zod schema inputs
+    if (
+      typeof action.inputs === "object" &&
+      action.inputs &&
+      "safeParse" in action.inputs
+    ) {
+      // This is a zod schema
+      try {
+        const result = (action.inputs as any).safeParse(rawParams);
+        if (!result.success) {
+          // Get the first validation error
+          const firstError = result.error.errors[0];
+          const key = firstError.path[0];
+          const value = rawParams[key];
+          let message = firstError.message;
+          if (message === "Required") {
+            message = `Missing required param: ${key}`;
+          }
+          throw new TypedError({
+            message,
+            type: ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
+            key,
+            value,
+          });
+        }
+        return result.data as ActionParams<Action>;
+      } catch (e) {
+        if (e instanceof TypedError) {
+          throw e;
+        }
+        throw new TypedError({
+          message: `Error validating params: ${e}`,
+          type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
+          originalError: e,
+        });
+      }
+    }
+
+    // Handle legacy Inputs type (Record<string, Input>)
     const formattedParams = {} as ActionParams<Action>;
 
-    for (const [key, paramDefinition] of Object.entries(action.inputs)) {
-      let value = params.get(key); // TODO: handle getAll for multiple values
+    for (const [key, paramDefinition] of Object.entries(
+      action.inputs as Record<string, any>,
+    )) {
+      let value = rawParams[key];
 
       try {
         if (
