@@ -15,7 +15,7 @@
     "compile": "bun compile-backend && bun compile-frontend",
     "tests": "bun test-backend && bun test-frontend",
     "test-backend": "cd backend && bun test",
-    "test-frontend": "cd frontend && bun test",
+    "test-frontend": "cd frontend && bun test:e2e",
     "lint-backend": "cd backend && bun lint",
     "lint-frontend": "cd frontend && bun lint",
     "lint": "bun lint-backend && bun lint-frontend",

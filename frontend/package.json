@@ -12,7 +12,8 @@
     "compileNext": "bun run next build",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "types": "bun --cwd ../backend types && rm -rf ./types && mkdir -p ./types && cp -r ../backend/types ./types/backend"
+    "types": "bun --cwd ../backend types && rm -rf ./types && mkdir -p ./types && cp -r ../backend/types ./types/backend",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "^14.2.7",
@@ -22,6 +23,7 @@
     "typescript": "^5.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.0",
     "@types/node": "22.7.5",
     "@types/react-dom": "^18.3.0",
     "prettier": "^3.3.3"
