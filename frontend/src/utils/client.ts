@@ -1,4 +1,4 @@
-const apiUrl: string = process.env.NEXT_PUBLIC_API_URL;
+const apiUrl: string = import.meta.env.VITE_API_URL;
 
 export const wrappedFetch = async <T>(
   url: string,
