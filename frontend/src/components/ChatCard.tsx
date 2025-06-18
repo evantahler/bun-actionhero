@@ -3,11 +3,12 @@ import type { AppUser } from "./App";
 import type { ActionResponse } from "../types/backend/api";
 import type { MessagesList } from "../types/backend/actions/message";
 import { useEffect, useState } from "react";
-import pkg from "../package.json";
+// import pkg from "../package.json";
 import { wrappedFetch } from "../utils/client";
 
 let ws: WebSocket;
 let messageCounter = 0;
+const APP_NAME = "bun-actionhero-frontend";
 
 export default function ChatCard({
   user,
@@ -24,7 +25,7 @@ export default function ChatCard({
   const [connected, setConnected] = useState<boolean>(false);
 
   function connect() {
-    ws = new WebSocket(process.env.NEXT_PUBLIC_API_URL + "/api", pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
+    ws = new WebSocket(import.meta.env.VITE_API_URL + "/api", APP_NAME); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
 
     // Connection opened
     ws.addEventListener("open", (event) => {
