@@ -72,7 +72,6 @@ export class SessionDestroy implements Action {
   description = "Destroy a session";
   web = { route: "/session", method: HTTP_METHOD.DELETE };
   middleware = [SessionMiddleware];
-  inputs = z.object({});
 
   async run(
     params: ActionParams<SessionDestroy>,

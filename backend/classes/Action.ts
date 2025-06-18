@@ -49,7 +49,7 @@ export type ActionMiddleware = {
 export abstract class Action {
   name: string;
   description?: string;
-  inputs: Inputs | z.ZodType<any>;
+  inputs?: Inputs | z.ZodType<any>;
   middleware?: ActionMiddleware[];
   web?: {
     route: RegExp | string;
@@ -63,7 +63,7 @@ export abstract class Action {
   constructor(args: ActionConstructorInputs) {
     this.name = args.name;
     this.description = args.description ?? `An Action: ${this.name}`;
-    this.inputs = args.inputs ?? ({} as Inputs);
+    this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
     this.web = {
       route: args.web?.route ?? `/${this.name}`,

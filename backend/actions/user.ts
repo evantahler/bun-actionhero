@@ -93,7 +93,6 @@ export class UserView implements Action {
   description = "View yourself";
   middleware = [SessionMiddleware];
   web = { route: "/user", method: HTTP_METHOD.GET };
-  inputs = z.object({});
 
   async run(params: ActionParams<UserView>, connection: Connection) {
     const [user] = await api.db.db

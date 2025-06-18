@@ -33,7 +33,6 @@ type SwaggerPath = {
 export class Swagger implements Action {
   name = "swagger";
   description = "Return API documentation in the OpenAPI specification";
-  inputs = z.object({});
   web = { route: "/swagger", method: HTTP_METHOD.GET };
 
   async run() {
@@ -98,7 +97,7 @@ function getActionParameters(action: any) {
   if (action.inputs && typeof action.inputs.parse === "function") {
     const zodSchema = action.inputs;
     const shape = zodSchema.shape || {};
-    
+
     return Object.keys(shape)
       .sort()
       .map((inputName) => {
@@ -144,7 +143,7 @@ function getActionParameters(action: any) {
 
 function getZodFieldType(fieldSchema: any): string {
   if (!fieldSchema) return "string";
-  
+
   const typeName = fieldSchema._def?.typeName;
   switch (typeName) {
     case "ZodString":
@@ -170,22 +169,22 @@ function getZodFieldType(fieldSchema: any): string {
 
 function isZodOptional(fieldSchema: any): boolean {
   if (!fieldSchema) return true;
-  
+
   const typeName = fieldSchema._def?.typeName;
   if (typeName === "ZodOptional") return true;
   if (typeName === "ZodDefault") return true;
-  
+
   return false;
 }
 
 function getZodDefault(fieldSchema: any): any {
   if (!fieldSchema) return undefined;
-  
+
   const typeName = fieldSchema._def?.typeName;
   if (typeName === "ZodDefault") {
     const defaultValue = fieldSchema._def.defaultValue;
     return typeof defaultValue === "function" ? defaultValue() : defaultValue;
   }
-  
+
   return undefined;
 }

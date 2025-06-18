@@ -112,7 +112,7 @@ export class MessagesHello implements Action {
   name = "messages:hello";
   description = "broadcast a hello message to all users in the chat room";
   task = { frequency: 1000 * 60, queue: "default" }; // run the task every minute
-  inputs = z.object({});
+
   async run() {
     const [message] = await api.db.db
       .insert(messages)
