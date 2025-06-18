@@ -46,4 +46,4 @@ bun test __tests__/path/file.test.ts  # Run specific test file
 - Run specific test files to isolate issues
 
 ## Linting
-After modifying any file, confirm that the file conforms to our linting standards with `bun lint`.  The fixes can likely be applied with `bun pretty`
+After modifying any file, confirm that the file conforms to our linting standards with `bun lint`.  The fixes can likely be applied with `bun format`
