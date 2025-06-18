@@ -30,7 +30,8 @@ export class UserCreate implements Action {
       .string()
       .min(8, "Password must be at least 8 characters")
       .max(256, "Password must be less than 256 characters")
-      .describe("The user's password"),
+      .describe("The user's password")
+      .secret(),
   });
 
   async run(params: ActionParams<UserCreate>) {
@@ -68,7 +69,7 @@ export class UserEdit implements Action {
   inputs = z.object({
     name: z.string().min(1).max(256).optional(),
     email: z.string().email().toLowerCase().optional(),
-    password: z.string().min(8).max(256).optional(),
+    password: z.string().min(8).max(256).optional().secret(),
   });
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {

@@ -27,7 +27,8 @@ export class SessionCreate implements Action {
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .describe("The user's password"),
+      .describe("The user's password")
+      .secret(),
   });
 
   // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it
