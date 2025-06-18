@@ -82,18 +82,19 @@ export abstract class Action {
    * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
    */
   abstract run(
-    params: any,
+    params: ActionParams<Action>,
     connection?: Connection,
   ): Promise<any>;
 }
 
-export type ActionParams<A extends Action> = A["inputs"] extends z.ZodType<any>
-  ? z.infer<A["inputs"]>
-  : A["inputs"] extends Inputs
-  ? {
-      [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
-    }
-  : Record<string, unknown>;
+export type ActionParams<A extends Action> =
+  A["inputs"] extends z.ZodType<any>
+    ? z.infer<A["inputs"]>
+    : A["inputs"] extends Inputs
+      ? {
+          [k in keyof A["inputs"]]: TypeFromFormatterOrUnknown<A["inputs"][k]>;
+        }
+      : Record<string, unknown>;
 
 type TypeFromFormatterOrUnknown<I extends Input> = I["formatter"] extends (
   a: any,

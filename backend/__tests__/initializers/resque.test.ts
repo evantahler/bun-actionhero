@@ -8,7 +8,7 @@ import {
   beforeEach,
   afterEach,
 } from "bun:test";
-import { ensureString } from "../../util/formatters";
+import { z } from "zod";
 import { DEFAULT_QUEUE } from "../../classes/Action";
 
 beforeAll(async () => {
@@ -38,9 +38,9 @@ let ran: string | null = null;
 
 class TestAction implements Action {
   name = "test_action";
-  inputs = {
-    val: { required: true, formatter: ensureString, default: "I ran" },
-  };
+  inputs = z.object({
+    val: z.string().default("I ran"),
+  });
   run = async (params: ActionParams<TestAction>) => {
     ran = params.val;
   };

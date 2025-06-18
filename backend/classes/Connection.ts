@@ -223,87 +223,8 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       }
     }
 
-    // Handle legacy Inputs type (Record<string, Input>)
-    const formattedParams = {} as ActionParams<Action>;
-
-    for (const [key, paramDefinition] of Object.entries(
-      action.inputs as Record<string, any>,
-    )) {
-      let value = rawParams[key];
-
-      try {
-        if (
-          (value === null || value === undefined) &&
-          paramDefinition.default !== undefined &&
-          paramDefinition.default !== null
-        ) {
-          value =
-            typeof paramDefinition.default === "function"
-              ? paramDefinition.default(value)
-              : paramDefinition.default;
-        }
-      } catch (e) {
-        throw new TypedError({
-          message: `Error creating default value for for param ${key}: ${e}`,
-          type: ErrorType.CONNECTION_ACTION_PARAM_DEFAULT,
-          originalError: e,
-        });
-      }
-
-      if (
-        paramDefinition.required === true &&
-        (value === undefined || value === null)
-      ) {
-        throw new TypedError({
-          message: `Missing required param: ${key}`,
-          type: ErrorType.CONNECTION_ACTION_PARAM_REQUIRED,
-          key,
-        });
-      }
-
-      if (paramDefinition.formatter && value !== undefined && value !== null) {
-        try {
-          value = paramDefinition.formatter(value);
-        } catch (e) {
-          throw new TypedError({
-            message: `${e}`,
-            type: ErrorType.CONNECTION_ACTION_PARAM_FORMATTING,
-            key,
-            value,
-            originalError: e,
-          });
-        }
-      }
-
-      if (paramDefinition.validator && value !== undefined && value !== null) {
-        let validationResponse: string | boolean | Error = false;
-
-        try {
-          validationResponse = paramDefinition.validator(value);
-        } catch (e) {
-          if (e instanceof Error) validationResponse = e;
-        }
-
-        if (
-          validationResponse instanceof Error ||
-          validationResponse === false
-        ) {
-          throw new TypedError({
-            message:
-              validationResponse instanceof Error
-                ? validationResponse.message
-                : `Validation failed for param ${key}`,
-            type: ErrorType.CONNECTION_ACTION_PARAM_VALIDATION,
-            key,
-            value,
-          });
-        }
-      }
-
-      formattedParams[key] = value as any;
-    }
-
-    return formattedParams;
+    // If we get here, inputs is not a zod schema, return empty object
+    return {} as ActionParams<Action>;
   }
 }
 
