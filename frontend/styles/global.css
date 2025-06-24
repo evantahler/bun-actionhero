@@ -100,7 +100,8 @@ body {
   border-spacing: 0;
 }
 
-.table td, .table th {
+.table td,
+.table th {
   border: 3px solid var(--brutal-black);
   padding: 16px;
   font-weight: 900;
@@ -162,12 +163,29 @@ h6 {
   transform: rotate(-1deg);
 }
 
-h1 { font-size: 3rem; }
-h2 { font-size: 2.5rem; background: var(--brutal-blue); }
-h3 { font-size: 2rem; background: var(--brutal-green); }
-h4 { font-size: 1.5rem; background: var(--brutal-orange); }
-h5 { font-size: 1.25rem; background: var(--brutal-pink); }
-h6 { font-size: 1rem; background: var(--brutal-gray); }
+h1 {
+  font-size: 3rem;
+}
+h2 {
+  font-size: 2.5rem;
+  background: var(--brutal-blue);
+}
+h3 {
+  font-size: 2rem;
+  background: var(--brutal-green);
+}
+h4 {
+  font-size: 1.5rem;
+  background: var(--brutal-orange);
+}
+h5 {
+  font-size: 1.25rem;
+  background: var(--brutal-pink);
+}
+h6 {
+  font-size: 1rem;
+  background: var(--brutal-gray);
+}
 
 /* InfoBar styles */
 .alert {
