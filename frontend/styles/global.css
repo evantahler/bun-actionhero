@@ -1,166 +1,173 @@
 :root {
-  --neon-pink: #ff00ff;
-  --neon-cyan: #00ffff;
-  --neon-purple: #8000ff;
-  --dark-blue: #000033;
-  --light-blue: #0066cc;
+  --brutal-red: #ff0000;
+  --brutal-yellow: #ffff00;
+  --brutal-blue: #0000ff;
+  --brutal-green: #00ff00;
+  --brutal-orange: #ff8000;
+  --brutal-pink: #ff0080;
+  --brutal-black: #000000;
+  --brutal-white: #ffffff;
+  --brutal-gray: #808080;
 }
 
 body {
-  background: linear-gradient(135deg, var(--dark-blue), var(--light-blue));
-  color: white;
-  font-family: "Orbitron", "Arial", sans-serif;
+  background: var(--brutal-white);
+  color: var(--brutal-black);
+  font-family: "Helvetica", "Arial Black", sans-serif;
+  font-weight: 900;
   margin: 0;
   padding: 0;
-  position: relative;
+  line-height: 1.2;
+  font-size: 18px;
 }
 
-/* Miami Vice inspired card styles */
+/* Brutal card styles */
 .card {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--neon-cyan);
-  border-radius: 8px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-  padding: 20px;
-  margin: 20px 0;
+  background: var(--brutal-yellow);
+  border: 8px solid var(--brutal-black);
+  border-radius: 0;
+  box-shadow: 12px 12px 0 var(--brutal-red);
+  padding: 24px;
+  margin: 24px 0;
   position: relative;
-  overflow: hidden;
+  transform: rotate(-1deg);
+  transition: transform 0.1s ease;
 }
 
-.card::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(0, 255, 255, 0.1),
-    transparent
-  );
-  transform: rotate(45deg);
-  animation: shine 3s infinite;
+.card:hover {
+  transform: rotate(0deg) scale(1.02);
+  box-shadow: 16px 16px 0 var(--brutal-blue);
 }
 
-@keyframes shine {
-  0% {
-    transform: translateX(-100%) rotate(45deg);
-  }
-  100% {
-    transform: translateX(100%) rotate(45deg);
-  }
+.card:nth-child(even) {
+  background: var(--brutal-green);
+  transform: rotate(1deg);
+  box-shadow: -12px 12px 0 var(--brutal-orange);
 }
 
-/* Neon button styles */
+.card:nth-child(even):hover {
+  box-shadow: -16px 16px 0 var(--brutal-pink);
+}
+
+/* Brutal button styles */
 .btn {
-  background: linear-gradient(45deg, var(--neon-pink), var(--neon-cyan));
-  border: none;
-  color: white;
-  font-weight: bold;
+  background: var(--brutal-red);
+  border: 4px solid var(--brutal-black);
+  color: var(--brutal-white);
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.3s ease;
-  font-family: "Orbitron", sans-serif;
+  letter-spacing: 2px;
+  transition: all 0.1s ease;
+  font-family: "Helvetica", "Arial Black", sans-serif;
+  font-size: 16px;
+  padding: 12px 24px;
+  cursor: pointer;
   position: relative;
-  overflow: hidden;
-}
-
-.btn::after {
-  content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transform: rotate(45deg);
-  transition: all 0.3s ease;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 var(--brutal-black);
 }
 
 .btn:hover {
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
-  transform: translateY(-2px);
+  background: var(--brutal-blue);
+  transform: translate(-2px, -2px);
+  box-shadow: 8px 8px 0 var(--brutal-black);
 }
 
-.btn:hover::after {
-  transform: translateX(100%) rotate(45deg);
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--brutal-black);
 }
 
 .btn-outline-secondary {
-  background: transparent;
-  border: 2px solid var(--neon-cyan);
-  color: var(--neon-cyan);
+  background: var(--brutal-white);
+  border: 4px solid var(--brutal-black);
+  color: var(--brutal-black);
+  box-shadow: 6px 6px 0 var(--brutal-gray);
 }
 
 .btn-outline-secondary:hover {
-  background: var(--neon-cyan);
-  color: var(--dark-blue);
+  background: var(--brutal-orange);
+  color: var(--brutal-white);
+  box-shadow: 8px 8px 0 var(--brutal-black);
 }
 
-/* Table styles */
+/* Brutal table styles */
 .table {
-  color: white;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--neon-cyan);
+  color: var(--brutal-black);
+  background: var(--brutal-white);
+  border: 6px solid var(--brutal-black);
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
-.table td {
-  border-color: var(--neon-cyan);
+.table td, .table th {
+  border: 3px solid var(--brutal-black);
+  padding: 16px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
-/* Form styles */
+.table thead th {
+  background: var(--brutal-red);
+  color: var(--brutal-white);
+}
+
+.table tbody tr:nth-child(odd) {
+  background: var(--brutal-yellow);
+}
+
+.table tbody tr:nth-child(even) {
+  background: var(--brutal-green);
+}
+
+/* Brutal form styles */
 .form-control {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--neon-cyan);
-  color: white;
-  font-family: "Orbitron", sans-serif;
+  background: var(--brutal-white);
+  border: 4px solid var(--brutal-black);
+  color: var(--brutal-black);
+  font-family: "Helvetica", "Arial Black", sans-serif;
+  font-weight: 900;
+  padding: 12px;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 var(--brutal-gray);
 }
 
 .form-control:focus {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: var(--neon-pink);
-  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
-  color: white;
+  background: var(--brutal-yellow);
+  border-color: var(--brutal-red);
+  box-shadow: 6px 6px 0 var(--brutal-black);
+  color: var(--brutal-black);
+  outline: none;
 }
 
-/* Heading styles */
+/* Brutal heading styles */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  color: var(--neon-cyan);
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-  font-weight: bold;
-  letter-spacing: 1px;
-  font-family: "Orbitron", sans-serif;
+  color: var(--brutal-black);
+  font-weight: 900;
+  letter-spacing: 3px;
+  font-family: "Helvetica", "Arial Black", sans-serif;
   position: relative;
+  text-transform: uppercase;
+  background: var(--brutal-red);
+  color: var(--brutal-white);
+  padding: 16px 24px;
+  margin: 24px 0;
+  border: 6px solid var(--brutal-black);
+  box-shadow: 8px 8px 0 var(--brutal-yellow);
+  transform: rotate(-1deg);
 }
 
-h1::after,
-h2::after,
-h3::after,
-h4::after,
-h5::after,
-h6::after {
-  content: "";
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--neon-pink), var(--neon-cyan));
-}
+h1 { font-size: 3rem; }
+h2 { font-size: 2.5rem; background: var(--brutal-blue); }
+h3 { font-size: 2rem; background: var(--brutal-green); }
+h4 { font-size: 1.5rem; background: var(--brutal-orange); }
+h5 { font-size: 1.25rem; background: var(--brutal-pink); }
+h6 { font-size: 1rem; background: var(--brutal-gray); }
 
 /* InfoBar styles */
 .alert {
