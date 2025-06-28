@@ -5,30 +5,36 @@
   "type": "module",
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "bin": {
+    "actionhero": "actionhero.ts"
+  },
   "scripts": {
-    "dev": "nf start --procfile Procfile",
-    "postinstall": "bun install-backend && bun install-frontend",
-    "install-backend": "cd backend && bun install",
-    "install-frontend": "cd frontend && bun install",
-    "compile-backend": "cd backend && bun compile",
-    "compile-frontend": "cd frontend && bun compile",
-    "compile": "bun compile-backend && bun compile-frontend",
-    "tests": "bun test-backend && bun test-frontend",
-    "test-backend": "cd backend && bun test",
-    "test-frontend": "cd frontend && bun test",
-    "lint-backend": "cd backend && bun lint",
-    "lint-frontend": "cd frontend && bun lint",
-    "lint": "bun lint-backend && bun lint-frontend",
-    "format-backend": "cd backend && bun format",
-    "format-frontend": "cd frontend && bun format",
-    "format": "bun format-backend && bun format-frontend",
-    "ci": "bun lint && bun compile && bun tests"
+    "start": "bun actionhero.ts start",
+    "dev": "bun --watch actionhero.ts start",
+    "migrations": "bun run migrations.ts",
+    "compile": "bun buildExecutable && bun types",
+    "buildExecutable": "bun build actionhero.ts --compile --outfile actionhero",
+    "lint": "prettier --check .",
+    "format": "prettier --write ."
   },
   "dependencies": {
-    "foreman": "^3.0.1"
+    "@asteasolutions/zod-to-openapi": "^7.3.4",
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.30.10",
+    "ioredis": "^5.6.0",
+    "node-resque": "^9.3.8",
+    "pg": "^8.14.1",
+    "typescript": "^5.8.3",
+    "zod": "^3.25.64"
   },
   "devDependencies": {
-    "@types/bun": "^1.1.8",
-    "prettier": "^3.3.3"
+    "@types/bun": "latest",
+    "@types/cookie": "^0.6.0",
+    "@types/formidable": "^3.4.5",
+    "@types/pg": "^8.11.11",
+    "drizzle-kit": "^0.20.18",
+    "prettier": "^3.5.3"
   }
 }
