@@ -75,7 +75,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
-    return this.handleWebAction(req, parsedUrl, ip, id);
+
+    if (parsedUrl.pathname?.startsWith(config.server.web.apiRoute)) {
+      return this.handleWebAction(req, parsedUrl, ip, id);
+    } else {
+      return this.handleStaticFile(req);
+    }
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
@@ -213,6 +218,21 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         unsubscribed: { channel: formattedMessage.channel },
       }),
     );
+  }
+
+  async handleStaticFile(req: Request) {
+    const url = new URL(req.url);
+    const path = url.pathname;
+    const filePath = path.startsWith("/") ? path.slice(1) : path;
+    const file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+    return (await file.exists())
+      ? new Response(await file.text(), {
+          headers: {
+            "Content-Type": "text/html",
+            "Access-Control-Allow-Origin": "*",
+          },
+        })
+      : new Response(`File not found: ${filePath}`, { status: 404 });
   }
 
   async handleWebAction(
