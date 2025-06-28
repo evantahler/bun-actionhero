@@ -224,13 +224,17 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const url = new URL(req.url);
     const path = url.pathname;
     const filePath = path.startsWith("/") ? path.slice(1) : path;
-    const file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+    let file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+
+    if (!(await file.exists())) {
+      file = Bun.file(
+        config.server.web.frontendPath + "/" + filePath + "index.html",
+      );
+    }
+
     return (await file.exists())
       ? new Response(await file.text(), {
-          headers: {
-            "Content-Type": "text/html",
-            "Access-Control-Allow-Origin": "*",
-          },
+          headers: { "Content-Type": "text/html" },
         })
       : new Response(`File not found: ${filePath}`, { status: 404 });
   }
