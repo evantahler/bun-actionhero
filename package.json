@@ -26,6 +26,8 @@
     "ioredis": "^5.6.0",
     "node-resque": "^9.3.8",
     "pg": "^8.14.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
     "typescript": "^5.8.3",
     "vite": "^7.0.0",
     "zod": "^3.25.64"
@@ -35,6 +37,7 @@
     "@types/cookie": "^0.6.0",
     "@types/formidable": "^3.4.5",
     "@types/pg": "^8.11.11",
+    "@types/react-dom": "^19.1.6",
     "drizzle-kit": "^0.20.18",
     "prettier": "^3.5.3"
   }

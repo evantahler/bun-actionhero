@@ -17,6 +17,10 @@ import type {
 const MAX_STARTUP_ATTEMPTS = 5;
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  viteServer:
+    | Awaited<ReturnType<typeof import("vite").createServer>>
+    | undefined;
+
   constructor() {
     super("web");
   }
@@ -51,6 +55,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         await Bun.sleep(1000);
         startupAttempts++;
       }
+    }
+
+    if (config.server.web.viteDevServer) {
+      const vite = await import("vite");
+      this.viteServer = await vite.createServer({});
     }
   }
 
@@ -221,22 +230,47 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleStaticFile(req: Request) {
-    const url = new URL(req.url);
-    const path = url.pathname;
-    const filePath = path.startsWith("/") ? path.slice(1) : path;
-    let file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+    const pathname = new URL(req.url).pathname;
 
-    if (!(await file.exists())) {
-      file = Bun.file(
-        config.server.web.frontendPath + "/" + filePath + "index.html",
+    if (
+      config.server.web.viteDevServer &&
+      this.viteServer &&
+      pathname == "/" &&
+      req.method == "GET"
+    ) {
+      let template = await Bun.file(
+        config.server.web.frontendPath + "/" + "index.html",
+      ).text();
+      template = await this.viteServer.transformIndexHtml(req.url, template);
+      const { render } = await this.viteServer.ssrLoadModule(
+        config.server.web.frontendPath + "/src/entry-server.tsx",
       );
-    }
+      const rendered = await render(req.url);
 
-    return (await file.exists())
-      ? new Response(await file.text(), {
-          headers: { "Content-Type": "text/html" },
-        })
-      : new Response(`File not found: ${filePath}`, { status: 404 });
+      const html = template
+        .replace(`<!--app-head-->`, rendered.head ?? "")
+        .replace(`<!--app-html-->`, rendered.html ?? "");
+
+      return new Response(html, {
+        headers: { "Content-Type": "text/html" },
+      });
+    } else {
+      const url = new URL(req.url);
+      const path = url.pathname;
+      const filePath = path.startsWith("/") ? path.slice(1) : path;
+
+      let file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+
+      if (!(await file.exists())) {
+        file = Bun.file(
+          config.server.web.frontendPath + "/" + filePath + "index.html",
+        );
+      }
+
+      return (await file.exists())
+        ? new Response(file)
+        : new Response(`File not found: ${filePath}`, { status: 404 });
+    }
   }
 
   async handleWebAction(
