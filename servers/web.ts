@@ -59,7 +59,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     if (config.server.web.viteDevServer) {
       const vite = await import("vite");
-      this.viteServer = await vite.createServer({});
+      this.viteServer = await vite.createServer({
+        server: { middlewareMode: true },
+        appType: "custom",
+        base: "/",
+      });
     }
   }
 
