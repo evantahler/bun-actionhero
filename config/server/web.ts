@@ -12,6 +12,10 @@ export const configServerWeb = {
     `http://${host}:${port}`,
   ),
   apiRoute: await loadFromEnvIfSet("WEB_SERVER_API_ROUTE", "/api"),
+  frontendPath: await loadFromEnvIfSet("WEB_SERVER_FRONTEND_PATH", "frontend"),
+
+  viteDevServer: await loadFromEnvIfSet("VITE_DEV_SERVER_URL", true),
+
   allowedOrigins: await loadFromEnvIfSet("WEB_SERVER_ALLOWED_ORIGINS", "*"),
   allowedMethods: await loadFromEnvIfSet(
     "WEB_SERVER_ALLOWED_METHODS",

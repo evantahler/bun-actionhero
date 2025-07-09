@@ -17,6 +17,10 @@ import type {
 const MAX_STARTUP_ATTEMPTS = 5;
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  viteServer:
+    | Awaited<ReturnType<typeof import("vite").createServer>>
+    | undefined;
+
   constructor() {
     super("web");
   }
@@ -52,6 +56,15 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         startupAttempts++;
       }
     }
+
+    if (config.server.web.viteDevServer) {
+      const vite = await import("vite");
+      this.viteServer = await vite.createServer({
+        server: { middlewareMode: true },
+        appType: "custom",
+        base: "/",
+      });
+    }
   }
 
   async stop() {
@@ -75,7 +88,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
-    return this.handleWebAction(req, parsedUrl, ip, id);
+
+    if (parsedUrl.pathname?.startsWith(config.server.web.apiRoute)) {
+      return this.handleWebAction(req, parsedUrl, ip, id);
+    } else {
+      return this.handleStaticFile(req);
+    }
   }
 
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
@@ -213,6 +231,50 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         unsubscribed: { channel: formattedMessage.channel },
       }),
     );
+  }
+
+  async handleStaticFile(req: Request) {
+    const pathname = new URL(req.url).pathname;
+
+    if (
+      config.server.web.viteDevServer &&
+      this.viteServer &&
+      pathname == "/" &&
+      req.method == "GET"
+    ) {
+      let template = await Bun.file(
+        config.server.web.frontendPath + "/" + "index.html",
+      ).text();
+      template = await this.viteServer.transformIndexHtml(req.url, template);
+      const { render } = await this.viteServer.ssrLoadModule(
+        config.server.web.frontendPath + "/src/entry-server.tsx",
+      );
+      const rendered = await render(req.url);
+
+      const html = template
+        .replace(`<!--app-head-->`, rendered.head ?? "")
+        .replace(`<!--app-html-->`, rendered.html ?? "");
+
+      return new Response(html, {
+        headers: { "Content-Type": "text/html" },
+      });
+    } else {
+      const url = new URL(req.url);
+      const path = url.pathname;
+      const filePath = path.startsWith("/") ? path.slice(1) : path;
+
+      let file = Bun.file(config.server.web.frontendPath + "/" + filePath);
+
+      if (!(await file.exists())) {
+        file = Bun.file(
+          config.server.web.frontendPath + "/" + filePath + "index.html",
+        );
+      }
+
+      return (await file.exists())
+        ? new Response(file)
+        : new Response(`File not found: ${filePath}`, { status: 404 });
+    }
   }
 
   async handleWebAction(
