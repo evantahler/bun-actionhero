@@ -277,6 +277,8 @@ describe("actions", () => {
         else receivedMessages2.push(parsedMessage);
       }
 
+      console.log({ messages1, messages2 });
+
       expect(sendResponse1?.response.message.body).toEqual("Marco");
       expect(sendResponse2?.response.message.body).toEqual("Polo");
 
