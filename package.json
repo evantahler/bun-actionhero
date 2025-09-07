@@ -5,6 +5,10 @@
   "type": "module",
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
     "dev": "bun run concurrently --kill-others --prefix name --names 💻,🎨 \"bun run dev:backend\" \"bun run dev:frontend\"",
     "dev:backend": "cd backend && bun run dev",
