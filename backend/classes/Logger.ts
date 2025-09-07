@@ -64,10 +64,20 @@ export class Logger {
     );
   }
 
+  /**
+   * Log a trace message.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   trace(message: string, object?: any) {
     this.log(LogLevel.trace, message, object);
   }
 
+  /**
+   * Log a debug message.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   debug(message: string, object?: any) {
     this.log(LogLevel.debug, message, object);
   }
@@ -76,14 +86,29 @@ export class Logger {
     this.log(LogLevel.info, message, object);
   }
 
+  /**
+   * Log a warning.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   warn(message: string, object?: any) {
     this.log(LogLevel.warn, message, object);
   }
 
+  /**
+   * Log an error.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   error(message: string, object?: any) {
     this.log(LogLevel.error, message, object);
   }
 
+  /**
+   * Log a fatal error.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   fatal(message: string, object?: any) {
     this.log(LogLevel.fatal, message, object);
   }

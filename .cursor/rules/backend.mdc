@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+# BACKEND RULES
+
+Whenever possible, use the `TypedError` class to throw errors.
+
+After any modification of the models, we need to migrate. Never create the migration file yourself. Run `./actionhero.ts migrations` in the backend directory to migrate.
+
+Do not try to run the server after making any change - it's probably already running by the developer. Instead, create tests.
+
+When creating routes, and there's an id required of the action, use the `/:id` syntax.
+
+In database operations where we read or write, type the return value of the operation.
