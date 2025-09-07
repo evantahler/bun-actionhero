@@ -1,7 +1,7 @@
-import { test, describe, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { Swagger } from "../../actions/swagger";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import type { Swagger } from "../../actions/swagger";
 
 const url = config.server.web.applicationUrl;
 
@@ -34,6 +34,11 @@ describe("swagger", () => {
     );
   });
 
+  // Helper function to convert route format for swagger tests
+  const convertRouteForSwagger = (route: string): string => {
+    return route.replace(/:\w+/g, (match) => `{${match.slice(1)}}`);
+  };
+
   test("swagger documents all web actions", async () => {
     const res = await fetch(url + "/api/swagger");
     const response = (await res.json()) as ActionResponse<Swagger>;
@@ -44,12 +49,14 @@ describe("swagger", () => {
     );
 
     // Count unique routes (since multiple methods on same route are grouped)
-    const uniqueRoutes = new Set(webActions.map((action) => action.web!.route));
+    const uniqueRoutes = new Set(
+      webActions.map((action) => convertRouteForSwagger(action.web!.route)),
+    );
     expect(Object.keys(response.paths).length).toBe(uniqueRoutes.size);
 
     // Verify each web action is documented
     for (const action of webActions) {
-      const path = action.web!.route;
+      const path = convertRouteForSwagger(action.web!.route);
       const method = action.web!.method.toLowerCase();
 
       expect(response.paths[path]).toBeDefined();
@@ -70,16 +77,25 @@ describe("swagger", () => {
     );
 
     for (const action of actionsWithInputs) {
-      const path = action.web!.route;
+      const path = convertRouteForSwagger(action.web!.route);
       const method = action.web!.method.toLowerCase();
       const pathObj = response.paths[path]![method]!;
 
-      expect(pathObj.requestBody).toBeDefined();
-      expect(pathObj.requestBody!.required).toBe(true);
-      expect(pathObj.requestBody!.content["application/json"]).toBeDefined();
-      expect(
-        pathObj.requestBody!.content["application/json"].schema,
-      ).toBeDefined();
+      // GET and HEAD methods should not have requestBody
+      if (method === "get" || method === "head") {
+        expect(pathObj.requestBody).toBeUndefined();
+      } else {
+        expect(pathObj.requestBody).toBeDefined();
+        expect(pathObj.requestBody!.required).toBe(true);
+        expect(pathObj.requestBody!.content["application/json"]).toBeDefined();
+        const schema = pathObj.requestBody!.content["application/json"].schema;
+        expect(schema).toBeDefined();
+        // Should be a $ref
+        expect(typeof schema.$ref).toBe("string");
+        // The referenced schema should exist in components.schemas
+        const refName = schema.$ref.replace("#/components/schemas/", "");
+        expect(response.components.schemas[refName]).toBeDefined();
+      }
     }
   });
 
@@ -113,7 +129,7 @@ describe("swagger", () => {
     for (const action of api.actions.actions) {
       if (!action.web?.route || !action.web?.method) continue;
 
-      const path = action.web.route;
+      const path = convertRouteForSwagger(action.web.route);
       const method = action.web.method.toLowerCase();
       const pathObj = response.paths[path]![method]!;
 
@@ -135,5 +151,40 @@ describe("swagger", () => {
       "Return API documentation in the OpenAPI specification",
     );
     expect(response.paths["/swagger"]!.get!.responses["200"]).toBeDefined();
+  });
+
+  test("swagger properly enumerates UserCreate action parameters", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    // Check the UserCreate action (PUT /user)
+    const userCreatePath = response.paths["/user"]!.put!;
+
+    expect(userCreatePath.requestBody).toBeDefined();
+    const requestBody = userCreatePath.requestBody as any;
+    expect(requestBody.required).toBe(true);
+    expect(requestBody.content["application/json"]).toBeDefined();
+    const schema = requestBody.content["application/json"].schema;
+    expect(schema).toBeDefined();
+    // Should be a $ref
+    expect(typeof schema.$ref).toBe("string");
+    const refName = schema.$ref.replace("#/components/schemas/", "");
+    const resolved = response.components.schemas[refName];
+    expect(resolved).toBeDefined();
+    // Check that the schema is an object with properties
+    expect(resolved.type).toBe("object");
+    expect(resolved.properties).toBeDefined();
+    // Check that all expected UserCreate parameters are present
+    expect(resolved.properties.name).toBeDefined();
+    expect(resolved.properties.email).toBeDefined();
+    expect(resolved.properties.password).toBeDefined();
+    // Check parameter types
+    expect(resolved.properties.name.type).toBe("string");
+    expect(resolved.properties.email.type).toBe("string");
+    expect(resolved.properties.password.type).toBe("string");
+    // Check required fields
+    expect(resolved.required).toContain("name");
+    expect(resolved.required).toContain("email");
+    expect(resolved.required).toContain("password");
   });
 });
