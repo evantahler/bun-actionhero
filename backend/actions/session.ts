@@ -1,12 +1,12 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { api, type Action, type ActionParams, Connection } from "../api";
-import { users } from "../schema/users";
-import { serializeUser, checkPassword } from "../ops/UserOps";
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
+import { ErrorType, TypedError } from "../classes/TypedError";
 import type { SessionData } from "../initializers/session";
 import { SessionMiddleware } from "../middleware/session";
+import { checkPassword, serializeUser } from "../ops/UserOps";
+import { users } from "../schema/users";
 
 export type SessionImpl = { userId?: number };
 

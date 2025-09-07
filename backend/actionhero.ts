@@ -1,10 +1,10 @@
 #! /usr/bin/env bun
 
-import pkg from "./package.json";
-import { Action, api } from "./api";
 import { Command } from "commander";
-import { globLoader } from "./util/glob";
+import { Action, api } from "./api";
+import pkg from "./package.json";
 import { addActionToProgram } from "./util/cli";
+import { globLoader } from "./util/glob";
 
 const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);

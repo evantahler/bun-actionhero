@@ -1,4 +1,4 @@
-import { logger, api } from "../api";
+import { api, logger } from "../api";
 import { ExitCode } from "../classes/ExitCode";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";

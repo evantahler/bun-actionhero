@@ -1,8 +1,8 @@
+import { Command } from "commander";
 import os from "node:os";
 import { Action, api, Connection, RUN_MODE } from "../api";
-import { Command } from "commander";
-import { TypedError } from "./../classes/TypedError";
 import { ExitCode } from "./../classes/ExitCode";
+import { TypedError } from "./../classes/TypedError";
 
 export function addActionToProgram(program: Command, action: Action) {
   const command = program.command(action.name);

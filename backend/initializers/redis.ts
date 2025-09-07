@@ -1,8 +1,8 @@
-import { logger, api } from "../api";
+import { Redis as RedisClient } from "ioredis";
+import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
-import { Redis as RedisClient } from "ioredis";
 import { formatConnectionStringForLogging } from "../util/connectionString";
 
 const namespace = "redis";

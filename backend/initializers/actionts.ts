@@ -1,5 +1,5 @@
 import type { ErrorPayload } from "node-resque";
-import { logger, api } from "../api";
+import { api, logger } from "../api";
 import { DEFAULT_QUEUE, type Action } from "../classes/Action";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";

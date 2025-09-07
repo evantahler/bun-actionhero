@@ -2,11 +2,11 @@ import { desc, eq, lt } from "drizzle-orm";
 import { z } from "zod";
 import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
+import { SessionMiddleware } from "../middleware/session";
 import { serializeMessage } from "../ops/MessageOps";
 import { messages } from "../schema/messages";
 import { users } from "../schema/users";
 import type { SessionImpl } from "./session";
-import { SessionMiddleware } from "../middleware/session";
 
 export class MessageCrete implements Action {
   name = "message:create";

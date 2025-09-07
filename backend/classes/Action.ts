@@ -1,6 +1,6 @@
+import { z } from "zod";
 import type { Connection } from "./Connection";
 import type { TypedError } from "./TypedError";
-import { z } from "zod";
 
 export enum HTTP_METHOD {
   "GET" = "GET",
