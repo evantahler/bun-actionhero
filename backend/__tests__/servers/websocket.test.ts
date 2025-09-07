@@ -273,7 +273,8 @@ describe("actions", () => {
         if (!parsedMessage.messageId) receivedMessages2.push(parsedMessage);
       }
 
-      console.log({ receivedMessages1, receivedMessages2 });
+      console.log(receivedMessages1);
+      console.log(receivedMessages2);
 
       expect(receivedMessages1.length).toEqual(2);
       expect(receivedMessages2.length).toEqual(2);
