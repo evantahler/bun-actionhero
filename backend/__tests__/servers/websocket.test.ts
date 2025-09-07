@@ -267,17 +267,17 @@ describe("actions", () => {
 
       for (const message of messages1.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (parsedMessage.messageId) sendResponse1 = parsedMessage;
+        if (parsedMessage.messageId && parsedMessage.response.message.body)
+          sendResponse1 = parsedMessage;
         else receivedMessages1.push(parsedMessage);
       }
 
       for (const message of messages2.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (parsedMessage.messageId) sendResponse2 = parsedMessage;
+        if (parsedMessage.messageId && parsedMessage.response.message.body)
+          sendResponse2 = parsedMessage;
         else receivedMessages2.push(parsedMessage);
       }
-
-      console.log({ messages1, messages2 });
 
       expect(sendResponse1?.response.message.body).toEqual("Marco");
       expect(sendResponse2?.response.message.body).toEqual("Polo");
