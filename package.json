@@ -6,10 +6,9 @@
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
   "scripts": {
-    "dev": "nf start --procfile Procfile",
-    "postinstall": "bun install-backend && bun install-frontend",
-    "install-backend": "cd backend && bun install",
-    "install-frontend": "cd frontend && bun install",
+    "dev": "bun run concurrently --kill-others --prefix name --names 💻,🎨 \"bun run dev:backend\" \"bun run dev:frontend\"",
+    "dev:backend": "cd backend && bun run dev",
+    "dev:frontend": "cd frontend && bun run dev",
     "compile-backend": "cd backend && bun compile",
     "compile-frontend": "cd frontend && bun compile",
     "compile": "bun compile-backend && bun compile-frontend",
@@ -25,7 +24,7 @@
     "ci": "bun lint && bun compile && bun tests"
   },
   "dependencies": {
-    "foreman": "^3.0.1"
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "@types/bun": "^1.1.8",
