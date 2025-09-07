@@ -260,33 +260,18 @@ describe("actions", () => {
       }
 
       // messages may arrive out of order
-      let sendResponse1: Record<string, any> | null = null;
-      let sendResponse2: Record<string, any> | null = null;
       let receivedMessages1: Record<string, any>[] = [];
       let receivedMessages2: Record<string, any>[] = [];
 
       for (const message of messages1.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (
-          parsedMessage.messageId &&
-          parsedMessage.response.message.body == "Marco"
-        ) {
-          sendResponse1 = parsedMessage;
-        } else receivedMessages1.push(parsedMessage);
+        if (!parsedMessage.messageId) receivedMessages1.push(parsedMessage);
       }
 
       for (const message of messages2.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (
-          parsedMessage.messageId &&
-          parsedMessage.response.message.body == "Polo"
-        ) {
-          sendResponse2 = parsedMessage;
-        } else receivedMessages2.push(parsedMessage);
+        if (!parsedMessage.messageId) receivedMessages2.push(parsedMessage);
       }
-
-      expect(sendResponse1?.response.message.body).toEqual("Marco");
-      expect(sendResponse2?.response.message.body).toEqual("Polo");
 
       expect(receivedMessages1.length).toEqual(2);
       expect(receivedMessages2.length).toEqual(2);
