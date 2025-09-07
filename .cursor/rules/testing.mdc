@@ -3,13 +3,19 @@ description:
 globs:
 alwaysApply: true
 ---
+
 # Testing
 
 Information about running and writing tests.
 
 ## Running Tests
 
+We use Bun's built in test framework.
+
+We prefer not to write mocks for database or model operations. Instead, we really write to the database and reset it after each test (that's what `await api.db.clearDatabase()` does).
+
 ### Backend Tests
+
 ```bash
 cd backend
 bun test                           # Run all tests
@@ -17,6 +23,7 @@ bun test __tests__/path/file.test.ts  # Run specific test file
 ```
 
 ### Frontend Tests
+
 ```bash
 cd frontend
 bun test                           # Run all tests
@@ -24,6 +31,7 @@ bun test __tests__/path/file.test.ts  # Run specific test file
 ```
 
 ## Test Structure
+
 - Tests must be run from their respective directories (backend or frontend)
 - For HTTP tests:
   - DELETE/POST/PUT requests need a body (at least "{}")
@@ -36,14 +44,17 @@ bun test __tests__/path/file.test.ts  # Run specific test file
 - Verify side effects (e.g., checking session destruction by attempting protected endpoint access)
 
 ## Test Database
+
 - Tests use a separate database: `bun-test`
 - Database is automatically created when needed
 - Each test should clean up after itself
 
 ## Debugging Tests
+
 - Add `console.log()` statements
 - Use Cursor's debugger
 - Run specific test files to isolate issues
 
 ## Linting
-After modifying any file, confirm that the file conforms to our linting standards with `bun lint`.  The fixes can likely be applied with `bun format`
+
+After modifying any file, confirm that the file conforms to our linting standards with `bun lint`. The fixes can likely be applied with `bun format`

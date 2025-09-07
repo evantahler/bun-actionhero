@@ -1,15 +1,15 @@
-import { api, logger } from "../api";
-import { Initializer } from "../classes/Initializer";
-import { config } from "../config";
+import { $ } from "bun";
+import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
+import { DefaultLogger, LogWriter, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import { DefaultLogger, LogWriter, sql } from "drizzle-orm";
-import { Pool } from "pg";
-import path from "path";
-import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { unlink } from "node:fs/promises";
-import { $ } from "bun";
+import path from "path";
+import { Pool } from "pg";
+import { api, logger } from "../api";
+import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { config } from "../config";
 import { formatConnectionStringForLogging } from "../util/connectionString";
 
 const namespace = "db";
@@ -84,9 +84,13 @@ export class DB extends Initializer {
   }
 
   async stop() {
-    if (api.db.db) {
-      await api.db.pool.end();
-      logger.info("database connection closed");
+    if (api.db.db && api.db.pool) {
+      try {
+        await api.db.pool.end();
+        logger.info("database connection closed");
+      } catch (e) {
+        logger.error("error closing database connection", e);
+      }
     }
   }
 
@@ -96,7 +100,7 @@ export class DB extends Initializer {
    */
   async generateMigrations() {
     const migrationConfig = {
-      schema: path.join("schema", "*"),
+      schema: path.join("models", "*"),
       dbCredentials: {
         uri: config.database.connectionString,
       },
@@ -109,7 +113,7 @@ export class DB extends Initializer {
     try {
       await Bun.write(tmpfilePath, fileContent);
       const { exitCode, stdout, stderr } =
-        await $`bun drizzle-kit generate:pg --config ${tmpfilePath}`.quiet();
+        await $`bun drizzle-kit generate:pg --config ${tmpfilePath}`;
       logger.trace(stdout.toString());
       if (exitCode !== 0) {
         {

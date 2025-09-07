@@ -1,4 +1,4 @@
-import { z, type ZodTypeAny, type ZodRawShape } from "zod";
+import { z, type ZodRawShape, type ZodTypeAny } from "zod";
 
 // Custom zod extension to mark fields as secret
 // This module augmentation and prototype extension allows .secret() to be used on zod fields
@@ -31,34 +31,50 @@ declare module "zod" {
 }
 
 z.ZodString.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodNumber.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodBoolean.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodArray.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodObject.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodOptional.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodNullable.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
 z.ZodDefault.prototype.secret = function () {
-  this._def.isSecret = true;
+  (this._def as any).isSecret = true;
   return this;
 };
+
+/**
+ * Creates a Zod schema that accepts both boolean and string values,
+ * transforming string representations of booleans to actual booleans.
+ * Useful for handling form data where booleans come as strings.
+ */
+export function zBooleanFromString() {
+  return z.union([z.boolean(), z.string()]).transform((val) => {
+    if (typeof val === "boolean") return val;
+    if (typeof val === "string") {
+      if (val.toLowerCase() === "true") return true;
+      if (val.toLowerCase() === "false") return false;
+    }
+    return false;
+  });
+}

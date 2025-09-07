@@ -3,25 +3,47 @@ description:
 globs:
 alwaysApply: true
 ---
+
 # Frontend Development
 
 Next.js frontend application information.
 
 ## Development
 
+Always, load the type type definitions from the Actions in the backend. Do not write your own types.
+
+For form inputs, use the type from the backend action. For example, if the backend action is `SessionCreate`, the input type is `SessionCreate["inputs"]["_type"]`.
+
+```
+type SigninFormData = SessionCreate["inputs"]["_type"];
+```
+
+For api responses, use the type from the backend action. For example, if the backend action is `SessionCreate`, the response type is `ActionResponse<SessionCreate>`.
+
+```
+type SigninResponse = ActionResponse<SessionCreate>;
+```
+
+When making API calls, use the APIWrapper class. For example, if the backend action is `SessionCreate`, the API call is `APIWrapper.post<SessionCreate>(SessionCreate)`.
+
+We write scss files for styling, not css.
+
 ### Start Frontend
+
 ```bash
 cd frontend
 bun dev
 ```
 
 ### Build for Production
+
 ```bash
 cd frontend
 bun build
 ```
 
 ## Project Structure
+
 - Follows Next.js 13+ app directory structure
 - API routes in `app/api/`
 - Pages in `app/`
@@ -29,15 +51,18 @@ bun build
 - Styles in `styles/`
 
 ## Environment Variables
+
 - Copy `.env.example` to `.env`
 - Configure API endpoints and other settings
 
 ## API Integration
+
 - Backend API is available at configured endpoint
 - Use TypeScript types for API responses
 - Handle errors appropriately
 
 ## Best Practices
+
 - Use TypeScript for type safety
 - Follow Next.js conventions
 - Implement proper error handling

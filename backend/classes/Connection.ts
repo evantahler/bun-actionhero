@@ -1,12 +1,12 @@
+import colors from "colors";
+import { randomUUID } from "crypto";
 import { api, logger } from "../api";
 import { config } from "../config";
-import colors from "colors";
+import type { PubSubMessage } from "../initializers/pubsub";
+import type { SessionData } from "../initializers/session";
+import "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
-import type { SessionData } from "../initializers/session";
-import { randomUUID } from "crypto";
-import type { PubSubMessage } from "../initializers/pubsub";
-import "../util/zodSecretsMixin";
 
 export class Connection<T extends Record<string, any> = Record<string, any>> {
   type: string;
@@ -113,8 +113,15 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
 
     const duration = new Date().getTime() - reqStartTime;
 
+    const errorStack =
+      error && error.stack
+        ? config.logger.colorize
+          ? "\r\n" + colors.gray(error.stack)
+          : "\r\n" + error.stack
+        : "";
+
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams} ${errorStack}`,
     );
 
     return { response, error };
@@ -174,7 +181,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   }
 
   private findAction(actionName: string | undefined) {
-    return api.actions.actions.find((a) => a.name === actionName);
+    return api.actions.actions.find((a: Action) => a.name === actionName);
   }
 
   private async formatParams(params: FormData, action: Action) {
@@ -183,7 +190,16 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     // Convert FormData to a plain object for processing
     const rawParams: Record<string, any> = {};
     params.forEach((value, key) => {
-      rawParams[key] = value;
+      if (rawParams[key] !== undefined) {
+        // If the key already exists, convert to array
+        if (Array.isArray(rawParams[key])) {
+          rawParams[key].push(value);
+        } else {
+          rawParams[key] = [rawParams[key], value];
+        }
+      } else {
+        rawParams[key] = value;
+      }
     });
 
     // Handle zod schema inputs

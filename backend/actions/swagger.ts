@@ -1,27 +1,23 @@
-import { z } from "zod";
-import { Action, config, api } from "../api";
+import { zodToJsonSchema } from "zod-to-json-schema";
+import { Action, api, config } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
-import {
-  OpenAPIRegistry,
-  extendZodWithOpenApi,
-  OpenApiGeneratorV3,
-} from "@asteasolutions/zod-to-openapi";
-
-// Extend Zod with OpenAPI support
-extendZodWithOpenApi(z);
 
 const SWAGGER_VERSION = "3.0.0";
 
-const genericResponseSchema = z.object({});
-const errorResponseSchema = z.object({ error: z.string() });
+const errorResponseSchema = {
+  type: "object",
+  properties: {
+    error: { type: "string" },
+  },
+};
 
 const swaggerResponses = {
   "200": {
     description: "successful operation",
     content: {
       "application/json": {
-        schema: genericResponseSchema,
+        schema: {},
       },
     },
   },
@@ -65,47 +61,72 @@ export class Swagger implements Action {
   web = { route: "/swagger", method: HTTP_METHOD.GET };
 
   async run() {
-    const registry = new OpenAPIRegistry();
+    const paths: Record<string, any> = {};
+    const components: { schemas: Record<string, any> } = { schemas: {} };
 
-    // Register all actions with their Zod schemas
     for (const action of api.actions.actions) {
       if (!action.web?.route || !action.web?.method) continue;
-
-      const path = action.web.route;
+      // Convert :param format to OpenAPI {param} format
+      const path = action.web.route.replace(
+        /:\w+/g,
+        (match: string) => `{${match.slice(1)}}`,
+      );
       const method = action.web.method.toLowerCase();
+      const tag = action.name.split(":")[0];
+      const summary = action.description || action.name;
 
-      // Create request body schema if action has inputs
+      // Extract path parameters from the original route
+      const pathParams: any[] = [];
+      const pathParamMatches = action.web.route.match(/:\w+/g) || [];
+      for (const paramMatch of pathParamMatches) {
+        const paramName = paramMatch.slice(1); // Remove the colon
+        pathParams.push({
+          name: paramName,
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+          description: `The ${paramName} parameter`,
+        });
+      }
+
+      // Build requestBody if Zod inputs exist and method supports body
       let requestBody: any = undefined;
-      if (action.inputs && typeof action.inputs.parse === "function") {
-        const zodSchema = action.inputs as z.ZodType;
-        const schemaRef = registry.register(
-          `RequestBody_${action.name}`,
-          zodSchema,
-        );
-
+      if (
+        action.inputs &&
+        typeof action.inputs.parse === "function" &&
+        method !== "get" &&
+        method !== "head"
+      ) {
+        const zodSchema = action.inputs;
+        const schemaName = `${action.name.replace(/:/g, "_")}_Request`;
+        const jsonSchema = zodToJsonSchema(zodSchema, schemaName);
+        components.schemas[schemaName] =
+          jsonSchema.definitions?.[schemaName] || jsonSchema;
         requestBody = {
           required: true,
           content: {
             "application/json": {
-              schema: schemaRef,
+              schema: { $ref: `#/components/schemas/${schemaName}` },
             },
           },
         };
       }
 
-      // Register the operation
-      registry.registerPath({
-        method,
-        path,
-        summary: action.description || action.name,
-        requestBody,
-        responses: swaggerResponses,
-        tags: [action.name.split(":")[0]], // Group by action namespace
-      });
+      // Build responses (200 will be generic unless action has a known output schema)
+      const responses = { ...swaggerResponses };
+
+      // Add path/method
+      if (!paths[path]) paths[path] = {};
+      paths[path][method] = {
+        summary,
+        ...(pathParams.length > 0 ? { parameters: pathParams } : {}),
+        ...(requestBody ? { requestBody } : {}),
+        responses,
+        tags: [tag],
+      };
     }
 
-    const generator = new OpenApiGeneratorV3(registry.definitions);
-    const document = generator.generateDocument({
+    const document = {
       openapi: SWAGGER_VERSION,
       info: {
         version: packageJSON.version,
@@ -119,8 +140,9 @@ export class Swagger implements Action {
           description: packageJSON.description,
         },
       ],
-    });
-
+      paths,
+      components,
+    };
     return document;
   }
 }
