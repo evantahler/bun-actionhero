@@ -233,6 +233,10 @@ describe("actions", () => {
         subscribed: { channel: "messages" },
       });
 
+      // emptying the messages
+      messages1.splice(0, messages1.length);
+      messages2.splice(0, messages2.length);
+
       socket1.send(
         JSON.stringify({
           messageType: "action",
@@ -259,12 +263,12 @@ describe("actions", () => {
       let receivedMessages1: Record<string, any>[] = [];
       let receivedMessages2: Record<string, any>[] = [];
 
-      for (const message of messages1.slice(3)) {
+      for (const message of messages1) {
         const parsedMessage = JSON.parse(message.data);
         if (!parsedMessage.messageId) receivedMessages1.push(parsedMessage);
       }
 
-      for (const message of messages2.slice(3)) {
+      for (const message of messages2) {
         const parsedMessage = JSON.parse(message.data);
         if (!parsedMessage.messageId) receivedMessages2.push(parsedMessage);
       }
