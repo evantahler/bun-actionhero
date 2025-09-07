@@ -243,7 +243,7 @@ describe("actions", () => {
       );
 
       while (messages1.length < 5 || messages2.length < 4) {
-        await Bun.sleep(1000);
+        await Bun.sleep(10);
       }
 
       socket2.send(
@@ -256,7 +256,7 @@ describe("actions", () => {
       );
 
       while (messages1.length < 6 || messages2.length < 6) {
-        await Bun.sleep(1000);
+        await Bun.sleep(10);
       }
 
       // messages may arrive out of order
@@ -267,16 +267,22 @@ describe("actions", () => {
 
       for (const message of messages1.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (parsedMessage.messageId && parsedMessage.response.message.body)
+        if (
+          parsedMessage.messageId &&
+          parsedMessage.response.message.body == "Marco"
+        ) {
           sendResponse1 = parsedMessage;
-        else receivedMessages1.push(parsedMessage);
+        } else receivedMessages1.push(parsedMessage);
       }
 
       for (const message of messages2.slice(3)) {
         const parsedMessage = JSON.parse(message.data);
-        if (parsedMessage.messageId && parsedMessage.response.message.body)
+        if (
+          parsedMessage.messageId &&
+          parsedMessage.response.message.body == "Polo"
+        ) {
           sendResponse2 = parsedMessage;
-        else receivedMessages2.push(parsedMessage);
+        } else receivedMessages2.push(parsedMessage);
       }
 
       expect(sendResponse1?.response.message.body).toEqual("Marco");
