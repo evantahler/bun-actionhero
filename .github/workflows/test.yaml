@@ -12,10 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
-      - run: cp backend/.env.example backend/.env
+      - uses: oven-sh/setup-bun@v2
+      - name: copy backend env
+        run: cp .env.example .env
+        working-directory: backend
+      - name: copy frontend env
+        run: cp .env.example .env
+        working-directory: frontend
       - run: bun install
-      - run: bun compile
+      - name: compile backend
+        run: bun compile
+        working-directory: backend
+      - name: compile frontend
+        run: bun run build
+        working-directory: frontend
 
   lint:
     runs-on: ubuntu-latest

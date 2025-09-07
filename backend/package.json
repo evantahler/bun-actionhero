@@ -12,11 +12,9 @@
     "start": "bun actionhero.ts start",
     "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
-    "compile": "bun buildExecutable && bun types",
-    "buildExecutable": "bun build actionhero.ts --compile --outfile actionhero",
+    "compile": "bun build actionhero.ts --compile --outfile actionhero",
     "lint": "prettier --check .",
-    "format": "prettier --write .",
-    "types": "rm -rf types && tsc -skipLibCheck true --emitDeclarationOnly --outDir types --declarationMap --declaration --esModuleInterop true --module esnext --moduleResolution bundler --target esnext actionhero.ts api.ts actions/.index.ts"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.4",
