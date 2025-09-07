@@ -1,12 +1,14 @@
 import { Action, ActionParams, api } from "../../api";
+import "./../setup";
+
 import {
-  test,
-  expect,
-  describe,
-  beforeAll,
   afterAll,
-  beforeEach,
   afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
 } from "bun:test";
 import { z } from "zod";
 import { DEFAULT_QUEUE } from "../../classes/Action";

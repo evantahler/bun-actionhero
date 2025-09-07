@@ -1,5 +1,6 @@
-import { test, expect, describe, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { api, config } from "../../api";
+import "./../setup";
 
 const wsUrl = config.server.web.applicationUrl
   .replace("https://", "wss://")

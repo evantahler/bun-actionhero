@@ -1,9 +1,10 @@
-import { test, describe, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import { users } from "../../schema/users";
 import { hashPassword } from "../../ops/UserOps";
-import type { SessionCreate } from "../../actions/session";
+import { users } from "../../schema/users";
+import "./../setup";
 
 const url = config.server.web.applicationUrl;
 
