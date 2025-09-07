@@ -243,7 +243,7 @@ describe("actions", () => {
       );
 
       while (messages1.length < 5 || messages2.length < 4) {
-        await Bun.sleep(10);
+        await Bun.sleep(100);
       }
 
       socket2.send(
@@ -256,7 +256,7 @@ describe("actions", () => {
       );
 
       while (messages1.length < 6 || messages2.length < 6) {
-        await Bun.sleep(10);
+        await Bun.sleep(100);
       }
 
       // messages may arrive out of order
