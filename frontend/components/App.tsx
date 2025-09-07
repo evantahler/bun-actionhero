@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Col, Row, Table } from "react-bootstrap";
-import type { UserView } from "../types/backend/actions/user";
-import type { ActionResponse } from "../types/backend/api";
+import type { UserView } from "../../backend/actions/user";
+import type { ActionResponse } from "../../backend/api";
 import { wrappedFetch } from "../utils/client";
 import ChatCard from "./ChatCard";
 import InfoBar from "./InfoBar";

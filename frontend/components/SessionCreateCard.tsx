@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Form } from "react-bootstrap";
-import type { SessionCreate } from "../types/backend/actions/session";
-import type { ActionResponse } from "../types/backend/api";
+import type { SessionCreate } from "../../backend/actions/session";
+import type { ActionResponse } from "../../backend/api";
 import { wrappedFetch } from "../utils/client";
 import type { AppUser } from "./App";
 

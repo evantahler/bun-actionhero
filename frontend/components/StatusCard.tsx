@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card } from "react-bootstrap";
-import type { Status } from "../types/backend/actions/status";
-import type { ActionResponse } from "../types/backend/api";
+import type { Status } from "../../backend/actions/status";
+import type { ActionResponse } from "../../backend/api";
 import { wrappedFetch } from "../utils/client";
 
 export const StatusCard = () => {

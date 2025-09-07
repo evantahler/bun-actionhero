@@ -6,13 +6,11 @@
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
   "scripts": {
-    "dev": "bun types && bun run next dev -p 3000 --hostname 0.0.0.0",
-    "start": "bun run next start -p 3000 --hostname 0.0.0.0",
-    "compile": "bun types && bun compileNext",
-    "compileNext": "bun run next build",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
     "lint": "prettier --check .",
-    "format": "prettier --write .",
-    "types": "bun --cwd ../backend types && rm -rf ./types && mkdir -p ./types && cp -r ../backend/types ./types/backend"
+    "format": "prettier --write ."
   },
   "dependencies": {
     "next": "^14.2.7",
