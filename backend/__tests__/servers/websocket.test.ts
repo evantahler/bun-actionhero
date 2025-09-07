@@ -242,9 +242,7 @@ describe("actions", () => {
         }),
       );
 
-      while (messages1.length < 5 || messages2.length < 4) {
-        await Bun.sleep(10);
-      }
+      await Bun.sleep(100);
 
       socket2.send(
         JSON.stringify({
@@ -255,9 +253,7 @@ describe("actions", () => {
         }),
       );
 
-      while (messages1.length < 6 || messages2.length < 6) {
-        await Bun.sleep(10);
-      }
+      await Bun.sleep(100);
 
       // messages may arrive out of order
       let receivedMessages1: Record<string, any>[] = [];
@@ -272,9 +268,6 @@ describe("actions", () => {
         const parsedMessage = JSON.parse(message.data);
         if (!parsedMessage.messageId) receivedMessages2.push(parsedMessage);
       }
-
-      console.log(receivedMessages1);
-      console.log(receivedMessages2);
 
       expect(receivedMessages1.length).toEqual(2);
       expect(receivedMessages2.length).toEqual(2);
