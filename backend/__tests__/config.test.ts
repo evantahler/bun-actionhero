@@ -1,7 +1,7 @@
-import { test, expect, describe, beforeAll, afterAll } from "bun:test";
-
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { config } from "../config";
 import { loadFromEnvIfSet } from "../util/config";
+import "./setup";
 
 test("config can be loaded", () => {
   expect(config).toBeDefined();

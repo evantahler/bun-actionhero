@@ -4,9 +4,9 @@ import { config as Config } from "./config";
 
 export {
   Action,
+  type ActionConstructorInputs,
   type ActionParams,
   type ActionResponse,
-  type ActionConstructorInputs,
 } from "./classes/Action";
 export { API, RUN_MODE } from "./classes/API";
 export { Connection } from "./classes/Connection";

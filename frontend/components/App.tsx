@@ -1,13 +1,13 @@
-import { Row, Col, Button, Table } from "react-bootstrap";
-import { StatusCard } from "./StatusCard";
+import { useEffect, useState } from "react";
+import { Button, Col, Row, Table } from "react-bootstrap";
+import type { UserView } from "../../backend/actions/user";
+import type { ActionResponse } from "../../backend/api";
+import { wrappedFetch } from "../utils/client";
+import ChatCard from "./ChatCard";
+import InfoBar from "./InfoBar";
 import { SessionCreateCard } from "./SessionCreateCard";
 import { SignUpCard } from "./SignUpCard";
-import { useEffect, useState } from "react";
-import type { ActionResponse } from "../types/backend/api";
-import InfoBar from "./InfoBar";
-import ChatCard from "./ChatCard";
-import type { UserView } from "../types/backend/actions/user";
-import { wrappedFetch } from "../utils/client";
+import { StatusCard } from "./StatusCard";
 
 export type AppUser = ActionResponse<UserView>["user"] | null;
 

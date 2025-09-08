@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Swagger } from "../../actions/swagger";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
+import "./../setup";
 
 const url = config.server.web.applicationUrl;
 
@@ -50,13 +51,15 @@ describe("swagger", () => {
 
     // Count unique routes (since multiple methods on same route are grouped)
     const uniqueRoutes = new Set(
-      webActions.map((action) => convertRouteForSwagger(action.web!.route)),
+      webActions.map((action) =>
+        convertRouteForSwagger(action.web!.route.toString()),
+      ),
     );
     expect(Object.keys(response.paths).length).toBe(uniqueRoutes.size);
 
     // Verify each web action is documented
     for (const action of webActions) {
-      const path = convertRouteForSwagger(action.web!.route);
+      const path = convertRouteForSwagger(action.web!.route.toString());
       const method = action.web!.method.toLowerCase();
 
       expect(response.paths[path]).toBeDefined();
@@ -77,7 +80,7 @@ describe("swagger", () => {
     );
 
     for (const action of actionsWithInputs) {
-      const path = convertRouteForSwagger(action.web!.route);
+      const path = convertRouteForSwagger(action.web!.route.toString());
       const method = action.web!.method.toLowerCase();
       const pathObj = response.paths[path]![method]!;
 
@@ -129,7 +132,7 @@ describe("swagger", () => {
     for (const action of api.actions.actions) {
       if (!action.web?.route || !action.web?.method) continue;
 
-      const path = convertRouteForSwagger(action.web.route);
+      const path = convertRouteForSwagger(action.web.route.toString());
       const method = action.web.method.toLowerCase();
       const pathObj = response.paths[path]![method]!;
 

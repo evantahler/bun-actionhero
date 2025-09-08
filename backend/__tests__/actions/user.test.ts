@@ -1,9 +1,9 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
-import { api, type ActionResponse } from "../../api";
-import type { UserCreate, UserEdit } from "../../actions/user";
-import { config } from "../../config";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
-import { logger } from "../../api";
+import type { UserCreate, UserEdit } from "../../actions/user";
+import { api, logger, type ActionResponse } from "../../api";
+import { config } from "../../config";
+import "./../setup";
 
 const url = config.server.web.applicationUrl;
 

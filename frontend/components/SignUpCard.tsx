@@ -1,9 +1,9 @@
-import { Button, Form } from "react-bootstrap";
-import type { ActionResponse } from "../types/backend/api";
-import type { UserCreate } from "../types/backend/actions/user";
 import React from "react";
-import type { AppUser } from "./App";
+import { Button, Form } from "react-bootstrap";
+import type { UserCreate } from "../../backend/actions/user";
+import type { ActionResponse } from "../../backend/api";
 import { wrappedFetch } from "../utils/client";
+import type { AppUser } from "./App";
 export const SignUpCard = ({
   setUser,
   setSuccessMessage,

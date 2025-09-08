@@ -1,6 +1,7 @@
-import { test, expect, describe, beforeAll, afterAll } from "bun:test";
-import { api, config, type ActionResponse } from "../../api";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Status } from "../../actions/status";
+import { api, config, type ActionResponse } from "../../api";
+import "./../setup";
 
 const url = config.server.web.applicationUrl;
 

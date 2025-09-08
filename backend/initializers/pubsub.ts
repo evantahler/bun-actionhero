@@ -1,6 +1,6 @@
-import pkg from "../package.json";
 import { api } from "../api";
 import { Initializer } from "../classes/Initializer";
+import pkg from "../package.json";
 
 const namespace = "pubsub";
 const redisPubSubChannel = `actionhero:pubsub:${pkg.name}`;

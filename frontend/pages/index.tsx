@@ -1,6 +1,6 @@
 import { Container } from "react-bootstrap";
-import { MainLayout } from "../layouts/main";
 import App from "../components/App";
+import { MainLayout } from "../layouts/main";
 
 export default function Page() {
   return (

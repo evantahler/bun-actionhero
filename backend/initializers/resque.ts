@@ -1,19 +1,19 @@
 import {
-  logger,
-  api,
-  config,
-  Action,
-  Connection,
-  type ActionParams,
-  RUN_MODE,
-} from "../api";
-import {
   Queue,
   Scheduler,
-  type ParsedJob,
-  type Job,
   Worker,
+  type Job,
+  type ParsedJob,
 } from "node-resque";
+import {
+  Action,
+  api,
+  config,
+  Connection,
+  logger,
+  RUN_MODE,
+  type ActionParams,
+} from "../api";
 import { Initializer } from "../classes/Initializer";
 import { TypedError } from "../classes/TypedError";
 

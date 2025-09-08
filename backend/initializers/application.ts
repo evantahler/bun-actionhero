@@ -1,9 +1,9 @@
+import crypto from "crypto";
 import { eq } from "drizzle-orm";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
-import { User, users } from "../schema/users";
-import crypto from "crypto";
 import { hashPassword } from "../ops/UserOps";
+import { User, users } from "../schema/users";
 const namespace = "application";
 
 const defaultUserEmail = "admin@actionherojs.com";

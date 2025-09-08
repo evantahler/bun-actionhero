@@ -1,9 +1,10 @@
-import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { MessageCrete, MessagesList } from "../../actions/message";
+import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import type { SessionCreate } from "../../actions/session";
-import type { MessageCrete, MessagesList } from "../../actions/message";
 import { messages } from "../../schema/messages";
+import "./../setup";
 
 const url = config.server.web.applicationUrl;
 

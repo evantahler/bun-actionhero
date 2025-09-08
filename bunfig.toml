@@ -1,0 +1,6 @@
+[install]
+# Enable workspace support
+workspaces = true
+
+[install.scopes]
+# Configure workspace scopes if needed

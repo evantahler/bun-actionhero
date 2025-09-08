@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { api, Action } from "../api";
+import { Action, api } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
 
