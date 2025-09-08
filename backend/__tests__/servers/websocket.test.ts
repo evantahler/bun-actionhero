@@ -1,4 +1,11 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
 import { api, config } from "../../api";
 import "./../setup";
 
@@ -128,115 +135,239 @@ describe("actions", () => {
   });
 
   describe("chat", () => {
-    test("integration-test", async () => {
+    beforeEach(async () => {
+      await api.db.clearDatabase();
+    });
+
+    // Helper function to create a user via websocket
+    const createUser = async (
+      socket: WebSocket,
+      messages: MessageEvent[],
+      name: string,
+      email: string,
+      password: string,
+    ) => {
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "user:create",
+          messageId: 1,
+          params: { name, email, password },
+        }),
+      );
+
+      while (messages.length === 0) await Bun.sleep(10);
+      const response = JSON.parse(messages[0].data);
+
+      if (response.error) {
+        throw new Error(`User creation failed: ${response.error.message}`);
+      }
+
+      return response.response.user;
+    };
+
+    // Helper function to create a session via websocket
+    const createSession = async (
+      socket: WebSocket,
+      messages: MessageEvent[],
+      email: string,
+      password: string,
+    ) => {
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "session:create",
+          messageId: 2,
+          params: { email, password },
+        }),
+      );
+
+      while (messages.length < 2) await Bun.sleep(10);
+      const response = JSON.parse(messages[1].data);
+
+      if (response.error) {
+        throw new Error(`Session creation failed: ${response.error.message}`);
+      }
+
+      return response.response;
+    };
+
+    // Helper function to subscribe to a channel
+    const subscribeToChannel = async (
+      socket: WebSocket,
+      messages: MessageEvent[],
+      channel: string,
+    ) => {
+      socket.send(JSON.stringify({ messageType: "subscribe", channel }));
+
+      while (messages.length < 3) await Bun.sleep(10);
+      const response = JSON.parse(messages[2].data);
+      return response;
+    };
+
+    // Helper function to wait for messages and filter out action responses
+    const waitForBroadcastMessages = async (
+      messages: MessageEvent[],
+      expectedCount: number,
+    ) => {
+      await Bun.sleep(100); // Give time for messages to be broadcast
+
+      const broadcastMessages: Record<string, any>[] = [];
+      for (const message of messages) {
+        const parsedMessage = JSON.parse(message.data);
+        if (!parsedMessage.messageId) {
+          broadcastMessages.push(parsedMessage);
+        }
+      }
+
+      expect(broadcastMessages.length).toBe(expectedCount);
+      return broadcastMessages;
+    };
+
+    test("should create two users with different IDs", async () => {
       const { socket: socket1, messages: messages1 } = await buildWebSocket();
       const { socket: socket2, messages: messages2 } = await buildWebSocket();
 
-      socket1.send(
-        JSON.stringify({
-          messageType: "action",
-          action: "user:create",
-          messageId: 1,
-          params: {
-            name: "Marco",
-            email: "marco@example.com",
-            password: "abc12345",
-          },
-        }),
-      );
-
-      socket2.send(
-        JSON.stringify({
-          messageType: "action",
-          action: "user:create",
-          messageId: 1,
-          params: {
-            name: "Polo",
-            email: "polo@example.com",
-            password: "abc12345",
-          },
-        }),
-      );
-
-      while (messages1.length < 1 || messages2.length < 1) {
-        await Bun.sleep(10);
-      }
-
-      const socket1UserId = JSON.parse(messages1[0].data).response.user.id;
-      const socket2UserId = JSON.parse(messages2[0].data).response.user.id;
-      expect(socket1UserId).toBeGreaterThan(0);
-      expect(socket2UserId).toBeGreaterThan(0);
-      expect(socket1UserId).not.toBe(socket2UserId);
-      expect(JSON.parse(messages1[0].data).response.user.email).toBe(
+      const user1 = await createUser(
+        socket1,
+        messages1,
+        "Marco",
         "marco@example.com",
+        "abc12345",
       );
-      expect(JSON.parse(messages2[0].data).response.user.email).toBe(
+      const user2 = await createUser(
+        socket2,
+        messages2,
+        "Polo",
         "polo@example.com",
+        "abc12345",
       );
 
-      socket1.send(
-        JSON.stringify({
-          messageType: "action",
-          action: "session:create",
-          messageId: 2,
-          params: {
-            email: "marco@example.com",
-            password: "abc12345",
-          },
-        }),
+      expect(user1.id).toBeGreaterThan(0);
+      expect(user2.id).toBeGreaterThan(0);
+      expect(user1.id).not.toBe(user2.id);
+      expect(user1.email).toBe("marco@example.com");
+      expect(user2.email).toBe("polo@example.com");
+
+      socket1.close();
+      socket2.close();
+    });
+
+    test("should create sessions for both users", async () => {
+      const { socket: socket1, messages: messages1 } = await buildWebSocket();
+      const { socket: socket2, messages: messages2 } = await buildWebSocket();
+
+      // Create users first
+      await createUser(
+        socket1,
+        messages1,
+        "Marco",
+        "marco@example.com",
+        "abc12345",
+      );
+      await createUser(
+        socket2,
+        messages2,
+        "Polo",
+        "polo@example.com",
+        "abc12345",
       );
 
-      socket2.send(
-        JSON.stringify({
-          messageType: "action",
-          action: "session:create",
-          messageId: 2,
-          params: {
-            email: "polo@example.com",
-            password: "abc12345",
-          },
-        }),
+      // Create sessions
+      const session1 = await createSession(
+        socket1,
+        messages1,
+        "marco@example.com",
+        "abc12345",
+      );
+      const session2 = await createSession(
+        socket2,
+        messages2,
+        "polo@example.com",
+        "abc12345",
       );
 
-      while (messages1.length < 2 || messages2.length < 2) {
-        await Bun.sleep(10);
-      }
+      expect(session1.user.id).toBe(1);
+      expect(session1.user.email).toBe("marco@example.com");
+      expect(session1.session.data.userId).toBe(1);
+      expect(session2.user.id).toBe(2);
+      expect(session2.user.email).toBe("polo@example.com");
+      expect(session2.session.data.userId).toBe(2);
 
-      const sessionMessage1 = JSON.parse(messages1[1].data);
-      const sessionMessage2 = JSON.parse(messages2[1].data);
+      socket1.close();
+      socket2.close();
+    });
 
-      expect(sessionMessage1.response.user.id).toEqual(1);
-      expect(sessionMessage1.response.user.email).toEqual("marco@example.com");
-      expect(sessionMessage1.response.session.data.userId).toEqual(1);
-      expect(sessionMessage2.response.user.id).toEqual(2);
-      expect(sessionMessage2.response.user.email).toEqual("polo@example.com");
-      expect(sessionMessage2.response.session.data.userId).toEqual(2);
+    test("should subscribe both users to messages channel", async () => {
+      const { socket: socket1, messages: messages1 } = await buildWebSocket();
+      const { socket: socket2, messages: messages2 } = await buildWebSocket();
 
-      socket1.send(
-        JSON.stringify({ messageType: "subscribe", channel: "messages" }),
+      // Create users and sessions first
+      await createUser(
+        socket1,
+        messages1,
+        "Marco",
+        "marco@example.com",
+        "abc12345",
       );
-      socket2.send(
-        JSON.stringify({ messageType: "subscribe", channel: "messages" }),
+      await createUser(
+        socket2,
+        messages2,
+        "Polo",
+        "polo@example.com",
+        "abc12345",
+      );
+      await createSession(socket1, messages1, "marco@example.com", "abc12345");
+      await createSession(socket2, messages2, "polo@example.com", "abc12345");
+
+      // Subscribe to channel
+      const subscribe1 = await subscribeToChannel(
+        socket1,
+        messages1,
+        "messages",
+      );
+      const subscribe2 = await subscribeToChannel(
+        socket2,
+        messages2,
+        "messages",
       );
 
-      while (messages1.length < 3 || messages2.length < 3) {
-        await Bun.sleep(10);
-      }
+      expect(subscribe1).toEqual({ subscribed: { channel: "messages" } });
+      expect(subscribe2).toEqual({ subscribed: { channel: "messages" } });
 
-      const subscribeMessage1 = JSON.parse(messages1[2].data);
-      const subscribeMessage2 = JSON.parse(messages2[2].data);
+      socket1.close();
+      socket2.close();
+    });
 
-      expect(subscribeMessage1).toEqual({
-        subscribed: { channel: "messages" },
-      });
-      expect(subscribeMessage2).toEqual({
-        subscribed: { channel: "messages" },
-      });
+    test("should broadcast messages to all subscribed users", async () => {
+      const { socket: socket1, messages: messages1 } = await buildWebSocket();
+      const { socket: socket2, messages: messages2 } = await buildWebSocket();
 
-      // emptying the messages
+      // Setup: create users, sessions, and subscribe to channel
+      await createUser(
+        socket1,
+        messages1,
+        "Marco",
+        "marco@example.com",
+        "abc12345",
+      );
+      await createUser(
+        socket2,
+        messages2,
+        "Polo",
+        "polo@example.com",
+        "abc12345",
+      );
+      await createSession(socket1, messages1, "marco@example.com", "abc12345");
+      await createSession(socket2, messages2, "polo@example.com", "abc12345");
+      await subscribeToChannel(socket1, messages1, "messages");
+      await subscribeToChannel(socket2, messages2, "messages");
+
+      // Clear action response messages
       messages1.splice(0, messages1.length);
       messages2.splice(0, messages2.length);
 
+      // Send messages
       socket1.send(
         JSON.stringify({
           messageType: "action",
@@ -245,8 +376,6 @@ describe("actions", () => {
           params: { body: "Marco" },
         }),
       );
-
-      await Bun.sleep(100);
 
       socket2.send(
         JSON.stringify({
@@ -257,33 +386,22 @@ describe("actions", () => {
         }),
       );
 
-      await Bun.sleep(100);
+      // Wait for broadcast messages
+      const broadcastMessages1 = await waitForBroadcastMessages(messages1, 2);
+      const broadcastMessages2 = await waitForBroadcastMessages(messages2, 2);
 
-      // messages may arrive out of order
-      let receivedMessages1: Record<string, any>[] = [];
-      let receivedMessages2: Record<string, any>[] = [];
-
-      for (const message of messages1) {
-        const parsedMessage = JSON.parse(message.data);
-        if (!parsedMessage.messageId) receivedMessages1.push(parsedMessage);
-      }
-
-      for (const message of messages2) {
-        const parsedMessage = JSON.parse(message.data);
-        if (!parsedMessage.messageId) receivedMessages2.push(parsedMessage);
-      }
-
-      expect(receivedMessages1.length).toEqual(2);
-      expect(receivedMessages2.length).toEqual(2);
-
-      expect(receivedMessages1[0].message.message.message.body).toEqual(
-        "Marco",
+      // Verify both users received both messages
+      const messageBodies1 = broadcastMessages1.map(
+        (msg) => msg.message.message.message.body,
       );
-      expect(receivedMessages2[0].message.message.message.body).toEqual(
-        "Marco",
+      const messageBodies2 = broadcastMessages2.map(
+        (msg) => msg.message.message.message.body,
       );
-      expect(receivedMessages1[1].message.message.message.body).toEqual("Polo");
-      expect(receivedMessages2[1].message.message.message.body).toEqual("Polo");
+
+      expect(messageBodies1).toContain("Marco");
+      expect(messageBodies1).toContain("Polo");
+      expect(messageBodies2).toContain("Marco");
+      expect(messageBodies2).toContain("Polo");
 
       socket1.close();
       socket2.close();
