@@ -86,9 +86,7 @@ To test:
 createdb bun-test
 
 # run all tests
-bun ci # runs linting, compilation, and all tests
-# or
-bun tests # runs just the tests (note the s at the end)
+bun run ci # runs linting, compilation, and all tests
 
 # run a single test file
 cd backend

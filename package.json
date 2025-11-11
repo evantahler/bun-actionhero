@@ -22,7 +22,7 @@
     "format-backend": "cd backend && bun format",
     "format-frontend": "cd frontend && bun format",
     "format": "bun format-backend && bun format-frontend",
-    "ci": "bun lint && bun compile && bun tests"
+    "ci": "bun lint-backend && bun lint-frontend && bun test-backend && bun test-frontend"
   },
   "dependencies": {
     "concurrently": "^8.2.2"
