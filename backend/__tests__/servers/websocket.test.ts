@@ -223,7 +223,7 @@ describe("actions", () => {
       try {
         expect(broadcastMessages.length).toBe(expectedCount);
       } catch (e) {
-        console.error(broadcastMessages);
+        console.error(JSON.stringify(broadcastMessages, null, 2));
         throw e;
       }
       return broadcastMessages;
