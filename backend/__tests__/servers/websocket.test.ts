@@ -369,8 +369,8 @@ describe("actions", () => {
       await subscribeToChannel(socket2, messages2, "messages");
 
       // Clear action response messages
-      messages1.splice(0, messages1.length);
-      messages2.splice(0, messages2.length);
+      while (messages1.length > 0) messages1.pop();
+      while (messages2.length > 0) messages2.pop();
 
       // Send messages
       socket1.send(
@@ -392,9 +392,7 @@ describe("actions", () => {
       );
 
       // Wait for broadcast messages
-      await Bun.sleep(100);
       const broadcastMessages1 = await waitForBroadcastMessages(messages1, 2);
-      await Bun.sleep(100);
       const broadcastMessages2 = await waitForBroadcastMessages(messages2, 2);
 
       // Verify both users received both messages
@@ -405,10 +403,8 @@ describe("actions", () => {
         (msg) => msg.message.message.message.body,
       );
 
-      expect(messageBodies1).toContain("Marco");
-      expect(messageBodies1).toContain("Polo");
-      expect(messageBodies2).toContain("Marco");
-      expect(messageBodies2).toContain("Polo");
+      expect(messageBodies1).toEqual(["Marco", "Polo"]);
+      expect(messageBodies2).toEqual(["Marco", "Polo"]);
 
       socket1.close();
       socket2.close();
