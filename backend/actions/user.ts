@@ -107,8 +107,6 @@ export class UserView implements Action {
   });
 
   async run(params: ActionParams<UserView>, connection: Connection) {
-
-
     const [user] = await api.db.db
       .select()
       .from(users)
