@@ -19,3 +19,12 @@ export function serializeUser(user: User) {
     updatedAt: user.updatedAt.getTime(),
   };
 }
+
+export function serializePublicUser(user: User) {
+  return {
+    id: user.id,
+    name: user.name,
+    createdAt: user.createdAt.getTime(),
+    updatedAt: user.updatedAt.getTime(),
+  };
+}

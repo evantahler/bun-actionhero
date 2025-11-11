@@ -4,7 +4,11 @@ import { Action, type ActionParams, api, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { SessionMiddleware } from "../middleware/session";
-import { hashPassword, serializeUser } from "../ops/UserOps";
+import {
+  hashPassword,
+  serializePublicUser,
+  serializeUser,
+} from "../ops/UserOps";
 import { users } from "../schema/users";
 
 export class UserCreate implements Action {
@@ -103,20 +107,7 @@ export class UserView implements Action {
   });
 
   async run(params: ActionParams<UserView>, connection: Connection) {
-    const userId = connection.session?.data.userId;
-    if (!userId) {
-      throw new TypedError({
-        message: "Session not found",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
 
-    if (params.id !== userId) {
-      throw new TypedError({
-        message: "You can only view yourself",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
 
     const [user] = await api.db.db
       .select()
@@ -131,6 +122,6 @@ export class UserView implements Action {
       });
     }
 
-    return { user: serializeUser(user) };
+    return { user: serializePublicUser(user) };
   }
 }

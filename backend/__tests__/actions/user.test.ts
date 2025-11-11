@@ -199,11 +199,12 @@ describe("user:view", () => {
     const response = (await res.json()) as ActionResponse<UserView>;
     expect(res.status).toBe(200);
     expect(response.user.id).toEqual(userId);
-    expect(response.user.email).toEqual("luigi@example.com");
     expect(response.user.name).toEqual("Luigi Mario");
+    // Email should not be in public user data
+    expect(response.user['email']).toBeUndefined();
   });
 
-  test("user cannot view another user", async () => {
+  test("user can view another user (public information only)", async () => {
     // Create two users
     await fetch(url + "/api/user", {
       method: "PUT",
@@ -215,7 +216,7 @@ describe("user:view", () => {
       }),
     });
 
-    // Create a session for the first user
+    // Create a session for Peach
     const sessionRes = await fetch(url + "/api/session", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -228,9 +229,8 @@ describe("user:view", () => {
       (await sessionRes.json()) as ActionResponse<SessionCreate>;
     expect(sessionRes.status).toBe(200);
     const sessionId = sessionResponse.session.id;
-    const userId = sessionResponse.user.id;
 
-    // Try to view a different user (id 1, which should be Mario from earlier tests)
+    // View a different user (id 1, which should exist from earlier tests)
     const res = await fetch(url + "/api/user/1", {
       method: "GET",
       headers: {
@@ -239,8 +239,12 @@ describe("user:view", () => {
       },
     });
     const response = (await res.json()) as ActionResponse<UserView>;
-    expect(res.status).toBe(500);
-    expect(response.error?.message).toMatch(/You can only view yourself/);
+    expect(res.status).toBe(200);
+    expect(response.user.id).toEqual(1);
+    expect(response.user.name).toBeDefined();
+    expect(typeof response.user.name).toBe("string");
+    // Email should not be in public user data
+    expect(response.user['email']).toBeUndefined();
   });
 
   test("fails with invalid id format", async () => {
