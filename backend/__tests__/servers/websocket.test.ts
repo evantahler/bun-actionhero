@@ -210,7 +210,7 @@ describe("actions", () => {
       messages: MessageEvent[],
       expectedCount: number,
     ) => {
-      await Bun.sleep(1000); // Give time for messages to be broadcast
+      await Bun.sleep(100); // Give time for messages to be broadcast
 
       const broadcastMessages: Record<string, any>[] = [];
       for (const message of messages) {
@@ -220,7 +220,12 @@ describe("actions", () => {
         }
       }
 
-      expect(broadcastMessages.length).toBe(expectedCount);
+      try {
+        expect(broadcastMessages.length).toBe(expectedCount);
+      } catch (e) {
+        console.error(broadcastMessages);
+        throw e;
+      }
       return broadcastMessages;
     };
 
