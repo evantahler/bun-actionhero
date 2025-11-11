@@ -30,7 +30,7 @@ TS/JS is still the best language for any web API. However, node.js has stalled a
 
 ## Project Structure
 
-- **root**: a slim package.json which wraps the backend and frontend directories. This is for convenience when developing. The regular commands `bun install`, `bun dev`, `bun tests`, etc will work from the root, but note the `s` at the end of `bun tests`.
+- **root**: a slim package.json which wraps the backend and frontend directories. This is for convenience when developing. The regular commands `bun install`, `bun dev` work here, but you need to change to the frontend and backend dirs to run tests.
 - **backend**: The actionhero server.
 - **frontend**: The frontend next.js application.
 
