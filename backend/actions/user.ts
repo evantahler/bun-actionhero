@@ -91,16 +91,45 @@ export class UserEdit implements Action {
 
 export class UserView implements Action {
   name = "user:view";
-  description = "View yourself";
+  description = "View a user";
   middleware = [SessionMiddleware];
-  web = { route: "/user", method: HTTP_METHOD.GET };
+  web = { route: "/user/:id", method: HTTP_METHOD.GET };
+  inputs = z.object({
+    id: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .refine((val) => !isNaN(val), "id must be a valid number")
+      .describe("The user's id"),
+  });
 
   async run(params: ActionParams<UserView>, connection: Connection) {
+    const userId = connection.session?.data.userId;
+    if (!userId) {
+      throw new TypedError({
+        message: "Session not found",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
+    }
+
+    if (params.id !== userId) {
+      throw new TypedError({
+        message: "You can only view yourself",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
+    }
+
     const [user] = await api.db.db
       .select()
       .from(users)
-      .where(eq(users.id, connection.session?.data.userId))
+      .where(eq(users.id, params.id))
       .limit(1);
+
+    if (!user) {
+      throw new TypedError({
+        message: "User not found",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
+    }
 
     return { user: serializeUser(user) };
   }

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
-import type { UserCreate, UserEdit } from "../../actions/user";
+import type { UserCreate, UserEdit, UserView } from "../../actions/user";
 import { api, logger, type ActionResponse } from "../../api";
 import { config } from "../../config";
 import "./../setup";
@@ -147,5 +147,127 @@ describe("user:edit", () => {
     expect(sessionResponse.user.updatedAt).toBeLessThan(
       response.user.updatedAt,
     );
+  });
+});
+
+describe("user:view", () => {
+  test("it fails without a session", async () => {
+    const res = await fetch(url + "/api/user/1", {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    const response = (await res.json()) as ActionResponse<UserView>;
+    expect(res.status).toBe(401);
+    expect(response.error?.message).toMatch(/Session not found/);
+  });
+
+  test("user can view themselves", async () => {
+    // Create a user first
+    await fetch(url + "/api/user", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Luigi Mario",
+        email: "luigi@example.com",
+        password: "mushroom1",
+      }),
+    });
+
+    // Create a session
+    const sessionRes = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "luigi@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const sessionResponse =
+      (await sessionRes.json()) as ActionResponse<SessionCreate>;
+    expect(sessionRes.status).toBe(200);
+    const sessionId = sessionResponse.session.id;
+    const userId = sessionResponse.user.id;
+
+    // View the user
+    const res = await fetch(url + `/api/user/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${config.session.cookieName}=${sessionId}`,
+      },
+    });
+    const response = (await res.json()) as ActionResponse<UserView>;
+    expect(res.status).toBe(200);
+    expect(response.user.id).toEqual(userId);
+    expect(response.user.email).toEqual("luigi@example.com");
+    expect(response.user.name).toEqual("Luigi Mario");
+  });
+
+  test("user cannot view another user", async () => {
+    // Create two users
+    await fetch(url + "/api/user", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Peach Toadstool",
+        email: "peach@example.com",
+        password: "mushroom1",
+      }),
+    });
+
+    // Create a session for the first user
+    const sessionRes = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "peach@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const sessionResponse =
+      (await sessionRes.json()) as ActionResponse<SessionCreate>;
+    expect(sessionRes.status).toBe(200);
+    const sessionId = sessionResponse.session.id;
+    const userId = sessionResponse.user.id;
+
+    // Try to view a different user (id 1, which should be Mario from earlier tests)
+    const res = await fetch(url + "/api/user/1", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${config.session.cookieName}=${sessionId}`,
+      },
+    });
+    const response = (await res.json()) as ActionResponse<UserView>;
+    expect(res.status).toBe(500);
+    expect(response.error?.message).toMatch(/You can only view yourself/);
+  });
+
+  test("fails with invalid id format", async () => {
+    // Create a session
+    const sessionRes = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "peach@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const sessionResponse =
+      (await sessionRes.json()) as ActionResponse<SessionCreate>;
+    expect(sessionRes.status).toBe(200);
+    const sessionId = sessionResponse.session.id;
+
+    // Try to view with invalid id
+    const res = await fetch(url + "/api/user/invalid", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${config.session.cookieName}=${sessionId}`,
+      },
+    });
+    const response = (await res.json()) as ActionResponse<UserView>;
+    expect(res.status).toBe(406);
+    expect(response.error?.message).toMatch(/id must be a valid number/);
   });
 });

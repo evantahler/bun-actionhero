@@ -22,11 +22,19 @@ export default function App() {
 
   async function hydrateUser() {
     try {
-      const response = await wrappedFetch<ActionResponse<UserView>>("/user");
+      const userId = localStorage.getItem("userId");
+      if (!userId) {
+        setUser(null);
+        return;
+      }
+      const response = await wrappedFetch<ActionResponse<UserView>>(
+        `/user/${userId}`,
+      );
       setSuccessMessage(`Welcome back, ${response.user.name}!`);
       setUser(response.user);
     } catch (error) {
       setUser(null);
+      localStorage.removeItem("userId");
     }
   }
 
@@ -34,6 +42,7 @@ export default function App() {
     try {
       await wrappedFetch("/session", { method: "DELETE" });
       setUser(null);
+      localStorage.removeItem("userId");
       setSuccessMessage("You have been logged out successfully");
     } catch (error) {
       setErrorMessage("Failed to log out");
