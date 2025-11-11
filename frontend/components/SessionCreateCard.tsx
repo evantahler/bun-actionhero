@@ -39,6 +39,7 @@ export const SessionCreateCard = ({
     if (response) {
       setSuccessMessage(`Welcome back, ${response.user.name}!`);
       setUser(response.user);
+      localStorage.setItem("userId", String(response.user.id));
     }
   }
 

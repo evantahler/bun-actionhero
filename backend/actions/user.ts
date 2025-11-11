@@ -4,7 +4,11 @@ import { Action, type ActionParams, api, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { SessionMiddleware } from "../middleware/session";
-import { hashPassword, serializeUser } from "../ops/UserOps";
+import {
+  hashPassword,
+  serializePublicUser,
+  serializeUser,
+} from "../ops/UserOps";
 import { users } from "../schema/users";
 
 export class UserCreate implements Action {
@@ -91,17 +95,31 @@ export class UserEdit implements Action {
 
 export class UserView implements Action {
   name = "user:view";
-  description = "View yourself";
+  description = "View a user";
   middleware = [SessionMiddleware];
-  web = { route: "/user", method: HTTP_METHOD.GET };
+  web = { route: "/user/:id", method: HTTP_METHOD.GET };
+  inputs = z.object({
+    id: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .refine((val) => !isNaN(val), "id must be a valid number")
+      .describe("The user's id"),
+  });
 
   async run(params: ActionParams<UserView>, connection: Connection) {
     const [user] = await api.db.db
       .select()
       .from(users)
-      .where(eq(users.id, connection.session?.data.userId))
+      .where(eq(users.id, params.id))
       .limit(1);
 
-    return { user: serializeUser(user) };
+    if (!user) {
+      throw new TypedError({
+        message: "User not found",
+        type: ErrorType.CONNECTION_ACTION_RUN,
+      });
+    }
+
+    return { user: serializePublicUser(user) };
   }
 }

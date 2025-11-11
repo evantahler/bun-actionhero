@@ -115,7 +115,7 @@ describe("session:destroy", () => {
     expect(response.success).toBe(true);
 
     // Verify session is actually destroyed by trying to access a protected endpoint
-    const userRes = await fetch(url + "/api/user", {
+    const userRes = await fetch(url + "/api/user/1", {
       method: "GET",
       headers: {
         Cookie: `${session.cookieName}=${session.id}`,
