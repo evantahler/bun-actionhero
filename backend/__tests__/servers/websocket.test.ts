@@ -345,6 +345,7 @@ describe("actions", () => {
     // });
 
     test("should broadcast messages to all subscribed users", async () => {
+      console.log("STARTING TEST");
       const { socket: socket1, messages: messages1 } = await buildWebSocket();
       const { socket: socket2, messages: messages2 } = await buildWebSocket();
 
@@ -402,7 +403,6 @@ describe("actions", () => {
       const messageBodies2 = broadcastMessages2.map(
         (msg) => msg.message.message.message.body,
       );
-
       expect(messageBodies1).toEqual(["Marco"]);
       expect(messageBodies2).toEqual(["Marco", "Polo"]);
 
