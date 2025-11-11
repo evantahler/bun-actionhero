@@ -382,8 +382,6 @@ describe("actions", () => {
         }),
       );
 
-      const broadcastMessages1 = await waitForBroadcastMessages(messages1, 1);
-
       socket2.send(
         JSON.stringify({
           messageType: "action",
@@ -393,6 +391,7 @@ describe("actions", () => {
         }),
       );
 
+      const broadcastMessages1 = await waitForBroadcastMessages(messages1, 2);
       const broadcastMessages2 = await waitForBroadcastMessages(messages2, 2);
 
       // Verify both users received both messages
@@ -402,7 +401,7 @@ describe("actions", () => {
       const messageBodies2 = broadcastMessages2.map(
         (msg) => msg.message.message.message.body,
       );
-      expect(messageBodies1).toEqual(["Marco"]);
+      expect(messageBodies1).toEqual(["Marco", "Polo"]);
       expect(messageBodies2).toEqual(["Marco", "Polo"]);
 
       socket1.close();
