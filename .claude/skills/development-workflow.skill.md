@@ -1,11 +1,18 @@
 ---
-description:
-globs:
-alwaysApply: false
+name: development-workflow
+description: Common development tasks and workflows
+when_to_use: |
+  - User is getting started with the project
+  - User asks how to start development servers
+  - User needs help with common development tasks
+  - User wants to create new actions or features
+  - User asks about debugging or hot reloading
+keywords: [development, workflow, getting-started, dev-server, debugging, hot-reload]
 ---
+
 # Development Workflow
 
-Common development tasks and workflows.
+Common development tasks and workflows for the bun-actionhero project.
 
 ## Starting Development
 
@@ -41,7 +48,7 @@ bun test path/to/test/file
 
 ### Debugging
 - Use `console.log()` for quick debugging
-- Add breakpoints in Cursor
+- Add breakpoints in your IDE
 - Check server logs in terminal
 
 ### Hot Reloading

@@ -1,32 +1,36 @@
----
-description:
-globs:
-alwaysApply: true
----
-
 # Frontend Development
 
-Next.js frontend application information.
+Next.js frontend application rules and guidelines.
 
-## Development
+## Type Definitions
 
-Always, load the type type definitions from the Actions in the backend. Do not write your own types.
+Always load the type definitions from the Actions in the backend. Do not write your own types.
+
+### Form Input Types
 
 For form inputs, use the type from the backend action. For example, if the backend action is `SessionCreate`, the input type is `SessionCreate["inputs"]["_type"]`.
 
-```
+```typescript
 type SigninFormData = SessionCreate["inputs"]["_type"];
 ```
 
-For api responses, use the type from the backend action. For example, if the backend action is `SessionCreate`, the response type is `ActionResponse<SessionCreate>`.
+### API Response Types
 
-```
+For API responses, use the type from the backend action. For example, if the backend action is `SessionCreate`, the response type is `ActionResponse<SessionCreate>`.
+
+```typescript
 type SigninResponse = ActionResponse<SessionCreate>;
 ```
 
+## API Calls
+
 When making API calls, use the APIWrapper class. For example, if the backend action is `SessionCreate`, the API call is `APIWrapper.post<SessionCreate>(SessionCreate)`.
 
-We write scss files for styling, not css.
+## Styling
+
+We write SCSS files for styling, not CSS.
+
+## Development
 
 ### Start Frontend
 

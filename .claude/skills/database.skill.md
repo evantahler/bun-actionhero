@@ -1,11 +1,18 @@
 ---
-description:
-globs:
-alwaysApply: false
+name: database
+description: Database operations, migrations, and management
+when_to_use: |
+  - User needs to set up or configure the database
+  - User asks about database migrations
+  - User wants to backup or restore data
+  - User mentions Drizzle ORM or database operations
+  - User is modifying database schemas
+keywords: [database, postgres, migration, drizzle, backup, restore, schema]
 ---
+
 # Database Management
 
-Database operations and management.
+Database operations and management for the bun-actionhero project.
 
 ## Setup
 

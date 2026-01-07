@@ -1,18 +1,16 @@
----
-description:
-globs:
-alwaysApply: true
----
-
 # Testing
 
 Information about running and writing tests.
 
-## Running Tests
+## Test Framework
 
-We use Bun's built in test framework.
+We use Bun's built-in test framework.
+
+## Database Testing
 
 We prefer not to write mocks for database or model operations. Instead, we really write to the database and reset it after each test (that's what `await api.db.clearDatabase()` does).
+
+## Running Tests
 
 ### Backend Tests
 
@@ -52,9 +50,9 @@ bun test __tests__/path/file.test.ts  # Run specific test file
 ## Debugging Tests
 
 - Add `console.log()` statements
-- Use Cursor's debugger
+- Use your IDE's debugger
 - Run specific test files to isolate issues
 
 ## Linting
 
-After modifying any file, confirm that the file conforms to our linting standards with `bun lint`. The fixes can likely be applied with `bun format`
+After modifying any file, confirm that the file conforms to our linting standards with `bun lint`. The fixes can likely be applied with `bun format`.

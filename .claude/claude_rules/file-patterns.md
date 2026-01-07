@@ -1,8 +1,3 @@
----
-description:
-globs:
-alwaysApply: true
----
 # File Patterns
 
 File pattern configurations for formatting and linting.

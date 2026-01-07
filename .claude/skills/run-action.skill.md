@@ -1,11 +1,17 @@
 ---
-description:
-globs:
-alwaysApply: false
+name: run-action
+description: Execute ActionHero actions from the command line
+when_to_use: |
+  - User wants to test or run an ActionHero action directly
+  - User asks how to run actions from CLI
+  - User needs to check server status or debug an action
+  - User mentions running actions outside of HTTP/WebSocket
+keywords: [actionhero, cli, action, status, command-line]
 ---
-# Running Actions
 
-How to run actions from the command line interface.
+# Run ActionHero Action
+
+Execute ActionHero actions from the command line interface.
 
 ## Basic Usage
 

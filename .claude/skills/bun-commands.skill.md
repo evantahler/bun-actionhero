@@ -1,8 +1,14 @@
 ---
-description:
-globs:
-alwaysApply: false
+name: bun-commands
+description: Common Bun commands reference
+when_to_use: |
+  - User asks what commands are available
+  - User wants to know how to run tests, lint, or format
+  - User asks about building or starting the project
+  - User mentions CI or compilation
+keywords: [bun, commands, test, lint, format, build, compile, ci]
 ---
+
 # Bun Commands
 
 Common Bun commands for this project.

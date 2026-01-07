@@ -1,8 +1,3 @@
----
-description:
-globs:
-alwaysApply: true
----
 # Project Structure
 
 Overview of the project's directory structure.
@@ -10,7 +5,7 @@ Overview of the project's directory structure.
 ## Root Directory
 - `backend/`: ActionHero server application
 - `frontend/`: Next.js frontend application
-- `.cursor/`: Cursor IDE configuration
+- `.claude/`: Claude Code configuration
 - `docker-compose.yml`: Docker configuration
 
 ## Backend Structure
