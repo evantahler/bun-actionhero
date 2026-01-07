@@ -1,4 +1,3 @@
-import { eq, sql } from "drizzle-orm";
 import {
   afterAll,
   beforeAll,
@@ -7,10 +6,8 @@ import {
   expect,
   test,
 } from "bun:test";
-import {
-  MessagesCleanup,
-  MessagesHello,
-} from "../../actions/message";
+import { eq, sql } from "drizzle-orm";
+import { MessagesCleanup, MessagesHello } from "../../actions/message";
 import { api } from "../../api";
 import { messages } from "../../schema/messages";
 import { users } from "../../schema/users";
@@ -45,7 +42,7 @@ describe("messages:cleanup", () => {
     // Create an old message (older than 24 hours) using postgres interval
     await api.db.db.execute(
       sql`INSERT INTO messages (body, user_id, created_at, updated_at)
-          VALUES ('Old message', ${user.id}, NOW() - INTERVAL '25 hours', NOW() - INTERVAL '25 hours')`
+          VALUES ('Old message', ${user.id}, NOW() - INTERVAL '25 hours', NOW() - INTERVAL '25 hours')`,
     );
 
     // Create a recent message
@@ -112,7 +109,7 @@ describe("messages:cleanup", () => {
     for (let i = 0; i < 5; i++) {
       await api.db.db.execute(
         sql`INSERT INTO messages (body, user_id, created_at, updated_at)
-            VALUES (${`Old message ${i}`}, ${user.id}, NOW() - INTERVAL '25 hours', NOW() - INTERVAL '25 hours')`
+            VALUES (${`Old message ${i}`}, ${user.id}, NOW() - INTERVAL '25 hours', NOW() - INTERVAL '25 hours')`,
       );
     }
 

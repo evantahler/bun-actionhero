@@ -1,5 +1,5 @@
-import { sql } from "drizzle-orm";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { sql } from "drizzle-orm";
 import { api } from "../../api";
 import { users } from "../../schema/users";
 import "./../setup";
