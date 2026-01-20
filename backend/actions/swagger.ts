@@ -118,8 +118,21 @@ export class Swagger implements Action {
         };
       }
 
-      // Build responses (200 will be generic unless action has a known output schema)
-      const responses = { ...swaggerResponses };
+      // Build responses - use generated schema if available
+      const responses = JSON.parse(JSON.stringify(swaggerResponses));
+      const responseSchema = api.swagger?.responseSchemas[action.name];
+      if (responseSchema) {
+        const schemaName = `${action.name.replace(/:/g, "_")}_Response`;
+        components.schemas[schemaName] = responseSchema;
+        responses["200"] = {
+          description: "successful operation",
+          content: {
+            "application/json": {
+              schema: { $ref: `#/components/schemas/${schemaName}` },
+            },
+          },
+        };
+      }
 
       // Add path/method
       if (!paths[path]) paths[path] = {};
