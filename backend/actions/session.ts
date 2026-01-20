@@ -7,6 +7,7 @@ import type { SessionData } from "../initializers/session";
 import { SessionMiddleware } from "../middleware/session";
 import { checkPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";
+import { secret } from "../util/zodMixins";
 
 export type SessionImpl = { userId?: number };
 
@@ -24,11 +25,12 @@ export class SessionCreate implements Action {
       )
       .transform((val) => val.toLowerCase())
       .describe("The user's email"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .describe("The user's password")
-      .secret(),
+    password: secret(
+      z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .describe("The user's password"),
+    ),
   });
 
   // @ts-ignore - this is a valid action and response type, but sometimes the compiler doesn't like it

@@ -4,7 +4,7 @@ import { api, logger } from "../api";
 import { config } from "../config";
 import type { PubSubMessage } from "../initializers/pubsub";
 import type { SessionData } from "../initializers/session";
-import "../util/zodMixins";
+import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
 
@@ -212,12 +212,15 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       try {
         const result = await (action.inputs as any).safeParseAsync(rawParams);
         if (!result.success) {
-          // Get the first validation error
-          const firstError = result.error.errors[0];
+          // Get the first validation error (Zod v4 uses .issues instead of .errors)
+          const firstError = result.error.issues[0];
           const key = firstError.path[0];
           const value = rawParams[key];
           let message = firstError.message;
-          if (message === "Required") {
+          // Zod v4: detect missing required param (code: "invalid_type" with undefined input)
+          const isMissingRequired =
+            firstError.code === "invalid_type" && value === undefined;
+          if (isMissingRequired) {
             message = `Missing required param: ${key}`;
           }
           throw new TypedError({
@@ -254,9 +257,10 @@ const sanitizeParams = (params: FormData, action: Action | undefined) => {
   const secretFields = new Set<string>();
   if (action?.inputs && typeof action.inputs === "object") {
     const zodSchema = action.inputs as any;
-    if (zodSchema._def?.typeName === "ZodObject" && zodSchema.shape) {
+    // In Zod v4, object schemas have a .shape property with the fields
+    if (zodSchema.shape) {
       for (const [fieldName, fieldSchema] of Object.entries(zodSchema.shape)) {
-        if ((fieldSchema as any)._def?.isSecret) {
+        if (isSecret(fieldSchema as any)) {
           secretFields.add(fieldName);
         }
       }

@@ -10,7 +10,7 @@ import {
   serializeUser,
 } from "../ops/UserOps";
 import { users } from "../schema/users";
-import { zUserIdOrModel } from "../util/zodMixins";
+import { secret, zUserIdOrModel } from "../util/zodMixins";
 
 export class UserCreate implements Action {
   name = "user:create";
@@ -31,12 +31,13 @@ export class UserCreate implements Action {
       )
       .transform((val) => val.toLowerCase())
       .describe("The user's email"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(256, "Password must be less than 256 characters")
-      .describe("The user's password")
-      .secret(),
+    password: secret(
+      z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .max(256, "Password must be less than 256 characters")
+        .describe("The user's password"),
+    ),
   });
 
   async run(params: ActionParams<UserCreate>) {
@@ -74,7 +75,7 @@ export class UserEdit implements Action {
   inputs = z.object({
     name: z.string().min(1).max(256).optional(),
     email: z.string().email().toLowerCase().optional(),
-    password: z.string().min(8).max(256).optional().secret(),
+    password: secret(z.string().min(8).max(256).optional()),
   });
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
@@ -108,4 +109,3 @@ export class UserView implements Action {
     return { user: serializePublicUser(params.user) };
   }
 }
-
