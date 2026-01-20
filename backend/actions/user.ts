@@ -10,6 +10,7 @@ import {
   serializeUser,
 } from "../ops/UserOps";
 import { users } from "../schema/users";
+import { secret, zUserIdOrModel } from "../util/zodMixins";
 
 export class UserCreate implements Action {
   name = "user:create";
@@ -30,12 +31,13 @@ export class UserCreate implements Action {
       )
       .transform((val) => val.toLowerCase())
       .describe("The user's email"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(256, "Password must be less than 256 characters")
-      .describe("The user's password")
-      .secret(),
+    password: secret(
+      z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .max(256, "Password must be less than 256 characters")
+        .describe("The user's password"),
+    ),
   });
 
   async run(params: ActionParams<UserCreate>) {
@@ -73,7 +75,7 @@ export class UserEdit implements Action {
   inputs = z.object({
     name: z.string().min(1).max(256).optional(),
     email: z.string().email().toLowerCase().optional(),
-    password: z.string().min(8).max(256).optional().secret(),
+    password: secret(z.string().min(8).max(256).optional()),
   });
 
   async run(params: ActionParams<UserEdit>, connection: Connection) {
@@ -97,29 +99,13 @@ export class UserView implements Action {
   name = "user:view";
   description = "View a user";
   middleware = [SessionMiddleware];
-  web = { route: "/user/:id", method: HTTP_METHOD.GET };
+  web = { route: "/user/:user", method: HTTP_METHOD.GET };
   inputs = z.object({
-    id: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .refine((val) => !isNaN(val), "id must be a valid number")
-      .describe("The user's id"),
+    user: zUserIdOrModel(),
   });
 
-  async run(params: ActionParams<UserView>, connection: Connection) {
-    const [user] = await api.db.db
-      .select()
-      .from(users)
-      .where(eq(users.id, params.id))
-      .limit(1);
-
-    if (!user) {
-      throw new TypedError({
-        message: "User not found",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
-
-    return { user: serializePublicUser(user) };
+  async run(params: ActionParams<UserView>) {
+    // params.user is already a resolved User object
+    return { user: serializePublicUser(params.user) };
   }
 }

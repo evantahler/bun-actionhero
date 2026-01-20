@@ -1,4 +1,4 @@
-import { zodToJsonSchema } from "zod-to-json-schema";
+import { z } from "zod";
 import { Action, api, config } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import packageJSON from "../package.json";
@@ -99,9 +99,15 @@ export class Swagger implements Action {
       ) {
         const zodSchema = action.inputs;
         const schemaName = `${action.name.replace(/:/g, "_")}_Request`;
-        const jsonSchema = zodToJsonSchema(zodSchema, schemaName);
-        components.schemas[schemaName] =
-          jsonSchema.definitions?.[schemaName] || jsonSchema;
+        // Use io: "input" to get the input schema (before transforms)
+        // Use unrepresentable: "any" to handle refinements, async transforms, etc.
+        const jsonSchema = z.toJSONSchema(zodSchema, {
+          io: "input",
+          unrepresentable: "any",
+        });
+        // Remove $schema from component schemas (not needed in OpenAPI)
+        const { $schema, ...schemaWithout$schema } = jsonSchema as any;
+        components.schemas[schemaName] = schemaWithout$schema;
         requestBody = {
           required: true,
           content: {
