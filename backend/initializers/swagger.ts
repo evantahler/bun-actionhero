@@ -39,7 +39,10 @@ function typeToJsonSchema(
   }
 
   // Handle Promise<T> - unwrap to T
-  if (type.getSymbol()?.getName() === "Promise" || typeText.startsWith("Promise<")) {
+  if (
+    type.getSymbol()?.getName() === "Promise" ||
+    typeText.startsWith("Promise<")
+  ) {
     const typeArgs = type.getTypeArguments();
     if (typeArgs.length > 0) {
       return typeToJsonSchema(typeArgs[0], visited);
@@ -207,8 +210,7 @@ export class SwaggerInitializer extends Initializer {
           // Check if class implements Action (has name property and run method)
           const nameProperty = classDecl.getProperty("name");
           const runMethod =
-            classDecl.getMethod("run") ||
-            classDecl.getProperty("run"); // run can be a property with arrow function
+            classDecl.getMethod("run") || classDecl.getProperty("run"); // run can be a property with arrow function
 
           if (!nameProperty || !runMethod) continue;
 
@@ -245,9 +247,7 @@ export class SwaggerInitializer extends Initializer {
           if (returnType) {
             const schema = typeToJsonSchema(returnType);
             responseSchemas[actionName] = schema;
-            logger.debug(
-              `Generated response schema for action: ${actionName}`,
-            );
+            logger.debug(`Generated response schema for action: ${actionName}`);
           }
         }
       }

@@ -198,7 +198,8 @@ describe("swagger", () => {
     // Check the status action response schema
     const statusPath = response.paths["/status"]!.get!;
     expect(statusPath.responses["200"]).toBeDefined();
-    const responseContent = statusPath.responses["200"]!.content["application/json"];
+    const responseContent =
+      statusPath.responses["200"]!.content["application/json"];
     expect(responseContent.schema).toBeDefined();
 
     // Should be a $ref to a response schema
@@ -245,7 +246,8 @@ describe("swagger", () => {
 
     // Check the user:create action response schema
     const userCreatePath = response.paths["/user"]!.put!;
-    const responseContent = userCreatePath.responses["200"]!.content["application/json"];
+    const responseContent =
+      userCreatePath.responses["200"]!.content["application/json"];
     const schema = responseContent.schema;
 
     expect(schema.$ref).toBeDefined();
