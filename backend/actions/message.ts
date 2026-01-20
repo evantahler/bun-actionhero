@@ -6,6 +6,7 @@ import { SessionMiddleware } from "../middleware/session";
 import { serializeMessage } from "../ops/MessageOps";
 import { messages } from "../schema/messages";
 import { users } from "../schema/users";
+import { zMessageIdOrModel } from "../util/zodMixins";
 import type { SessionImpl } from "./session";
 
 export class MessageCrete implements Action {
@@ -82,6 +83,29 @@ export class MessagesList implements Action {
         serializeMessage(m, m.user_name ? m.user_name : undefined),
       ),
     };
+  }
+}
+
+export class MessageView implements Action {
+  name = "message:view";
+  description = "View a message";
+  middleware = [SessionMiddleware];
+  web = { route: "/message/:message", method: HTTP_METHOD.GET };
+  inputs = z.object({
+    message: zMessageIdOrModel(),
+  });
+
+  async run(params: ActionParams<MessageView>) {
+    const message = params.message;
+
+    // Get the user name for the message
+    const [user] = await api.db.db
+      .select({ name: users.name })
+      .from(users)
+      .where(eq(users.id, message.user_id))
+      .limit(1);
+
+    return { message: serializeMessage(message, user?.name) };
   }
 }
 

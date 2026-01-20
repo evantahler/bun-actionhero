@@ -1,5 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import type { MessageCrete, MessagesList } from "../../actions/message";
+import type {
+  MessageCrete,
+  MessagesList,
+  MessageView,
+} from "../../actions/message";
 import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
@@ -137,6 +141,90 @@ describe("message:create", () => {
       expect(response.messages.length).toEqual(2);
       expect(response.messages[0].body).toEqual("message 3");
       expect(response.messages[1].body).toEqual("message 2");
+    });
+  });
+
+  describe("message:view", () => {
+    let messageId: number;
+
+    beforeAll(async () => {
+      // Create a message for testing
+      const [msg] = await api.db.db
+        .insert(messages)
+        .values({
+          body: "Test message for viewing",
+          user_id: user.id,
+        })
+        .returning();
+      messageId = msg.id;
+    });
+
+    test("fails without a session", async () => {
+      const res = await fetch(url + `/api/message/${messageId}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      expect(res.status).toBe(401);
+      const response = (await res.json()) as ActionResponse<MessageView>;
+      expect(response.error?.message).toEqual("Session not found");
+    });
+
+    test("can view a message by ID", async () => {
+      const res = await fetch(url + `/api/message/${messageId}`, {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+          "Content-Type": "application/json",
+        },
+      });
+      expect(res.status).toBe(200);
+
+      const response = (await res.json()) as ActionResponse<MessageView>;
+      expect(response.message.id).toEqual(messageId);
+      expect(response.message.body).toEqual("Test message for viewing");
+      expect(response.message.user_id).toEqual(user.id);
+      expect(response.message.user_name).toEqual("Mario Mario");
+    });
+
+    test("includes user_name in response", async () => {
+      const res = await fetch(url + `/api/message/${messageId}`, {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+          "Content-Type": "application/json",
+        },
+      });
+      expect(res.status).toBe(200);
+
+      const response = (await res.json()) as ActionResponse<MessageView>;
+      expect(response.message.user_name).toBeDefined();
+      expect(typeof response.message.user_name).toBe("string");
+    });
+
+    test("fails with invalid message id format", async () => {
+      const res = await fetch(url + `/api/message/invalid`, {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+          "Content-Type": "application/json",
+        },
+      });
+      expect(res.status).toBe(406);
+      const response = (await res.json()) as ActionResponse<MessageView>;
+      expect(response.error?.key).toEqual("message");
+    });
+
+    test("fails when message not found", async () => {
+      const res = await fetch(url + `/api/message/99999`, {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+          "Content-Type": "application/json",
+        },
+      });
+      expect(res.status).toBe(500); // CONNECTION_ACTION_RUN returns 500
+      const response = (await res.json()) as ActionResponse<MessageView>;
+      expect(response.error?.message).toMatch(/Message with id 99999 not found/);
     });
   });
 });

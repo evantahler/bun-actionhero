@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import { createSchemaFactory } from "drizzle-zod";
 import { z } from "zod";
 import { api } from "../api";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -48,17 +49,55 @@ export function zBooleanFromString() {
   });
 }
 
+// Create schema factory with Zod v4 instance for drizzle-zod compatibility
+const { createSelectSchema } = createSchemaFactory({ zodInstance: z });
+
+// Type for Drizzle tables with an id column
+type TableWithId = { id: any; $inferSelect: any };
+
 /**
- * Zod schema that matches the User type from Drizzle.
+ * Generic factory to create a Zod schema that accepts either an ID or a model object.
+ * If an ID is provided, it resolves to the full model via database lookup.
+ *
+ * @param table - Drizzle table definition (must have an `id` column)
+ * @param modelSchema - Zod schema for the model (from createSelectSchema)
+ * @param isModel - Type guard function to check if value is already a model
+ * @param entityName - Human-readable name for error messages
  */
-export const zUserSchema = z.object({
-  id: z.number().int(),
-  name: z.string(),
-  email: z.string(),
-  password_hash: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-}) satisfies z.ZodType<User>;
+function zIdOrModel<TTable extends TableWithId, TModel>(
+  table: TTable,
+  modelSchema: z.ZodType<TModel>,
+  isModel: (val: unknown) => val is TModel,
+  entityName: string,
+) {
+  return z
+    .union([z.coerce.number().int().positive(), modelSchema])
+    .transform(async (val): Promise<TModel> => {
+      if (isModel(val)) {
+        return val;
+      }
+      const [record] = await api.db.db
+        .select()
+        .from(table as any)
+        .where(eq((table as any).id, val))
+        .limit(1);
+
+      if (!record) {
+        throw new TypedError({
+          message: `${entityName} with id ${val} not found`,
+          type: ErrorType.CONNECTION_ACTION_RUN,
+        });
+      }
+      return record as TModel;
+    })
+    .describe(`A ${entityName} ID or ${entityName} object`);
+}
+
+/**
+ * Zod schema generated from Drizzle users table.
+ * Automatically stays in sync with the database schema.
+ */
+export const zUserSchema = createSelectSchema(users);
 
 /**
  * Type guard to check if a value is a valid User object.
@@ -72,39 +111,14 @@ export function isUser(val: unknown): val is User {
  * Resolves to a full User via async transform if ID is provided.
  */
 export function zUserIdOrModel() {
-  return z
-    .union([z.coerce.number().int().positive(), zUserSchema])
-    .transform(async (val): Promise<User> => {
-      if (isUser(val)) {
-        return val;
-      }
-      const [user] = await api.db.db
-        .select()
-        .from(users)
-        .where(eq(users.id, val))
-        .limit(1);
-
-      if (!user) {
-        throw new TypedError({
-          message: `User with id ${val} not found`,
-          type: ErrorType.CONNECTION_ACTION_RUN,
-        });
-      }
-      return user;
-    })
-    .describe("A User ID or User object");
+  return zIdOrModel(users, zUserSchema as z.ZodType<User>, isUser, "User");
 }
 
 /**
- * Zod schema that matches the Message type from Drizzle.
+ * Zod schema generated from Drizzle messages table.
+ * Automatically stays in sync with the database schema.
  */
-export const zMessageSchema = z.object({
-  id: z.number().int(),
-  body: z.string(),
-  user_id: z.number().int(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-}) satisfies z.ZodType<Message>;
+export const zMessageSchema = createSelectSchema(messages);
 
 /**
  * Type guard to check if a value is a valid Message object.
@@ -118,25 +132,10 @@ export function isMessage(val: unknown): val is Message {
  * Resolves to a full Message via async transform if ID is provided.
  */
 export function zMessageIdOrModel() {
-  return z
-    .union([z.coerce.number().int().positive(), zMessageSchema])
-    .transform(async (val): Promise<Message> => {
-      if (isMessage(val)) {
-        return val;
-      }
-      const [message] = await api.db.db
-        .select()
-        .from(messages)
-        .where(eq(messages.id, val))
-        .limit(1);
-
-      if (!message) {
-        throw new TypedError({
-          message: `Message with id ${val} not found`,
-          type: ErrorType.CONNECTION_ACTION_RUN,
-        });
-      }
-      return message;
-    })
-    .describe("A Message ID or Message object");
+  return zIdOrModel(
+    messages,
+    zMessageSchema as z.ZodType<Message>,
+    isMessage,
+    "Message",
+  );
 }
