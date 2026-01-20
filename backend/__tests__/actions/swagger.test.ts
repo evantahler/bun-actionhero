@@ -190,4 +190,74 @@ describe("swagger", () => {
     expect(resolved.required).toContain("email");
     expect(resolved.required).toContain("password");
   });
+
+  test("swagger documents response types from TypeScript return types", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    // Check the status action response schema
+    const statusPath = response.paths["/status"]!.get!;
+    expect(statusPath.responses["200"]).toBeDefined();
+    const responseContent =
+      statusPath.responses["200"]!.content["application/json"];
+    expect(responseContent.schema).toBeDefined();
+
+    // Should be a $ref to a response schema
+    const schema = responseContent.schema;
+    expect(schema.$ref).toBeDefined();
+    const refName = schema.$ref.replace("#/components/schemas/", "");
+    expect(refName).toBe("status_Response");
+
+    // The response schema should exist in components
+    const resolved = response.components.schemas[refName];
+    expect(resolved).toBeDefined();
+    expect(resolved.type).toBe("object");
+    expect(resolved.properties).toBeDefined();
+
+    // Check that the status response properties are present
+    expect(resolved.properties.name).toBeDefined();
+    expect(resolved.properties.pid).toBeDefined();
+    expect(resolved.properties.version).toBeDefined();
+    expect(resolved.properties.uptime).toBeDefined();
+    expect(resolved.properties.consumedMemoryMB).toBeDefined();
+
+    // Verify correct types are inferred (not generic objects)
+    expect(resolved.properties.name.type).toBe("string");
+    expect(resolved.properties.pid.type).toBe("number");
+    expect(resolved.properties.version.type).toBe("string");
+    expect(resolved.properties.uptime.type).toBe("number");
+    expect(resolved.properties.consumedMemoryMB.type).toBe("number");
+
+    // Ensure these are NOT incorrectly typed as objects with additionalProperties
+    expect(resolved.properties.name.additionalProperties).toBeUndefined();
+    expect(resolved.properties.pid.additionalProperties).toBeUndefined();
+
+    // Check required fields
+    expect(resolved.required).toContain("name");
+    expect(resolved.required).toContain("pid");
+    expect(resolved.required).toContain("version");
+    expect(resolved.required).toContain("uptime");
+    expect(resolved.required).toContain("consumedMemoryMB");
+  });
+
+  test("swagger documents response types for UserCreate action", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    // Check the user:create action response schema
+    const userCreatePath = response.paths["/user"]!.put!;
+    const responseContent =
+      userCreatePath.responses["200"]!.content["application/json"];
+    const schema = responseContent.schema;
+
+    expect(schema.$ref).toBeDefined();
+    const refName = schema.$ref.replace("#/components/schemas/", "");
+    expect(refName).toBe("user_create_Response");
+
+    // The response schema should have a user property
+    const resolved = response.components.schemas[refName];
+    expect(resolved).toBeDefined();
+    expect(resolved.type).toBe("object");
+    expect(resolved.properties.user).toBeDefined();
+  });
 });
