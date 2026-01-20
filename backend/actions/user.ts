@@ -10,6 +10,7 @@ import {
   serializeUser,
 } from "../ops/UserOps";
 import { users } from "../schema/users";
+import { zUserIdOrModel } from "../util/zodMixins";
 
 export class UserCreate implements Action {
   name = "user:create";
@@ -97,29 +98,14 @@ export class UserView implements Action {
   name = "user:view";
   description = "View a user";
   middleware = [SessionMiddleware];
-  web = { route: "/user/:id", method: HTTP_METHOD.GET };
+  web = { route: "/user/:user", method: HTTP_METHOD.GET };
   inputs = z.object({
-    id: z
-      .string()
-      .transform((val) => parseInt(val, 10))
-      .refine((val) => !isNaN(val), "id must be a valid number")
-      .describe("The user's id"),
+    user: zUserIdOrModel(),
   });
 
-  async run(params: ActionParams<UserView>, connection: Connection) {
-    const [user] = await api.db.db
-      .select()
-      .from(users)
-      .where(eq(users.id, params.id))
-      .limit(1);
-
-    if (!user) {
-      throw new TypedError({
-        message: "User not found",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
-
-    return { user: serializePublicUser(user) };
+  async run(params: ActionParams<UserView>) {
+    // params.user is already a resolved User object
+    return { user: serializePublicUser(params.user) };
   }
 }
+

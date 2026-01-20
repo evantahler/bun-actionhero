@@ -208,9 +208,9 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       action.inputs &&
       "safeParse" in action.inputs
     ) {
-      // This is a zod schema
+      // This is a zod schema - use safeParseAsync to support both sync and async transforms
       try {
-        const result = (action.inputs as any).safeParse(rawParams);
+        const result = await (action.inputs as any).safeParseAsync(rawParams);
         if (!result.success) {
           // Get the first validation error
           const firstError = result.error.errors[0];

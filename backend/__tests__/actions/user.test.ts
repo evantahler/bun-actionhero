@@ -247,7 +247,7 @@ describe("user:view", () => {
     expect(response.user["email"]).toBeUndefined();
   });
 
-  test("fails with invalid id format", async () => {
+  test("fails with invalid user id format", async () => {
     // Create a session
     const sessionRes = await fetch(url + "/api/session", {
       method: "PUT",
@@ -272,6 +272,34 @@ describe("user:view", () => {
     });
     const response = (await res.json()) as ActionResponse<UserView>;
     expect(res.status).toBe(406);
-    expect(response.error?.message).toMatch(/id must be a valid number/);
+    expect(response.error?.key).toEqual("user");
+  });
+
+  test("fails when user not found", async () => {
+    // Create a session
+    const sessionRes = await fetch(url + "/api/session", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: "peach@example.com",
+        password: "mushroom1",
+      }),
+    });
+    const sessionResponse =
+      (await sessionRes.json()) as ActionResponse<SessionCreate>;
+    expect(sessionRes.status).toBe(200);
+    const sessionId = sessionResponse.session.id;
+
+    // Try to view non-existent user
+    const res = await fetch(url + "/api/user/99999", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: `${config.session.cookieName}=${sessionId}`,
+      },
+    });
+    const response = (await res.json()) as ActionResponse<UserView>;
+    expect(res.status).toBe(500); // CONNECTION_ACTION_RUN returns 500
+    expect(response.error?.message).toMatch(/User with id 99999 not found/);
   });
 });
