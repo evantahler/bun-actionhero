@@ -78,6 +78,7 @@ export abstract class Action {
    * It can be `async`.
    * Usually the goal of this run method is to return the data that you want to be sent to API consumers.
    * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
+   * @throws {TypedError} All errors thrown should be TypedError instances
    */
   abstract run(
     params: ActionParams<Action>,
