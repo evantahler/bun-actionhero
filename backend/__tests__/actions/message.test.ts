@@ -224,7 +224,9 @@ describe("message:create", () => {
       });
       expect(res.status).toBe(500); // CONNECTION_ACTION_RUN returns 500
       const response = (await res.json()) as ActionResponse<MessageView>;
-      expect(response.error?.message).toMatch(/Message with id 99999 not found/);
+      expect(response.error?.message).toMatch(
+        /Message with id 99999 not found/,
+      );
     });
   });
 });
