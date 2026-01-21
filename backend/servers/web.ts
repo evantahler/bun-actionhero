@@ -257,7 +257,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       req.headers.get("content-type") === "application/json"
     ) {
       try {
-        const bodyContent = await req.json();
+        const bodyContent = (await req.json()) as Record<string, unknown>;
         for (const [key, value] of Object.entries(bodyContent)) {
           if (Array.isArray(value)) {
             // Handle arrays by appending each element
@@ -379,7 +379,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleStaticFile(
-    req: Request,
+    _req: Request,
     url: ReturnType<typeof parse>,
   ): Promise<Response | null> {
     const staticRoute = config.server.web.staticFilesRoute;

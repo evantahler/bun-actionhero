@@ -61,7 +61,7 @@ export class MessagesList implements Action {
 
   async run(
     params: ActionParams<MessagesList>,
-    connection: Connection<SessionImpl>,
+    _connection: Connection<SessionImpl>,
   ) {
     const _messages = await api.db.db
       .select({

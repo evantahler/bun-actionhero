@@ -84,7 +84,7 @@ describe("user:create", () => {
       formData.append("email", "test@example.com");
       formData.append("password", "secretpassword123");
 
-      const res = await fetch(url + "/api/user", {
+      await fetch(url + "/api/user", {
         method: "PUT",
         body: formData,
       });
@@ -201,7 +201,7 @@ describe("user:view", () => {
     expect(response.user.id).toEqual(userId);
     expect(response.user.name).toEqual("Luigi Mario");
     // Email should not be in public user data
-    expect(response.user["email"]).toBeUndefined();
+    expect((response.user as Record<string, unknown>)["email"]).toBeUndefined();
   });
 
   test("user can view another user (public information only)", async () => {
@@ -244,7 +244,7 @@ describe("user:view", () => {
     expect(response.user.name).toBeDefined();
     expect(typeof response.user.name).toBe("string");
     // Email should not be in public user data
-    expect(response.user["email"]).toBeUndefined();
+    expect((response.user as Record<string, unknown>)["email"]).toBeUndefined();
   });
 
   test("fails with invalid user id format", async () => {

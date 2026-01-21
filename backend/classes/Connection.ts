@@ -159,7 +159,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     return api.pubsub.broadcast(channel, message, this.id);
   }
 
-  onBroadcastMessageReceived(payload: PubSubMessage) {
+  onBroadcastMessageReceived(_payload: PubSubMessage) {
     throw new Error(
       "unimplemented - this should be overwritten by connections that support it",
     );
