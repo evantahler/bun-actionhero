@@ -1,6 +1,6 @@
 import { $ } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
-import { DefaultLogger, LogWriter, sql } from "drizzle-orm";
+import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { unlink } from "node:fs/promises";

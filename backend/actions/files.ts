@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Action, ActionParams } from "../api";
+import { Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 
 export class FileUpload implements Action {

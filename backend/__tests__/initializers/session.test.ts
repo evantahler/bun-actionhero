@@ -94,7 +94,10 @@ describe("session initializer", () => {
 
   test("update merges new data with existing", async () => {
     const connection = new Connection("test", "test-update");
-    const initialData = { userId: 111, username: "initial" };
+    const initialData: Record<string, unknown> = {
+      userId: 111,
+      username: "initial",
+    };
 
     // Create session
     const session = await api.session.create(connection, initialData);

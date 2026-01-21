@@ -29,6 +29,7 @@ export class Connections extends Initializer {
       if (connection) {
         return api.connections.connections.splice(index, 1);
       }
+      return [];
     }
 
     return { connections: [] as Connection[], find, destroy };

@@ -136,7 +136,7 @@ export class Resque extends Initializer {
           `[resque:${worker.name}] job acquired, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}`,
         );
       });
-      worker.on("reEnqueue", (queue, job: ParsedJob, plugin) => {
+      worker.on("reEnqueue", (queue, job: ParsedJob, _plugin) => {
         logger.debug(
           `[resque:${worker.name}] job reEnqueue, ${queue}, ${job.class}, ${JSON.stringify(job.args[0])}`,
         );

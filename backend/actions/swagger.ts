@@ -66,6 +66,8 @@ export class Swagger implements Action {
 
     for (const action of api.actions.actions) {
       if (!action.web?.route || !action.web?.method) continue;
+      // Skip RegExp routes for swagger documentation
+      if (typeof action.web.route !== "string") continue;
       // Convert :param format to OpenAPI {param} format
       const path = action.web.route.replace(
         /:\w+/g,

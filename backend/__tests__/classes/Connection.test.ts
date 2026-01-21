@@ -83,7 +83,10 @@ describe("Connection class", () => {
     const conn = new Connection("test", "test-act-notfound");
     const params = new FormData();
 
-    const { response, error } = await conn.act("nonexistent-action", params);
+    const { response: _response, error } = await conn.act(
+      "nonexistent-action",
+      params,
+    );
 
     expect(error).toBeDefined();
     expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_NOT_FOUND);
@@ -94,7 +97,7 @@ describe("Connection class", () => {
     const conn = new Connection("test", "test-act-undefined");
     const params = new FormData();
 
-    const { response, error } = await conn.act(undefined, params);
+    const { response: _response, error } = await conn.act(undefined, params);
 
     expect(error).toBeDefined();
     expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_NOT_FOUND);
@@ -105,7 +108,10 @@ describe("Connection class", () => {
     const params = new FormData();
     // user:create requires name, email, password - we're not providing them
 
-    const { response, error } = await conn.act("user:create", params);
+    const { response: _response, error } = await conn.act(
+      "user:create",
+      params,
+    );
 
     expect(error).toBeDefined();
     // Should be a validation error
