@@ -85,7 +85,8 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - run: bun install
       - run: cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env
-      - run: bun test-frontend
+      - run: bun run test:ci
+        working-directory: frontend
 
   complete:
     runs-on: ubuntu-latest
