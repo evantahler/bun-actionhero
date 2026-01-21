@@ -16,23 +16,34 @@ export const StatusCard = () => {
   };
 
   return (
-    <Card bg="primary">
+    <Card bg="primary" data-testid="status-card">
       <Card.Header>Server Status</Card.Header>
       <Card.Body>
         <code>
-          <strong>Name</strong>: {status?.name}
+          <strong>Name</strong>:{" "}
+          <span data-testid="status-name">{status?.name ?? ""}</span>
           <br />
-          <strong>PID</strong>: {status?.pid}
+          <strong>PID</strong>:{" "}
+          <span data-testid="status-pid">{status?.pid ?? ""}</span>
           <br />
-          <strong>Version</strong>: {status?.version}
+          <strong>Version</strong>:{" "}
+          <span data-testid="status-version">{status?.version ?? ""}</span>
           <br />
-          <strong>Uptime</strong>: {status?.uptime ? status.uptime / 1000 : 0}s
+          <strong>Uptime</strong>:{" "}
+          <span data-testid="status-uptime">
+            {status?.uptime ? status.uptime / 1000 : 0}
+          </span>
+          s
           <br />
-          <strong>Memory Used</strong>: {status?.consumedMemoryMB}MB
+          <strong>Memory Used</strong>:{" "}
+          <span data-testid="status-memory">{status?.consumedMemoryMB ?? ""}</span>
+          MB
         </code>
       </Card.Body>
 
-      <Button onClick={loadStatus}>Refresh</Button>
+      <Button data-testid="status-refresh" onClick={loadStatus}>
+        Refresh
+      </Button>
     </Card>
   );
 };
