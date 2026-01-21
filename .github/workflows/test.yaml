@@ -13,12 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - name: copy backend env
-        run: cp .env.example .env
-        working-directory: backend
-      - name: copy frontend env
-        run: cp .env.example .env
-        working-directory: frontend
+      - name: copy env files
+        run: cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env
       - run: bun install
       - name: compile backend
         run: bun compile
@@ -60,7 +56,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: bun install
-      - run: cp backend/.env.example backend/.env
+      - run: cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env
       - run: bun test-backend
 
   test-frontend:
@@ -69,7 +65,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: bun install
-      - run: cp backend/.env.example backend/.env
+      - run: cp backend/.env.example backend/.env && cp frontend/.env.example frontend/.env
       - run: bun test-frontend
 
   complete:
