@@ -17,5 +17,5 @@ export const SwaggerCard = () => {
     });
   }, []);
 
-  return <div id="swaggerContainer" />;
+  return <div id="swaggerContainer" data-testid="swagger-container" />;
 };

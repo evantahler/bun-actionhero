@@ -7,3 +7,9 @@ next.sock
 backend/.env
 frontend/.env
 types
+
+# Playwright
+test-results
+playwright-report
+blob-report
+playwright/.cache

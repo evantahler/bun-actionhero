@@ -41,23 +41,35 @@ export const SignUpCard = ({
 
   return (
     <div>
-      <Form onSubmit={handleForm}>
+      <Form data-testid="signup-form" onSubmit={handleForm}>
         <Form.Group className="mb-3" controlId="name">
           <Form.Label>Name</Form.Label>
-          <Form.Control type="text" placeholder="Enter Name" />
+          <Form.Control
+            data-testid="signup-name"
+            type="text"
+            placeholder="Enter Name"
+          />
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="email">
           <Form.Label>Email</Form.Label>
-          <Form.Control type="text" placeholder="Enter Email Address" />
+          <Form.Control
+            data-testid="signup-email"
+            type="text"
+            placeholder="Enter Email Address"
+          />
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="password">
           <Form.Label>Password</Form.Label>
-          <Form.Control type="password" placeholder="Enter Password" />
+          <Form.Control
+            data-testid="signup-password"
+            type="password"
+            placeholder="Enter Password"
+          />
         </Form.Group>
 
-        <Button variant="primary" type="submit">
+        <Button data-testid="signup-submit" variant="primary" type="submit">
           Submit
         </Button>
       </Form>

@@ -103,13 +103,22 @@ export default function ChatCard({
     <>
       <Row>
         <Col>
-          <Form onSubmit={sendMessage}>
+          <Form data-testid="chat-form" onSubmit={sendMessage}>
             <Form.Group className="mb-3" controlId="body">
               <Form.Label>Message</Form.Label>
-              <Form.Control type="text" placeholder="Message" />
+              <Form.Control
+                data-testid="chat-message"
+                type="text"
+                placeholder="Message"
+              />
             </Form.Group>
 
-            <Button variant="primary" type="submit" disabled={!connected}>
+            <Button
+              data-testid="chat-send"
+              variant="primary"
+              type="submit"
+              disabled={!connected}
+            >
               Send
             </Button>
           </Form>
@@ -119,7 +128,7 @@ export default function ChatCard({
       <hr />
 
       <Row>
-        <Table striped bordered hover>
+        <Table data-testid="messages-table" striped bordered hover>
           <thead>
             <tr>
               <th>Who</th>

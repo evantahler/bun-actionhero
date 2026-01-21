@@ -79,6 +79,7 @@ export default function App() {
                     <td className="text-start">Signed in as {user.name}</td>
                     <td className="text-end">
                       <Button
+                        data-testid="signout-button"
                         size="sm"
                         variant="outline-secondary"
                         onClick={handleLogout}
