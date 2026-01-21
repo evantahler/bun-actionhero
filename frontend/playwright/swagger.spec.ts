@@ -32,4 +32,3 @@ test("swagger page renders API docs", async ({ page }) => {
   // One high-signal sanity check that endpoints made it to the UI.
   await expect(swaggerUI).toContainText("status", { timeout: 20_000 });
 });
-

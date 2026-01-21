@@ -48,7 +48,8 @@ export default defineConfig({
       env: {
         // Ensure the app can reach the backend during build/runtime.
         // Must NOT include "/api" because the websocket appends it.
-        NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080",
+        NEXT_PUBLIC_API_URL:
+          process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080",
       },
       reuseExistingServer: !isCI,
       timeout: 120_000,
@@ -61,4 +62,3 @@ export default defineConfig({
     },
   ],
 });
-

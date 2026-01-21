@@ -36,7 +36,9 @@ export const StatusCard = () => {
           s
           <br />
           <strong>Memory Used</strong>:{" "}
-          <span data-testid="status-memory">{status?.consumedMemoryMB ?? ""}</span>
+          <span data-testid="status-memory">
+            {status?.consumedMemoryMB ?? ""}
+          </span>
           MB
         </code>
       </Card.Body>

@@ -7,7 +7,9 @@ test("happy path: sign up, sign in, send a message", async ({ page }) => {
   const password = `password-${runId}!`;
 
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Bun Actionhero" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Bun Actionhero" }),
+  ).toBeVisible();
 
   // Sign up (creates user account)
   const signUp = page.getByTestId("signup-form");
@@ -44,4 +46,3 @@ test("happy path: sign up, sign in, send a message", async ({ page }) => {
       .getByRole("cell", { name: message, exact: true }),
   ).toBeVisible({ timeout: 10_000 });
 });
-
