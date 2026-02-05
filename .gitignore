@@ -7,3 +7,4 @@ next.sock
 backend/.env
 frontend/.env
 types
+dump.rdb

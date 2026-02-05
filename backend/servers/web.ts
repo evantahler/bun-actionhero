@@ -191,13 +191,41 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ClientSubscribeMessage,
   ) {
-    connection.subscribe(formattedMessage.channel);
-    ws.send(
-      JSON.stringify({
-        messageId: formattedMessage.messageId,
-        subscribed: { channel: formattedMessage.channel },
-      }),
-    );
+    try {
+      // Ensure session is loaded before checking authorization
+      if (!connection.sessionLoaded) {
+        await connection.loadSession();
+      }
+
+      // Check channel authorization middleware
+      await api.channels.authorizeSubscription(
+        formattedMessage.channel,
+        connection,
+      );
+
+      connection.subscribe(formattedMessage.channel);
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          subscribed: { channel: formattedMessage.channel },
+        }),
+      );
+    } catch (e) {
+      const error =
+        e instanceof TypedError
+          ? e
+          : new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_CHANNEL_AUTHORIZATION,
+              originalError: e,
+            });
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          error: buildErrorPayload(error),
+        }),
+      );
+    }
   }
 
   async handleWebsocketUnsubscribe(
@@ -206,6 +234,18 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     formattedMessage: ClientUnsubscribeMessage,
   ) {
     connection.unsubscribe(formattedMessage.channel);
+
+    // Call channel middleware unsubscription hooks (for cleanup/presence)
+    try {
+      await api.channels.handleUnsubscription(
+        formattedMessage.channel,
+        connection,
+      );
+    } catch (e) {
+      // Log but don't fail the unsubscription
+      logger.error(`Error in channel unsubscription hook: ${e}`);
+    }
+
     ws.send(
       JSON.stringify({
         messageId: formattedMessage.messageId,
