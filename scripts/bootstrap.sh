@@ -86,18 +86,29 @@ fi
 # -----------------------------------------------------------------------------
 echo "[3/6] Creating databases..."
 
+# Determine PostgreSQL user - try postgres first, then current user
+if psql -U postgres -lqt &>/dev/null; then
+    PG_USER="postgres"
+elif psql -lqt &>/dev/null; then
+    PG_USER="$(whoami)"
+else
+    echo "  WARNING: Cannot determine PostgreSQL user. Trying 'postgres'..."
+    PG_USER="postgres"
+fi
+echo "  Using PostgreSQL user: $PG_USER"
+
 # Create main database
-if psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw bun; then
+if psql -U "$PG_USER" -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw bun; then
     echo "  Database 'bun' already exists"
 else
-    createdb bun 2>/dev/null && echo "  Created database 'bun'" || echo "  Could not create database 'bun' (may already exist)"
+    createdb -U "$PG_USER" bun 2>/dev/null && echo "  Created database 'bun'" || echo "  Could not create database 'bun' (may already exist)"
 fi
 
 # Create test database
-if psql -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw bun-test; then
+if psql -U "$PG_USER" -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw bun-test; then
     echo "  Database 'bun-test' already exists"
 else
-    createdb bun-test 2>/dev/null && echo "  Created database 'bun-test'" || echo "  Could not create database 'bun-test' (may already exist)"
+    createdb -U "$PG_USER" bun-test 2>/dev/null && echo "  Created database 'bun-test'" || echo "  Could not create database 'bun-test' (may already exist)"
 fi
 
 # -----------------------------------------------------------------------------
@@ -145,14 +156,17 @@ fi
 echo "[6/6] Configuring session environment..."
 
 if [ -n "$CLAUDE_ENV_FILE" ]; then
-    cat >> "$CLAUDE_ENV_FILE" << 'ENVEOF'
-export DATABASE_URL="postgres://localhost:5432/bun"
-export DATABASE_URL_TEST="postgres://localhost:5432/bun-test"
+    # Use the detected PostgreSQL user in connection strings
+    cat >> "$CLAUDE_ENV_FILE" << ENVEOF
+export DATABASE_URL="postgres://${PG_USER}@localhost:5432/bun"
+export DATABASE_URL_TEST="postgres://${PG_USER}@localhost:5432/bun-test"
 export REDIS_URL="redis://localhost:6379/0"
 export REDIS_URL_TEST="redis://localhost:6379/1"
 export NODE_ENV="development"
 ENVEOF
     echo "  Session environment variables configured"
+    echo "  DATABASE_URL=postgres://${PG_USER}@localhost:5432/bun"
+    echo "  DATABASE_URL_TEST=postgres://${PG_USER}@localhost:5432/bun-test"
 else
     echo "  CLAUDE_ENV_FILE not set (running outside Claude Code?)"
 fi
