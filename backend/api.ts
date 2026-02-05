@@ -9,6 +9,11 @@ export {
   type ActionResponse,
 } from "./classes/Action";
 export { API, RUN_MODE } from "./classes/API";
+export {
+  Channel,
+  type ChannelConstructorInputs,
+  type ChannelMiddleware,
+} from "./classes/Channel";
 export { Connection } from "./classes/Connection";
 export { Initializer } from "./classes/Initializer";
 export { Logger } from "./classes/Logger";
