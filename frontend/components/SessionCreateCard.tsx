@@ -45,18 +45,26 @@ export const SessionCreateCard = ({
 
   return (
     <div>
-      <Form onSubmit={handleForm}>
+      <Form data-testid="signin-form" onSubmit={handleForm}>
         <Form.Group className="mb-3" controlId="email">
           <Form.Label>Email</Form.Label>
-          <Form.Control type="text" placeholder="Enter Email Address" />
+          <Form.Control
+            data-testid="signin-email"
+            type="text"
+            placeholder="Enter Email Address"
+          />
         </Form.Group>
 
         <Form.Group className="mb-3" controlId="password">
           <Form.Label>Password</Form.Label>
-          <Form.Control type="password" placeholder="Enter Password" />
+          <Form.Control
+            data-testid="signin-password"
+            type="password"
+            placeholder="Enter Password"
+          />
         </Form.Group>
 
-        <Button variant="primary" type="submit">
+        <Button data-testid="signin-submit" variant="primary" type="submit">
           Submit
         </Button>
       </Form>

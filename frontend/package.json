@@ -9,6 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "playwright test",
+    "test:ci": "playwright install --with-deps chromium && playwright test",
     "lint": "prettier --check .",
     "format": "prettier --write ."
   },
@@ -20,6 +22,7 @@
     "typescript": "^5.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "22.7.5",
     "@types/react-dom": "^18.3.0",
