@@ -15,7 +15,6 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import type { SessionData } from "../initializers/session";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   constructor() {

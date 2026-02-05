@@ -1,8 +1,7 @@
 import { api, logger } from "../api";
 import type { Channel } from "../classes/Channel";
-import { Initializer } from "../classes/Initializer";
 import type { Connection } from "../classes/Connection";
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { Initializer } from "../classes/Initializer";
 import { globLoader } from "../util/glob";
 
 const namespace = "channels";
@@ -84,7 +83,9 @@ export class Channels extends Initializer {
       channels = await globLoader<Channel>("channels");
     } catch (e) {
       // channels directory may not exist, which is fine
-      logger.debug(`No channels directory found or error loading channels: ${e}`);
+      logger.debug(
+        `No channels directory found or error loading channels: ${e}`,
+      );
     }
 
     for (const c of channels) {
