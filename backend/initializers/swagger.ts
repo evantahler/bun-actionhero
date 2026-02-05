@@ -176,7 +176,6 @@ export class SwaggerInitializer extends Initializer {
 
   async initialize() {
     const responseSchemas: Record<string, JSONSchema> = {};
-    const actionsDir = path.join(api.rootDir, "actions");
 
     try {
       const tsConfigPath = path.join(api.rootDir, "tsconfig.json");
