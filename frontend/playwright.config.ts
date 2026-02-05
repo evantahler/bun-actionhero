@@ -17,6 +17,8 @@ function loadNumberFromEnvIfSet(key: string, defaultValue: number): number {
 const frontendPort = loadNumberFromEnvIfSet("PLAYWRIGHT_PORT", 3100);
 const baseURL =
   process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${frontendPort}`;
+const backendPort = loadNumberFromEnvIfSet("WEB_SERVER_PORT_TEST", 8090);
+const backendBaseUrl = `http://127.0.0.1:${backendPort}`;
 
 export default defineConfig({
   testDir: "./playwright",
@@ -32,8 +34,10 @@ export default defineConfig({
     {
       command: "bun run start",
       cwd: path.resolve(__dirname, "../backend"),
-      url: "http://127.0.0.1:8080/api/status",
+      url: `${backendBaseUrl}/api/status`,
       env: {
+        NODE_ENV: "test",
+        WEB_SERVER_PORT_TEST: String(backendPort),
         // Make CORS compatible with credentials: "include" in the frontend.
         // Using "*" with Access-Control-Allow-Credentials breaks browser requests.
         WEB_SERVER_ALLOWED_ORIGINS: baseURL,
@@ -46,10 +50,11 @@ export default defineConfig({
       cwd: __dirname,
       url: baseURL,
       env: {
+        NODE_ENV: "test",
         // Ensure the app can reach the backend during build/runtime.
         // Must NOT include "/api" because the websocket appends it.
         NEXT_PUBLIC_API_URL:
-          process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8080",
+          process.env.NEXT_PUBLIC_API_URL ?? backendBaseUrl,
       },
       reuseExistingServer: !isCI,
       timeout: 120_000,

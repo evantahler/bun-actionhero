@@ -5,8 +5,8 @@ test("swagger page renders API docs", async ({ page }) => {
   const swaggerSpecResponsePromise = page.waitForResponse(
     (resp) =>
       resp.status() === 200 &&
-      resp.url().includes("/swagger") &&
-      resp.url().includes(":8080"),
+      resp.url().endsWith("/swagger") &&
+      (resp.headers()["content-type"] ?? "").includes("application/json"),
   );
 
   await page.goto("/swagger");

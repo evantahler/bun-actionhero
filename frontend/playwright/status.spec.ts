@@ -28,8 +28,7 @@ test("homepage status card loads and refreshes", async ({ page }) => {
   const statusResponsePromise = page.waitForResponse(
     (resp) =>
       resp.status() === 200 &&
-      resp.url().includes("/status") &&
-      resp.url().includes(":8080"),
+      resp.url().includes("/status"),
   );
   await page.getByTestId("status-refresh").click();
   await statusResponsePromise;
