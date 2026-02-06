@@ -57,14 +57,15 @@ export class PubSub extends Initializer {
 
   async start() {
     if (api.redis.subscription) {
-      api.redis.subscription.subscribe(redisPubSubChannel);
+      await api.redis.subscription.subscribe(redisPubSubChannel);
       api.redis.subscription.on("message", this.handleMessage.bind(this));
     }
   }
 
   async stop() {
     if (api.redis.subscription) {
-      api.redis.subscription.unsubscribe(redisPubSubChannel);
+      api.redis.subscription.removeAllListeners("message");
+      await api.redis.subscription.unsubscribe(redisPubSubChannel);
     }
   }
 
