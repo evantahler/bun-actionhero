@@ -1,3 +1,4 @@
+import { mkdir } from "fs/promises";
 import path from "path";
 import { Project, Type, ts } from "ts-morph";
 import { api, logger } from "../api";
@@ -175,6 +176,36 @@ export class SwaggerInitializer extends Initializer {
   }
 
   async initialize() {
+    const cacheDir = path.join(api.rootDir, ".cache");
+    const cacheFile = path.join(cacheDir, "swagger-schemas.json");
+
+    // Hash action source files to detect changes
+    const actionsDir = path.join(api.rootDir, "actions");
+    const glob = new Bun.Glob("**/*.ts");
+    const actionFiles = Array.from(glob.scanSync(actionsDir)).sort();
+    const hasher = new Bun.CryptoHasher("sha256");
+    for (const file of actionFiles) {
+      const content = await Bun.file(path.join(actionsDir, file)).text();
+      hasher.update(content);
+    }
+    const hash = hasher.digest("hex") as string;
+
+    // Check cache
+    const cacheFileHandle = Bun.file(cacheFile);
+    if (await cacheFileHandle.exists()) {
+      try {
+        const cached = await cacheFileHandle.json();
+        if (cached.hash === hash) {
+          logger.info(
+            `Loaded ${Object.keys(cached.responseSchemas).length} response schemas from cache`,
+          );
+          return { responseSchemas: cached.responseSchemas };
+        }
+      } catch {
+        // Cache file corrupted, regenerate
+      }
+    }
+
     const responseSchemas: Record<string, JSONSchema> = {};
 
     try {
@@ -256,6 +287,17 @@ export class SwaggerInitializer extends Initializer {
       );
     } catch (error) {
       logger.error(`Failed to generate swagger response schemas: ${error}`);
+    }
+
+    // Write cache
+    try {
+      await mkdir(cacheDir, { recursive: true });
+      await Bun.write(
+        cacheFile,
+        JSON.stringify({ hash, responseSchemas }, null, 2),
+      );
+    } catch (error) {
+      logger.warn(`Failed to write swagger schema cache: ${error}`);
     }
 
     return { responseSchemas };
