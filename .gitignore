@@ -8,4 +8,3 @@ backend/.env
 frontend/.env
 types
 dump.rdb
-.cache
