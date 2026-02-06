@@ -52,6 +52,11 @@ export class Redis extends Initializer {
   }
 
   async stop() {
+    // Allow in-flight Redis commands (e.g. node-resque worker pings) to
+    // complete before closing connections.  Without this, pending commands
+    // become unhandled promise rejections when the connection closes.
+    await Bun.sleep(250);
+
     let acted = false;
 
     if (api.redis.redis) {
