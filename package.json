@@ -14,7 +14,7 @@
     "dev:backend": "cd backend && bun run dev",
     "dev:frontend": "cd frontend && bun run dev",
     "tests": "bun test-backend && bun test-frontend",
-    "test-backend": "cd backend && bun test --concurrent 1",
+    "test-backend": "cd backend && bun test",
     "test-frontend": "cd frontend && bun test",
     "lint-backend": "cd backend && bun lint",
     "lint-frontend": "cd frontend && bun lint",
