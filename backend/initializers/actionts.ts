@@ -356,7 +356,7 @@ export class Actions extends Initializer {
    * Stop a task with a frequency by removing it from all possible queues (regular or delayed).
    * Will throw an error if redis cannot be reached.
    */
-  stopRecurrentAction = async (actionName: string) => {
+  stopRecurrentAction = async (actionName: string): Promise<number> => {
     const action = api.actions.actions.find((a) => a.name === actionName);
     if (!action) {
       throw new TypedError({
@@ -380,6 +380,7 @@ export class Actions extends Initializer {
       removedCount = removedCount + timestamps.length;
       return removedCount;
     }
+    return 0;
   };
 
   /**

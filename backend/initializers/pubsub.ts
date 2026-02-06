@@ -68,7 +68,10 @@ export class PubSub extends Initializer {
     }
   }
 
-  async handleMessage(pubSubChannel: string, incomingMessage: string | Buffer) {
+  async handleMessage(
+    _pubSubChannel: string,
+    incomingMessage: string | Buffer,
+  ) {
     const payload = JSON.parse(incomingMessage.toString()) as PubSubMessage;
     for (const connection of api.connections.connections) {
       if (connection.subscriptions.has(payload.channel)) {

@@ -110,7 +110,7 @@ describe("session:destroy", () => {
       },
       body: "{}",
     });
-    const response = await res.json();
+    const response = (await res.json()) as { success: boolean };
     expect(res.status).toBe(200);
     expect(response.success).toBe(true);
 
@@ -131,7 +131,7 @@ describe("session:destroy", () => {
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
-    const response = await res.json();
+    const response = (await res.json()) as { error?: { message: string } };
     expect(res.status).toBe(401);
     expect(response.error?.message).toMatch(/Session not found/);
   });

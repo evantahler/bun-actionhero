@@ -19,7 +19,7 @@ export class API {
   stopped: boolean;
   bootTime: number;
   logger: Logger;
-  runMode: RUN_MODE;
+  runMode!: RUN_MODE;
   initializers: Initializer[];
 
   // allow arbitrary properties to be set on the API, to be added and typed later

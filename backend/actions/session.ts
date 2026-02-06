@@ -77,7 +77,7 @@ export class SessionDestroy implements Action {
   middleware = [SessionMiddleware];
 
   async run(
-    params: ActionParams<SessionDestroy>,
+    _params: ActionParams<SessionDestroy>,
     connection: Connection<SessionImpl>,
   ) {
     await api.session.destroy(connection);

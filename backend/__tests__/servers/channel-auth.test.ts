@@ -1,0 +1,238 @@
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+} from "bun:test";
+import { api, config } from "../../api";
+import "./../setup";
+
+const wsUrl = config.server.web.applicationUrl
+  .replace("https://", "wss://")
+  .replace("http://", "ws://");
+
+beforeAll(async () => {
+  await api.start();
+  await api.db.clearDatabase();
+});
+
+afterAll(async () => {
+  await api.stop();
+});
+
+const buildWebSocket = async () => {
+  const socket = new WebSocket(wsUrl);
+  const messages: MessageEvent[] = [];
+  socket.addEventListener("message", (event) => {
+    messages.push(event);
+  });
+  socket.addEventListener("error", (event) => {
+    console.error(event);
+  });
+  await new Promise((resolve) => {
+    socket.addEventListener("open", resolve);
+  });
+  return { socket, messages };
+};
+
+// Helper to wait for a specific number of messages
+const waitForMessages = async (
+  messages: MessageEvent[],
+  count: number,
+  timeout = 2000,
+) => {
+  const start = Date.now();
+  while (messages.length < count && Date.now() - start < timeout) {
+    await Bun.sleep(10);
+  }
+};
+
+describe("channel authorization", () => {
+  beforeEach(async () => {
+    await api.db.clearDatabase();
+  });
+
+  describe("protected channels", () => {
+    test("should deny subscription to messages channel without authentication", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      // Try to subscribe without being logged in
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "messages",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      expect(messages.length).toBe(1);
+      const response = JSON.parse(messages[0].data);
+      expect(response.messageId).toBe("sub-1");
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_AUTHORIZATION");
+      expect(response.error.message).toBe(
+        "Authentication required to join this channel",
+      );
+
+      socket.close();
+    });
+
+    test("should allow subscription to messages channel after authentication", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      // Create a user
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "user:create",
+          messageId: "create-user",
+          params: {
+            name: "Test User",
+            email: "testuser@example.com",
+            password: "password123",
+          },
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+      const createResponse = JSON.parse(messages[0].data);
+      expect(createResponse.response.user.id).toBeGreaterThan(0);
+
+      // Create a session (log in)
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "session:create",
+          messageId: "create-session",
+          params: {
+            email: "testuser@example.com",
+            password: "password123",
+          },
+        }),
+      );
+
+      await waitForMessages(messages, 2);
+      const sessionResponse = JSON.parse(messages[1].data);
+      expect(sessionResponse.response.session.data.userId).toBeGreaterThan(0);
+
+      // Now try to subscribe - should succeed
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "messages",
+        }),
+      );
+
+      await waitForMessages(messages, 3);
+      const subscribeResponse = JSON.parse(messages[2].data);
+      expect(subscribeResponse.messageId).toBe("sub-1");
+      expect(subscribeResponse.error).toBeUndefined();
+      expect(subscribeResponse.subscribed).toEqual({ channel: "messages" });
+
+      socket.close();
+    });
+
+    test("should allow unsubscription from protected channels", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      // Create user and session
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "user:create",
+          messageId: "create-user",
+          params: {
+            name: "Test User",
+            email: "unsubtest@example.com",
+            password: "password123",
+          },
+        }),
+      );
+      await waitForMessages(messages, 1);
+
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "session:create",
+          messageId: "create-session",
+          params: {
+            email: "unsubtest@example.com",
+            password: "password123",
+          },
+        }),
+      );
+      await waitForMessages(messages, 2);
+
+      // Subscribe to messages channel
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "messages",
+        }),
+      );
+      await waitForMessages(messages, 3);
+
+      // Unsubscribe
+      socket.send(
+        JSON.stringify({
+          messageType: "unsubscribe",
+          messageId: "unsub-1",
+          channel: "messages",
+        }),
+      );
+      await waitForMessages(messages, 4);
+
+      const unsubscribeResponse = JSON.parse(messages[3].data);
+      expect(unsubscribeResponse.messageId).toBe("unsub-1");
+      expect(unsubscribeResponse.unsubscribed).toEqual({ channel: "messages" });
+
+      socket.close();
+    });
+  });
+
+  describe("unprotected channels", () => {
+    test("should allow subscription to channels without middleware", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      // Try to subscribe to a channel that doesn't have a Channel definition
+      // (no middleware protection)
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "public-announcements",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.messageId).toBe("sub-1");
+      expect(response.error).toBeUndefined();
+      expect(response.subscribed).toEqual({ channel: "public-announcements" });
+
+      socket.close();
+    });
+  });
+
+  describe("channel pattern matching", () => {
+    test("should load channels initializer with registered channels", async () => {
+      // Verify that the messages channel is loaded
+      const messagesChannel = api.channels.findChannel("messages");
+      expect(messagesChannel).toBeDefined();
+      expect(messagesChannel?.name).toBe("messages");
+      expect(messagesChannel?.middleware.length).toBeGreaterThan(0);
+    });
+
+    test("should return undefined for unregistered channels", async () => {
+      const unknownChannel = api.channels.findChannel("unknown-channel-xyz");
+      expect(unknownChannel).toBeUndefined();
+    });
+  });
+});

@@ -1,4 +1,4 @@
-import { Action, ActionParams, api } from "../../api";
+import { Action, api } from "../../api";
 import "./../setup";
 
 import {
@@ -38,12 +38,14 @@ afterAll(async () => {
 
 let ran: string | null = null;
 
+const testActionInputs = z.object({
+  val: z.string().default("I ran"),
+});
+
 class TestAction implements Action {
   name = "test_action";
-  inputs = z.object({
-    val: z.string().default("I ran"),
-  });
-  run = async (params: ActionParams<TestAction>) => {
+  inputs = testActionInputs;
+  run = async (params: z.infer<typeof testActionInputs>): Promise<void> => {
     ran = params.val;
   };
 }

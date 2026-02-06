@@ -191,13 +191,41 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ClientSubscribeMessage,
   ) {
-    connection.subscribe(formattedMessage.channel);
-    ws.send(
-      JSON.stringify({
-        messageId: formattedMessage.messageId,
-        subscribed: { channel: formattedMessage.channel },
-      }),
-    );
+    try {
+      // Ensure session is loaded before checking authorization
+      if (!connection.sessionLoaded) {
+        await connection.loadSession();
+      }
+
+      // Check channel authorization middleware
+      await api.channels.authorizeSubscription(
+        formattedMessage.channel,
+        connection,
+      );
+
+      connection.subscribe(formattedMessage.channel);
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          subscribed: { channel: formattedMessage.channel },
+        }),
+      );
+    } catch (e) {
+      const error =
+        e instanceof TypedError
+          ? e
+          : new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_CHANNEL_AUTHORIZATION,
+              originalError: e,
+            });
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          error: buildErrorPayload(error),
+        }),
+      );
+    }
   }
 
   async handleWebsocketUnsubscribe(
@@ -206,6 +234,18 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     formattedMessage: ClientUnsubscribeMessage,
   ) {
     connection.unsubscribe(formattedMessage.channel);
+
+    // Call channel middleware unsubscription hooks (for cleanup/presence)
+    try {
+      await api.channels.handleUnsubscription(
+        formattedMessage.channel,
+        connection,
+      );
+    } catch (e) {
+      // Log but don't fail the unsubscription
+      logger.error(`Error in channel unsubscription hook: ${e}`);
+    }
+
     ws.send(
       JSON.stringify({
         messageId: formattedMessage.messageId,
@@ -257,7 +297,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       req.headers.get("content-type") === "application/json"
     ) {
       try {
-        const bodyContent = await req.json();
+        const bodyContent = (await req.json()) as Record<string, unknown>;
         for (const [key, value] of Object.entries(bodyContent)) {
           if (Array.isArray(value)) {
             // Handle arrays by appending each element
@@ -379,7 +419,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleStaticFile(
-    req: Request,
+    _req: Request,
     url: ReturnType<typeof parse>,
   ): Promise<Response | null> {
     const staticRoute = config.server.web.staticFilesRoute;
