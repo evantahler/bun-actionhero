@@ -2,16 +2,16 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { api } from "../../api";
 import { users, type User } from "../../schema/users";
 import { isUser, zUserIdOrModel, zUserSchema } from "../../util/zodMixins";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("zUserIdOrModel", () => {
   let testUser: User;

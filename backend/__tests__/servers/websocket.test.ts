@@ -7,7 +7,7 @@ import {
   test,
 } from "bun:test";
 import { api, config } from "../../api";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const wsUrl = config.server.web.applicationUrl
   .replace("https://", "wss://")
@@ -16,11 +16,11 @@ const wsUrl = config.server.web.applicationUrl
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 const buildWebSocket = async () => {
   const socket = new WebSocket(wsUrl);

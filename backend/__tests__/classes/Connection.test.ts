@@ -1,17 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Connection, api } from "../../api";
 import { ErrorType } from "../../classes/TypedError";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
   await api.redis.redis.flushdb();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("Connection class", () => {
   test("constructor creates connection with unique ID", () => {

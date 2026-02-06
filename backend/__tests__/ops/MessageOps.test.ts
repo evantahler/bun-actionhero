@@ -2,16 +2,16 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { api } from "../../api";
 import { serializeMessage } from "../../ops/MessageOps";
 import type { Message } from "../../schema/messages";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("serializeMessage", () => {
   test("serializes message with all required fields", () => {

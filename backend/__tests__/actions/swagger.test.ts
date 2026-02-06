@@ -2,17 +2,17 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Swagger } from "../../actions/swagger";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("swagger", () => {
   test("the swagger endpoint returns valid OpenAPI 3.0 metadata", async () => {

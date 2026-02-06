@@ -1,17 +1,17 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Status } from "../../actions/status";
 import { api, config, type ActionResponse } from "../../api";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("booting", () => {
   test("the web server will boot on a test port", async () => {

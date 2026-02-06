@@ -11,16 +11,16 @@ import { MessagesCleanup, MessagesHello } from "../../actions/message";
 import { api } from "../../api";
 import { messages } from "../../schema/messages";
 import { users } from "../../schema/users";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("messages:cleanup", () => {
   // Clear database before each test to ensure isolation

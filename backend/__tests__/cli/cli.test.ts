@@ -2,13 +2,13 @@ import { $ } from "bun";
 import { beforeAll, describe, expect, test } from "bun:test";
 import { api } from "../../api";
 import pkg from "./../../package.json";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("CLI", () => {
   test("help describes the CLI and actions", async () => {

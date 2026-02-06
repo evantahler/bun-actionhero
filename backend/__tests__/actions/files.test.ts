@@ -3,17 +3,17 @@ import path from "path";
 import type { FileUpload } from "../../actions/files";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("status", () => {
   test("the web server can handle a request to an action", async () => {

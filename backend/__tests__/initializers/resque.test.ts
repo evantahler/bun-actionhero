@@ -1,5 +1,5 @@
 import { Action, api } from "../../api";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 import {
   afterAll,
@@ -30,11 +30,11 @@ beforeAll(async () => {
   await applicationInitializer.start();
 
   await api.resque.startQueue();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 let ran: string | null = null;
 
