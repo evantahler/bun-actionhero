@@ -3,18 +3,18 @@ import type { SessionCreate } from "../../actions/session";
 import type { UserCreate, UserEdit, UserView } from "../../actions/user";
 import { api, logger, type ActionResponse } from "../../api";
 import { config } from "../../config";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("user:create", () => {
   test("user can be created", async () => {

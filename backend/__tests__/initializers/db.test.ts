@@ -2,16 +2,16 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 import { api } from "../../api";
 import { users } from "../../schema/users";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("db initializer", () => {
   test("db object is initialized", () => {

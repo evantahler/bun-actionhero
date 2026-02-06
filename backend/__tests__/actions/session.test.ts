@@ -4,7 +4,7 @@ import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
 import { hashPassword } from "../../ops/UserOps";
 import { users } from "../../schema/users";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
@@ -16,11 +16,11 @@ beforeAll(async () => {
     email: "mario@example.com",
     password_hash: await hashPassword("mushroom1"),
   });
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("session:create", () => {
   test("returns user when matched", async () => {

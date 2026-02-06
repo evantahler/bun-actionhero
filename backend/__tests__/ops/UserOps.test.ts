@@ -7,16 +7,16 @@ import {
   serializeUser,
 } from "../../ops/UserOps";
 import type { User } from "../../schema/users";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("hashPassword", () => {
   test("creates a valid bcrypt hash", async () => {

@@ -8,7 +8,7 @@ import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
 import { config } from "../../config";
 import { messages } from "../../schema/messages";
-import "./../setup";
+import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
 
@@ -16,11 +16,11 @@ beforeAll(async () => {
   await api.start();
   await api.db.clearDatabase();
   await api.redis.redis.flushdb();
-});
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 describe("message:create", () => {
   let user: ActionResponse<SessionCreate>["user"];
