@@ -178,6 +178,16 @@ export class Resque extends Initializer {
   };
 
   stopWorkers = async () => {
+    // Signal all workers to stop polling/pinging before closing connections.
+    // worker.end() clears timers and closes the Redis connection, but if a
+    // poll() or ping() callback already fired and has an in-flight Redis
+    // command, it will reject with "Connection is closed." Setting running=false
+    // first ensures no NEW operations start, then we drain any in-flight ones.
+    for (const worker of api.resque.workers) {
+      worker.running = false;
+    }
+    await Bun.sleep(250);
+
     while (true) {
       const worker = api.resque.workers.pop();
       if (!worker) break;
