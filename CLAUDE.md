@@ -1,0 +1,115 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with `backend/` (API server) and `frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, and background tasks simultaneously.
+
+## Common Commands
+
+All commands from root unless noted. Backend tests require PostgreSQL (`bun` and `bun-test` databases) and Redis running locally.
+
+```bash
+bun install                        # Install all dependencies
+bun dev                            # Run both backend and frontend with hot reload
+bun run ci                         # Full CI: lint + test both apps
+
+# Backend only (run from backend/)
+cd backend
+bun test                           # Run all backend tests (uses bun:test, non-concurrent)
+bun test __tests__/actions/user.test.ts  # Run a single test file
+bun run dev                        # Backend only with --watch
+bun run start                      # Start server
+bun lint                           # Check formatting (prettier)
+bun format                         # Fix formatting (prettier)
+bun run migrations                 # Generate DB migrations from schema changes
+```
+
+## Architecture
+
+### Global Singleton: `api`
+The `api` object (`backend/api.ts`) is a global singleton stored on `globalThis`. It manages the full lifecycle: initialize -> start -> stop. All initializers attach their namespaces to it (e.g., `api.db`, `api.actions`, `api.redis`).
+
+### Actions (`backend/actions/`, `backend/classes/Action.ts`)
+Transport-agnostic controllers. Every action defines:
+- `inputs`: Zod schema for validation and type inference
+- `web`: `{ route, method }` for HTTP routing (routes are regex or string with `:param` path params, defined on the action itself)
+- `task`: `{ queue, frequency }` for background job scheduling
+- `middleware`: Array of `ActionMiddleware` (e.g., `SessionMiddleware` for auth)
+- `run(params, connection)`: The handler. **Must throw `TypedError`** for errors.
+
+Type helpers: `ActionParams<A>` infers input types, `ActionResponse<A>` infers return types.
+
+New actions must be re-exported from `backend/actions/.index.ts` for frontend type sharing.
+
+### Initializers (`backend/initializers/`, `backend/classes/Initializer.ts`)
+Lifecycle components with priority-based ordering. Each initializer:
+1. Uses **module augmentation** to extend the `API` interface with its namespace
+2. Returns its namespace object from `initialize()`
+3. Connects to services in `start()`, cleans up in `stop()`
+
+Pattern (see `backend/initializers/db.ts`):
+```typescript
+declare module "../classes/API" {
+  export interface API {
+    [namespace]: Awaited<ReturnType<MyInitializer["initialize"]>>;
+  }
+}
+```
+
+Key initializers and their priorities: `actions` (100), `db` (100), `redis` (default), `pubsub` (150), `swagger` (150), `resque` (250), `application` (1000).
+
+### Channels (`backend/classes/Channel.ts`)
+PubSub channels for WebSocket real-time messaging. Channels define a `name` (string or RegExp pattern) and optional `middleware` (ChannelMiddleware) for authorization on subscribe and cleanup on unsubscribe.
+
+### Servers (`backend/servers/web.ts`)
+WebServer uses `Bun.serve` for HTTP + WebSocket. Handles routing, static files, cookies, and session management.
+
+### Config (`backend/config/`)
+Modular config with per-environment overrides via `loadFromEnvIfSet()` — checks `ENV_VAR_NODEENV` first, then `ENV_VAR`, then falls back to the default value. Type-aware (auto-parses booleans and numbers).
+
+### Ops (`backend/ops/`)
+Business logic layer (e.g., `UserOps`, `MessageOps`) separating DB operations from actions.
+
+### Schemas (`backend/schema/`)
+Drizzle ORM table definitions. Migrations auto-apply on server start when `config.database.autoMigrate` is true.
+
+### Zod Helpers (`backend/util/zodMixins.ts`)
+- `secret(schema)`: Wraps a Zod schema so the field is redacted as `[[secret]]` in logs. Uses Zod v4 `.meta()` API.
+- `zIdOrModel(table, ...)` / `zUserIdOrModel()` / `zMessageIdOrModel()`: Accepts an ID or full object and auto-resolves via DB using async transforms.
+- `zBooleanFromString()`: Parses `"true"`/`"false"` strings from form data into booleans.
+
+### TypedError (`backend/classes/TypedError.ts`)
+All action errors must use `TypedError` with an `ErrorType` enum. Each error type maps to an HTTP status code via `ErrorStatusCodes`.
+
+## Testing Patterns
+
+Tests use Bun's built-in test runner. Each test file boots/stops the full server:
+
+```typescript
+import { api } from "../../api";
+import { config } from "../../config";
+const url = config.server.web.applicationUrl;
+
+beforeAll(async () => { await api.start(); });
+afterAll(async () => { await api.stop(); });
+
+test("...", async () => {
+  const res = await fetch(url + "/api/status");
+  const body = (await res.json()) as ActionResponse<Status>;
+});
+```
+
+Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concurrently to avoid port conflicts.
+
+### Auto-discovery
+Actions, initializers, and servers are auto-discovered via `globLoader` (`backend/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped.
+
+## Gotcha: Stale Processes
+
+If code changes aren't reflected in HTTP responses, check for stale `bun actionhero` processes:
+```bash
+ps aux | grep "bun actionhero" | grep -v grep
+kill -9 <PIDs>
+```
