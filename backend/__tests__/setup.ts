@@ -9,3 +9,20 @@ setMaxListeners(999);
 // bun:test's setDefaultTimeout and bunfig.toml [test].timeout only apply to
 // test() blocks, not lifecycle hooks — so we export this for explicit use.
 export const HOOK_TIMEOUT = 15_000;
+
+// ioredis flushes its command queue on connection close, rejecting pending
+// commands with "Connection is closed." These rejections are unhandled because
+// they originate from fire-and-forget callers (e.g. node-resque's setInterval
+// ping). This is harmless during test shutdown but causes bun:test to exit 1.
+// Note: ioredis uses plain Error objects with no custom class or error code,
+// so we match the exact message string and verify the stack originates from ioredis.
+process.on("unhandledRejection", (reason: unknown) => {
+  if (
+    reason instanceof Error &&
+    reason.message === "Connection is closed." &&
+    reason.stack?.includes("ioredis")
+  ) {
+    return;
+  }
+  throw reason;
+});
