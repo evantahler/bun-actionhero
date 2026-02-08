@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import type { ErrorPayload } from "node-resque";
 import { api, logger } from "../api";
 import { DEFAULT_QUEUE, type Action } from "../classes/Action";
@@ -6,6 +7,25 @@ import { ErrorType, TypedError } from "../classes/TypedError";
 import { globLoader } from "../util/glob";
 
 const namespace = "actions";
+
+const DEFAULT_FAN_OUT_BATCH_SIZE = 100;
+const DEFAULT_FAN_OUT_RESULT_TTL = 600; // 10 minutes in seconds
+
+export type FanOutResult = {
+  fanOutId: string;
+  actionName: string;
+  queue: string;
+  enqueued: number;
+  errors: Array<{ index: number; error: string }>;
+};
+
+export type FanOutStatus = {
+  total: number;
+  completed: number;
+  failed: number;
+  results: Array<{ params: Record<string, any>; result: any }>;
+  errors: Array<{ params: Record<string, any>; error: string }>;
+};
 
 declare module "../classes/API" {
   export interface API {
@@ -28,7 +48,7 @@ export class Actions extends Initializer {
   enqueue = async (
     actionName: string,
     inputs: TaskInputs = {},
-    queue: string = DEFAULT_QUEUE,
+    queue?: string,
   ) => {
     const action = api.actions.actions.find((a) => a.name === actionName);
     if (!action) {
@@ -37,8 +57,119 @@ export class Actions extends Initializer {
         type: ErrorType.CONNECTION_TASK_DEFINITION,
       });
     }
-    queue = action?.task?.queue ?? DEFAULT_QUEUE;
+    queue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
     return api.resque.queue.enqueue(queue, actionName, [inputs]);
+  };
+
+  /**
+   * Fan out work to many child jobs for parallel processing.
+   * Enqueues one job per item in `inputsArray`, injects `_fanOutId` into each,
+   * and stores metadata in Redis for result collection.
+   *
+   * Returns a FanOutResult with the fanOutId for later status queries.
+   */
+  fanOut = async (
+    actionName: string,
+    inputsArray: TaskInputs[],
+    queue?: string,
+    options?: { batchSize?: number; resultTtl?: number },
+  ): Promise<FanOutResult> => {
+    const action = api.actions.actions.find((a) => a.name === actionName);
+    if (!action) {
+      throw new TypedError({
+        message: `action ${actionName} not found`,
+        type: ErrorType.CONNECTION_TASK_DEFINITION,
+      });
+    }
+
+    const resolvedQueue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+    const batchSize = options?.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
+    const resultTtl = options?.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
+    const fanOutId = randomUUID();
+    const metaKey = `fanout:${fanOutId}`;
+
+    // Store fan-out metadata in Redis
+    await api.redis.redis.hset(metaKey, {
+      total: inputsArray.length.toString(),
+      completed: "0",
+      failed: "0",
+      actionName,
+      queue: resolvedQueue,
+    });
+    await api.redis.redis.expire(metaKey, resultTtl);
+
+    // Pre-create results/errors lists with TTL so they exist for queries
+    // (Redis will auto-create on RPUSH, but we set TTL proactively)
+    const resultsKey = `fanout:${fanOutId}:results`;
+    const errorsKey = `fanout:${fanOutId}:errors`;
+    await api.redis.redis.expire(resultsKey, resultTtl);
+    await api.redis.redis.expire(errorsKey, resultTtl);
+
+    const enqueueErrors: Array<{ index: number; error: string }> = [];
+    let enqueued = 0;
+
+    // Enqueue in batches to avoid flooding Redis
+    for (let i = 0; i < inputsArray.length; i += batchSize) {
+      const batch = inputsArray.slice(i, i + batchSize);
+      const results = await Promise.allSettled(
+        batch.map((inputs, batchIdx) => {
+          const enrichedInputs = {
+            ...inputs,
+            _fanOutId: fanOutId,
+          };
+          return this.enqueue(actionName, enrichedInputs, resolvedQueue);
+        }),
+      );
+
+      for (let j = 0; j < results.length; j++) {
+        const result = results[j];
+        if (result.status === "fulfilled") {
+          enqueued++;
+        } else {
+          enqueueErrors.push({
+            index: i + j,
+            error: String(result.reason),
+          });
+        }
+      }
+    }
+
+    return {
+      fanOutId,
+      actionName,
+      queue: resolvedQueue,
+      enqueued,
+      errors: enqueueErrors,
+    };
+  };
+
+  /**
+   * Query the status of a fan-out operation.
+   * Returns totals, collected results, and errors.
+   */
+  fanOutStatus = async (fanOutId: string): Promise<FanOutStatus> => {
+    const metaKey = `fanout:${fanOutId}`;
+    const meta = await api.redis.redis.hgetall(metaKey);
+
+    if (!meta || Object.keys(meta).length === 0) {
+      return { total: 0, completed: 0, failed: 0, results: [], errors: [] };
+    }
+
+    const resultsKey = `fanout:${fanOutId}:results`;
+    const errorsKey = `fanout:${fanOutId}:errors`;
+
+    const [rawResults, rawErrors] = await Promise.all([
+      api.redis.redis.lrange(resultsKey, 0, -1),
+      api.redis.redis.lrange(errorsKey, 0, -1),
+    ]);
+
+    return {
+      total: parseInt(meta.total, 10) || 0,
+      completed: parseInt(meta.completed, 10) || 0,
+      failed: parseInt(meta.failed, 10) || 0,
+      results: rawResults.map((r) => JSON.parse(r)),
+      errors: rawErrors.map((e) => JSON.parse(e)),
+    };
   };
 
   /**
@@ -434,6 +565,8 @@ export class Actions extends Initializer {
       actions,
 
       enqueue: this.enqueue,
+      fanOut: this.fanOut,
+      fanOutStatus: this.fanOutStatus,
       enqueueAt: this.enqueueAt,
       enqueueIn: this.enqueueIn,
       del: this.del,

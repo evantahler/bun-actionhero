@@ -60,6 +60,19 @@ declare module "../classes/API" {
 
 Key initializers and their priorities: `actions` (100), `db` (100), `redis` (default), `pubsub` (150), `swagger` (150), `resque` (250), `application` (1000).
 
+### Fan-Out Tasks (`backend/initializers/actionts.ts`)
+A parent action can distribute work across many child jobs using `api.actions.fanOut()`. Child results are automatically collected in Redis via `_fanOutId` injection.
+
+```typescript
+// Fan out work
+const result = await api.actions.fanOut("child:action", inputsArray, "worker", { batchSize: 100, resultTtl: 600 });
+// Query results
+const status = await api.actions.fanOutStatus(result.fanOutId);
+// → { total, completed, failed, results: [...], errors: [...] }
+```
+
+Redis keys: `fanout:{id}` (hash), `fanout:{id}:results` (list), `fanout:{id}:errors` (list). All keys have TTL (default 10 min, refreshed on each child completion).
+
 ### Channels (`backend/classes/Channel.ts`)
 PubSub channels for WebSocket real-time messaging. Channels define a `name` (string or RegExp pattern) and optional `middleware` (ChannelMiddleware) for authorization on subscribe and cleanup on unsubscribe.
 

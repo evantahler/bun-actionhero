@@ -1,7 +1,10 @@
 import { loadFromEnvIfSet } from "../util/config";
 export const configTasks = {
   enabled: await loadFromEnvIfSet("TASKS_ENABLED", true),
-  // what queues should the taskProcessors work?
+  // What queues should the taskProcessors work?
+  // Order controls worker priority: workers drain queues left-to-right.
+  // e.g. ["worker", "scheduler"] means "worker" jobs are processed before "scheduler" jobs.
+  // Use ["*"] to process all queues with equal priority.
   queues: ["*"] as string[] | (() => Promise<string[]>),
   // Or, rather than providing a static list of `queues`, you can define a method that returns the list of queues.
   // queues: async () => { return ["queueA", "queueB"]; } as string[] | (() => Promise<string[]>)>,
