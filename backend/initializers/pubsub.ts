@@ -1,5 +1,6 @@
 import { api } from "../api";
 import { Initializer } from "../classes/Initializer";
+import { config } from "../config";
 import pkg from "../package.json";
 
 const namespace = "pubsub";
@@ -78,6 +79,11 @@ export class PubSub extends Initializer {
       if (connection.subscriptions.has(payload.channel)) {
         connection.onBroadcastMessageReceived(payload);
       }
+    }
+
+    // Forward to MCP as notifications
+    if (config.server.mcp.enabled && api.mcp?.sendNotification) {
+      api.mcp.sendNotification(payload);
     }
   }
 }
