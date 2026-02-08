@@ -59,7 +59,7 @@ async function getAccessToken(): Promise<string> {
   });
   const authHtml = await authRes.text();
   const metaMatch = authHtml.match(
-    /<meta name="redirect-url" content="([^"]+)">/,
+    /<meta name="redirect-url" content="([^"]+)"\s*\/?>/,
   );
   const code = new URL(metaMatch![1]).searchParams.get("code")!;
 
@@ -402,7 +402,7 @@ describe("mcp initializer (enabled)", () => {
       expect(authRes.status).toBe(200);
       const authHtml = await authRes.text();
       const metaMatch = authHtml.match(
-        /<meta name="redirect-url" content="([^"]+)">/,
+        /<meta name="redirect-url" content="([^"]+)"\s*\/?>/,
       );
       expect(metaMatch).toBeTruthy();
       const redirectUrl = new URL(metaMatch![1]);
@@ -541,7 +541,7 @@ describe("mcp initializer (enabled)", () => {
 
       const signinHtml = await signinRes.text();
       const signinMetaMatch = signinHtml.match(
-        /<meta name="redirect-url" content="([^"]+)">/,
+        /<meta name="redirect-url" content="([^"]+)"\s*\/?>/,
       );
       expect(signinMetaMatch).toBeTruthy();
       const signinRedirect = new URL(signinMetaMatch![1]);
