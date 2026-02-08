@@ -80,6 +80,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         parsedUrl.pathname === config.server.mcp.route &&
         api.mcp?.handleRequest
       ) {
+        server.timeout(req, 0); // disable idle timeout for long-lived MCP SSE streams
         return api.mcp.handleRequest(req);
       }
 
