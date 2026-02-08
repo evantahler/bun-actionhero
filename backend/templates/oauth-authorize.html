@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Authorize Application</title>
+    <style>
+      {{> commonCss}}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Authorize Application</h2>
+      {{{errorHtml}}}
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('signin')">Sign In</div>
+        <div class="tab" onclick="switchTab('signup')">Sign Up</div>
+      </div>
+      <div id="signin-form" class="form-section active">
+        <form method="POST" action="/oauth/authorize">
+          {{{hiddenFields}}}
+          <input type="hidden" name="mode" value="signin" />
+          <label for="signin-email">Email</label>
+          <input type="email" id="signin-email" name="email" required />
+          <label for="signin-password">Password</label>
+          <input
+            type="password"
+            id="signin-password"
+            name="password"
+            required
+          />
+          <button type="submit">Sign In</button>
+        </form>
+      </div>
+      <div id="signup-form" class="form-section">
+        <form method="POST" action="/oauth/authorize">
+          {{{hiddenFields}}}
+          <input type="hidden" name="mode" value="signup" />
+          <label for="signup-name">Name</label>
+          <input
+            type="text"
+            id="signup-name"
+            name="name"
+            required
+            minlength="3"
+          />
+          <label for="signup-email">Email</label>
+          <input type="email" id="signup-email" name="email" required />
+          <label for="signup-password">Password</label>
+          <input
+            type="password"
+            id="signup-password"
+            name="password"
+            required
+            minlength="8"
+          />
+          <button type="submit">Sign Up</button>
+        </form>
+      </div>
+    </div>
+    <div class="dog">{{> dogSvg}}</div>
+    <script>
+      function switchTab(tab) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".form-section")
+          .forEach((f) => f.classList.remove("active"));
+        document.querySelector("#" + tab + "-form").classList.add("active");
+        event.target.classList.add("active");
+      }
+    </script>
+  </body>
+</html>
