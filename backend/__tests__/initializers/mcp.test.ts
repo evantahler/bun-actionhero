@@ -57,8 +57,11 @@ async function getAccessToken(): Promise<string> {
     }).toString(),
     redirect: "manual",
   });
-  const location = authRes.headers.get("location")!;
-  const code = new URL(location).searchParams.get("code")!;
+  const authHtml = await authRes.text();
+  const metaMatch = authHtml.match(
+    /<meta name="redirect-url" content="([^"]+)">/,
+  );
+  const code = new URL(metaMatch![1]).searchParams.get("code")!;
 
   // Exchange code for token
   const tokenRes = await fetch(`${baseUrl()}/oauth/token`, {
@@ -396,10 +399,13 @@ describe("mcp initializer (enabled)", () => {
         body: authForm.toString(),
         redirect: "manual",
       });
-      expect(authRes.status).toBe(302);
-      const location = authRes.headers.get("location")!;
-      expect(location).toBeTruthy();
-      const redirectUrl = new URL(location);
+      expect(authRes.status).toBe(200);
+      const authHtml = await authRes.text();
+      const metaMatch = authHtml.match(
+        /<meta name="redirect-url" content="([^"]+)">/,
+      );
+      expect(metaMatch).toBeTruthy();
+      const redirectUrl = new URL(metaMatch![1]);
       const code = redirectUrl.searchParams.get("code");
       expect(code).toBeTruthy();
       expect(redirectUrl.searchParams.get("state")).toBe("test-state");
@@ -508,7 +514,7 @@ describe("mcp initializer (enabled)", () => {
         }).toString(),
         redirect: "manual",
       });
-      expect(signupRes.status).toBe(302);
+      expect(signupRes.status).toBe(200);
       // We don't exchange this code — the user is now created in the DB
 
       // --- 2. Sign in as the created user via OAuth signin ---
@@ -531,11 +537,14 @@ describe("mcp initializer (enabled)", () => {
         }).toString(),
         redirect: "manual",
       });
-      expect(signinRes.status).toBe(302);
+      expect(signinRes.status).toBe(200);
 
-      const signinLocation = signinRes.headers.get("location")!;
-      expect(signinLocation).toBeTruthy();
-      const signinRedirect = new URL(signinLocation);
+      const signinHtml = await signinRes.text();
+      const signinMetaMatch = signinHtml.match(
+        /<meta name="redirect-url" content="([^"]+)">/,
+      );
+      expect(signinMetaMatch).toBeTruthy();
+      const signinRedirect = new URL(signinMetaMatch![1]);
       const signinCode = signinRedirect.searchParams.get("code");
       expect(signinCode).toBeTruthy();
       expect(signinRedirect.searchParams.get("state")).toBe("signin");

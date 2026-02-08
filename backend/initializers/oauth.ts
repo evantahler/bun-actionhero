@@ -1,10 +1,17 @@
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
+import Mustache from "mustache";
 import { api } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 import { checkPassword, hashPassword } from "../ops/UserOps";
 import { users } from "../schema/users";
+
+const templatesDir = import.meta.dir + "/../templates";
+let authTemplate: string;
+let successTemplate: string;
+let commonCss: string;
+let dogSvg: string;
 
 const namespace = "oauth";
 
@@ -44,6 +51,15 @@ export class OAuthInitializer extends Initializer {
   }
 
   async initialize() {
+    authTemplate = await Bun.file(
+      `${templatesDir}/oauth-authorize.html`,
+    ).text();
+    successTemplate = await Bun.file(
+      `${templatesDir}/oauth-success.html`,
+    ).text();
+    commonCss = await Bun.file(`${templatesDir}/oauth-common.css`).text();
+    dogSvg = await Bun.file(`${templatesDir}/dog.svg`).text();
+
     async function verifyAccessToken(token: string): Promise<TokenData | null> {
       const raw = await api.redis.redis.get(`oauth:token:${token}`);
       if (!raw) return null;
@@ -340,10 +356,7 @@ async function handleAuthorizePost(req: Request): Promise<Response> {
   redirectUrl.searchParams.set("code", code);
   if (state) redirectUrl.searchParams.set("state", state);
 
-  return new Response(null, {
-    status: 302,
-    headers: { Location: redirectUrl.toString() },
-  });
+  return renderSuccessPage(redirectUrl.toString());
 }
 
 async function handleToken(req: Request): Promise<Response> {
@@ -506,73 +519,24 @@ function renderAuthPage(params: AuthPageParams): Response {
     <input type="hidden" name="state" value="${escapeHtml(params.state)}">
   `;
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Authorize Application</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-    .container { background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 32px; width: 100%; max-width: 400px; }
-    h2 { margin-bottom: 20px; color: #333; }
-    .error { background: #fee; border: 1px solid #fcc; color: #c00; padding: 10px; border-radius: 4px; margin-bottom: 16px; }
-    .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #eee; }
-    .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; color: #666; }
-    .tab.active { border-bottom-color: #0066cc; color: #0066cc; font-weight: 600; }
-    .form-section { display: none; }
-    .form-section.active { display: block; }
-    label { display: block; margin-bottom: 4px; font-weight: 500; color: #555; font-size: 14px; }
-    input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; margin-bottom: 12px; }
-    input:focus { outline: none; border-color: #0066cc; box-shadow: 0 0 0 2px rgba(0,102,204,0.2); }
-    button { width: 100%; padding: 12px; background: #0066cc; color: #fff; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
-    button:hover { background: #0052a3; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h2>Authorize Application</h2>
-    ${errorHtml}
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('signin')">Sign In</div>
-      <div class="tab" onclick="switchTab('signup')">Sign Up</div>
-    </div>
-    <div id="signin-form" class="form-section active">
-      <form method="POST" action="/oauth/authorize">
-        ${hiddenFields}
-        <input type="hidden" name="mode" value="signin">
-        <label for="signin-email">Email</label>
-        <input type="email" id="signin-email" name="email" required>
-        <label for="signin-password">Password</label>
-        <input type="password" id="signin-password" name="password" required>
-        <button type="submit">Sign In</button>
-      </form>
-    </div>
-    <div id="signup-form" class="form-section">
-      <form method="POST" action="/oauth/authorize">
-        ${hiddenFields}
-        <input type="hidden" name="mode" value="signup">
-        <label for="signup-name">Name</label>
-        <input type="text" id="signup-name" name="name" required minlength="3">
-        <label for="signup-email">Email</label>
-        <input type="email" id="signup-email" name="email" required>
-        <label for="signup-password">Password</label>
-        <input type="password" id="signup-password" name="password" required minlength="8">
-        <button type="submit">Sign Up</button>
-      </form>
-    </div>
-  </div>
-  <script>
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
-      document.querySelector('#' + tab + '-form').classList.add('active');
-      event.target.classList.add('active');
-    }
-  </script>
-</body>
-</html>`;
+  const html = Mustache.render(
+    authTemplate,
+    { errorHtml, hiddenFields },
+    { commonCss, dogSvg },
+  );
+
+  return new Response(html, {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
+}
+
+function renderSuccessPage(redirectUrl: string): Response {
+  const html = Mustache.render(
+    successTemplate,
+    { redirectUrl },
+    { commonCss, dogSvg },
+  );
 
   return new Response(html, {
     status: 200,
