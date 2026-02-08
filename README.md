@@ -2,8 +2,6 @@
 
 [![Test](https://github.com/evantahler/bun-actionhero/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-actionhero/actions/workflows/test.yaml)
 
-Project Board: https://github.com/users/evantahler/projects/1/views/1
-
 ## What is this Project?
 
 This is a modern rewrite of [ActionHero](https://www.actionherojs.com), built on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — it was an attempt to take the best ideas from Rails and Node.js and shove them together — but the original framework needed a fresh start with modern tooling.
