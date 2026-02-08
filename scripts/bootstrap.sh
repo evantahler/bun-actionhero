@@ -24,6 +24,22 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "[1/6] Starting PostgreSQL..."
 
+# Fix SSL key permissions (often wrong in cloud/container environments, blocks PG startup)
+if [ -f /etc/ssl/private/ssl-cert-snakeoil.key ]; then
+    chmod 600 /etc/ssl/private/ssl-cert-snakeoil.key 2>/dev/null || true
+fi
+
+# Set pg_hba.conf to trust local connections so we can connect as postgres
+# without sudo (sudo is often unavailable in cloud environments)
+for PG_HBA in /etc/postgresql/16/main/pg_hba.conf /etc/postgresql/15/main/pg_hba.conf; do
+    if [ -f "$PG_HBA" ]; then
+        sed -i 's/^\(local\s\+all\s\+all\s\+\)peer$/\1trust/' "$PG_HBA" 2>/dev/null || true
+        sed -i 's/^\(local\s\+all\s\+postgres\s\+\)peer$/\1trust/' "$PG_HBA" 2>/dev/null || true
+        sed -i 's/^\(host\s\+all\s\+all\s\+127\.0\.0\.1\/32\s\+\)scram-sha-256$/\1trust/' "$PG_HBA" 2>/dev/null || true
+        break
+    fi
+done
+
 # Check if PostgreSQL is already running
 if pg_isready -q 2>/dev/null; then
     echo "  PostgreSQL is already running"
@@ -31,7 +47,7 @@ else
     # Start PostgreSQL service (varies by environment)
     if command -v pg_ctlcluster &>/dev/null; then
         # Debian/Ubuntu style
-        sudo pg_ctlcluster 16 main start 2>/dev/null || sudo pg_ctlcluster 15 main start 2>/dev/null || true
+        pg_ctlcluster 16 main start 2>/dev/null || pg_ctlcluster 15 main start 2>/dev/null || true
     elif command -v pg_ctl &>/dev/null; then
         # Direct pg_ctl
         pg_ctl start -D /var/lib/postgresql/data 2>/dev/null || true
@@ -53,8 +69,7 @@ if ! pg_isready -q 2>/dev/null; then
 fi
 
 # Set postgres user password to match .env.example expectations
-# This enables TCP connections with password authentication
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
+psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
 echo "  PostgreSQL password configured"
 
 # -----------------------------------------------------------------------------
