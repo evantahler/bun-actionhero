@@ -1,0 +1,6 @@
+# bun-actionhero
+
+> The modern TypeScript API framework built on Bun.
+
+This file is auto-generated during build by vitepress-plugin-llms.
+Run `bun docs:build` to generate the full version.

@@ -1,0 +1,108 @@
+---
+description: Testing with Bun's built-in test runner — real HTTP requests, no mocking.
+---
+
+# Testing
+
+We don't mock the server. That's a deliberate choice — if you're testing an API, you should be making real HTTP requests against a real running server. Now that Bun includes `fetch` out of the box, this is trivially easy.
+
+## Test Structure
+
+Each test file boots and stops the full server in `beforeAll`/`afterAll`:
+
+```ts
+import { api } from "../../api";
+import { config } from "../../config";
+
+const url = config.server.web.applicationUrl;
+
+beforeAll(async () => {
+  await api.start();
+});
+
+afterAll(async () => {
+  await api.stop();
+});
+
+test("status endpoint returns server info", async () => {
+  const res = await fetch(url + "/api/status");
+  const body = (await res.json()) as ActionResponse<Status>;
+
+  expect(res.status).toBe(200);
+  expect(body.name).toBe("server");
+  expect(body.uptime).toBeGreaterThan(0);
+});
+```
+
+Yes, this means each test file starts the entire server — database connections, Redis, the works. It's slower than unit testing with mocks, but you're testing what actually happens when a client hits your API. I'll take that tradeoff every time.
+
+## Running Tests
+
+```bash
+# all backend tests
+cd backend && bun test
+
+# a single file
+cd backend && bun test __tests__/actions/user.test.ts
+
+# full CI — lint + test both frontend and backend
+bun run ci
+```
+
+Tests run non-concurrently to avoid port conflicts. Each test file gets the server to itself.
+
+## Making Requests
+
+Just use `fetch`. Here's a typical test for creating a user:
+
+```ts
+test("create a user", async () => {
+  const res = await fetch(url + "/api/user", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Test User",
+      email: "test@example.com",
+      password: "password123",
+    }),
+  });
+
+  const body = await res.json();
+  expect(res.status).toBe(200);
+  expect(body.user.name).toBe("Test User");
+});
+```
+
+Nothing special — it's the same `fetch` you'd use in a browser or a Bun script.
+
+## Database Setup
+
+Tests typically clear the database before running to ensure a clean slate:
+
+```ts
+beforeAll(async () => {
+  await api.start();
+  await api.db.clearDatabase();
+});
+```
+
+`clearDatabase()` truncates all tables with `RESTART IDENTITY CASCADE`. It refuses to run when `NODE_ENV=production`, so you can't accidentally nuke your production data.
+
+You'll need a separate test database:
+
+```bash
+createdb bun-test
+```
+
+Set `DATABASE_URL_TEST` in your environment (or `backend/.env`) to point at it.
+
+## Gotcha: Stale Processes
+
+If you're changing code but your tests are still seeing old behavior… you probably have a stale server process running from a previous dev session. This has bitten me more than once:
+
+```bash
+ps aux | grep "bun actionhero" | grep -v grep
+kill -9 <PIDs>
+```
+
+Check for old processes whenever code changes aren't being reflected. It'll save you hours of debugging.
