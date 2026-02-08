@@ -75,12 +75,19 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
 
     // MCP route interception
-    if (
-      config.server.mcp.enabled &&
-      parsedUrl.pathname === config.server.mcp.route &&
-      api.mcp?.handleRequest
-    ) {
-      return api.mcp.handleRequest(req);
+    if (config.server.mcp.enabled) {
+      if (
+        parsedUrl.pathname === config.server.mcp.route &&
+        api.mcp?.handleRequest
+      ) {
+        return api.mcp.handleRequest(req);
+      }
+
+      // The MCP SDK client probes for OAuth metadata before connecting.
+      // Return 404 so these don't fall through to the action handler and log errors.
+      if (parsedUrl.pathname === "/.well-known/oauth-authorization-server") {
+        return new Response(null, { status: 404 });
+      }
     }
 
     return this.handleWebAction(req, parsedUrl, ip, id);
