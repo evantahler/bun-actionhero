@@ -485,6 +485,17 @@ function createMcpServer(
             "MCP",
           );
 
+          // If this tool call newly established an authenticated session, persist the
+          // mapping so subsequent tool calls within this MCP session reuse it
+          if (
+            !error &&
+            !connectionId &&
+            mcpSessionId &&
+            connection.session?.data?.userId
+          ) {
+            await api.mcp.setSessionAuth(mcpSessionId, connection.id);
+          }
+
           if (error) {
             return {
               content: [
