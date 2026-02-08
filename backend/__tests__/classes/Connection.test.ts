@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Connection, api } from "../../api";
+import { Connection, api, logger } from "../../api";
 import { ErrorType } from "../../classes/TypedError";
 import { HOOK_TIMEOUT } from "./../setup";
 
@@ -116,6 +116,31 @@ describe("Connection class", () => {
     expect(error).toBeDefined();
     // Should be a validation error
     expect(error?.message).toBeDefined();
+  });
+
+  test("act logs the connection type (trigger source)", async () => {
+    const logMessages: string[] = [];
+    const originalInfo = logger.info;
+    logger.info = (message: string) => {
+      logMessages.push(message);
+    };
+
+    try {
+      for (const type of ["web", "cli", "resque", "websocket"]) {
+        logMessages.length = 0;
+        const conn = new Connection(type, `test-${type}`);
+        const params = new FormData();
+        await conn.act("status", params);
+
+        const actionLog = logMessages.find(
+          (msg) => msg.includes("[ACTION:") && msg.includes("status"),
+        );
+        expect(actionLog).toBeDefined();
+        expect(actionLog).toContain(`[${type}]`);
+      }
+    } finally {
+      logger.info = originalInfo;
+    }
   });
 
   test("act loads session for connection", async () => {

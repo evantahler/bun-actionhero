@@ -31,7 +31,7 @@ else
     # Start PostgreSQL service (varies by environment)
     if command -v pg_ctlcluster &>/dev/null; then
         # Debian/Ubuntu style
-        sudo pg_ctlcluster 16 main start 2>/dev/null || sudo pg_ctlcluster 15 main start 2>/dev/null || true
+        pg_ctlcluster 16 main start 2>/dev/null || pg_ctlcluster 15 main start 2>/dev/null || true
     elif command -v pg_ctl &>/dev/null; then
         # Direct pg_ctl
         pg_ctl start -D /var/lib/postgresql/data 2>/dev/null || true
@@ -53,8 +53,7 @@ if ! pg_isready -q 2>/dev/null; then
 fi
 
 # Set postgres user password to match .env.example expectations
-# This enables TCP connections with password authentication
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
+psql -U postgres -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/null || true
 echo "  PostgreSQL password configured"
 
 # -----------------------------------------------------------------------------
