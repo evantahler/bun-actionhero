@@ -104,7 +104,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       ? colors.gray(JSON.stringify(sanitizedParams))
       : JSON.stringify(sanitizedParams);
 
-    const statusMessage = `[ACTION:${loggerResponsePrefix}]`;
+    const statusMessage = `ACTION:${this.type}:${loggerResponsePrefix}`;
     const messagePrefix = config.logger.colorize
       ? loggerResponsePrefix === "OK"
         ? colors.bgBlue(statusMessage)
@@ -121,7 +121,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
         : "";
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) [${this.type}] ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams} ${errorStack}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""} ${error ? error : ""} ${loggingParams} ${errorStack}`,
     );
 
     return { response, error };

@@ -133,10 +133,10 @@ describe("Connection class", () => {
         await conn.act("status", params);
 
         const actionLog = logMessages.find(
-          (msg) => msg.includes("[ACTION:") && msg.includes("status"),
+          (msg) => msg.includes("ACTION:") && msg.includes("status"),
         );
         expect(actionLog).toBeDefined();
-        expect(actionLog).toContain(`[${type}]`);
+        expect(actionLog).toContain(`ACTION:${type}:`);
       }
     } finally {
       logger.info = originalInfo;
