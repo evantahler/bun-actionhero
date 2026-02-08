@@ -226,7 +226,15 @@ export class Resque extends Initializer {
           for (const [key, value] of params.entries()) {
             paramsAsFormData.append(key, value);
           }
+        } else if (typeof params === "object" && params !== null) {
+          for (const [key, value] of Object.entries(params)) {
+            if (value !== undefined && value !== null) {
+              paramsAsFormData.append(key, String(value));
+            }
+          }
         }
+
+        const fanOutId = params._fanOutId as string | undefined;
 
         let response: Awaited<ReturnType<(typeof action)["run"]>>;
         let error: TypedError | undefined;
@@ -236,6 +244,26 @@ export class Resque extends Initializer {
           error = payload.error;
 
           if (error) throw error;
+        } catch (e) {
+          // Collect fan-out error before re-throwing
+          if (fanOutId) {
+            const metaKey = `fanout:${fanOutId}`;
+            const errorsKey = `fanout:${fanOutId}:errors`;
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            await api.redis.redis.rpush(
+              errorsKey,
+              JSON.stringify({ params, error: errorMessage }),
+            );
+            await api.redis.redis.hincrby(metaKey, "failed", 1);
+            // Refresh TTL on all fan-out keys
+            const ttl = await api.redis.redis.ttl(metaKey);
+            if (ttl > 0) {
+              await api.redis.redis.expire(metaKey, ttl);
+              await api.redis.redis.expire(`fanout:${fanOutId}:results`, ttl);
+              await api.redis.redis.expire(errorsKey, ttl);
+            }
+          }
+          throw e;
         } finally {
           if (
             action.task &&
@@ -245,6 +273,25 @@ export class Resque extends Initializer {
             await api.actions.enqueueRecurrent(action);
           }
         }
+
+        // Collect fan-out result on success
+        if (fanOutId) {
+          const metaKey = `fanout:${fanOutId}`;
+          const resultsKey = `fanout:${fanOutId}:results`;
+          await api.redis.redis.rpush(
+            resultsKey,
+            JSON.stringify({ params, result: response }),
+          );
+          await api.redis.redis.hincrby(metaKey, "completed", 1);
+          // Refresh TTL on all fan-out keys
+          const ttl = await api.redis.redis.ttl(metaKey);
+          if (ttl > 0) {
+            await api.redis.redis.expire(metaKey, ttl);
+            await api.redis.redis.expire(resultsKey, ttl);
+            await api.redis.redis.expire(`fanout:${fanOutId}:errors`, ttl);
+          }
+        }
+
         return response;
       },
     };

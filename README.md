@@ -153,6 +153,64 @@ Actions which have a `task` property can be scheduled as a task. A `queue` prope
 task = { queue: "default", frequency: 1000 * 60 * 60 }; // run the task every hour
 ```
 
+### Fan-Out Tasks
+
+A scheduled parent task can distribute work across many child jobs for parallel processing using `api.actions.fanOut()`. This is useful for tasks like "process all users" that need to fan out to individual worker jobs.
+
+**Queue Priority**: Workers drain queues left-to-right. Configure `queues: ["worker", "scheduler"]` so child jobs on `"worker"` are processed before parent jobs on `"scheduler"`.
+
+**API**:
+- `api.actions.fanOut(actionName, inputsArray, queue?, options?)` — Single-action form: bulk-enqueues the same action with different inputs.
+- `api.actions.fanOut(jobs[], options?)` — Multi-action form: each job specifies `{ action, inputs?, queue? }` so you can fan out to different action types in one batch.
+- `api.actions.fanOutStatus(fanOutId)` — Returns `{ total, completed, failed, results, errors }`.
+- Options: `batchSize` (default 100), `resultTtl` (default 600s / 10 min).
+
+**Example — single action**:
+
+```ts
+// Parent: scheduled task that fans out work
+export class ProcessAllUsers implements Action {
+  name = "users:processAll";
+  task = { frequency: 1000 * 60 * 60, queue: "scheduler" };
+  async run() {
+    const users = await getActiveUsers();
+    const result = await api.actions.fanOut(
+      "users:processOne",
+      users.map(u => ({ userId: u.id })),
+      "worker",
+    );
+    return { fanOut: result };
+  }
+}
+
+// Child: processes one unit of work (no special fan-out code needed)
+export class ProcessOneUser implements Action {
+  name = "users:processOne";
+  task = { queue: "worker" };
+  inputs = z.object({ userId: z.string() });
+  async run(params) { /* process one user */ }
+}
+```
+
+**Example — multiple actions**:
+
+```ts
+// Fan out to different action types in one batch
+const result = await api.actions.fanOut([
+  { action: "users:processOne", inputs: { userId: "1" } },
+  { action: "users:processOne", inputs: { userId: "2" } },
+  { action: "emails:send", inputs: { to: "a@b.com" }, queue: "priority" },
+]);
+// result.actionName → ["users:processOne", "emails:send"]
+// result.queue → ["worker", "priority"]
+
+// Query results — same API for both forms
+const status = await api.actions.fanOutStatus(result.fanOutId);
+// → { total: 3, completed: 3, failed: 0, results: [...], errors: [...] }
+```
+
+Fan-out metadata and results are stored in Redis with a configurable TTL (default 10 minutes). The TTL is refreshed on each child job completion, so it's relative to the last activity rather than fan-out creation.
+
 ## Marking Secret Fields in Action Inputs
 
 You can mark sensitive fields in your zod schemas as secret using the custom `.secret()` mixin. This is useful for fields like passwords, API keys, or tokens that should never be logged or exposed in logs.
