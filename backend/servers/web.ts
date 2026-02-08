@@ -74,6 +74,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       if (staticResponse) return staticResponse;
     }
 
+    // OAuth route interception (must come before MCP route check)
+    if (config.server.mcp.enabled && api.oauth?.handleRequest) {
+      const oauthResponse = await api.oauth.handleRequest(req);
+      if (oauthResponse) return oauthResponse;
+    }
+
     // MCP route interception
     if (config.server.mcp.enabled) {
       if (
@@ -82,12 +88,6 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       ) {
         server.timeout(req, 0); // disable idle timeout for long-lived MCP SSE streams
         return api.mcp.handleRequest(req);
-      }
-
-      // The MCP SDK client probes for OAuth metadata before connecting.
-      // Return 404 so these don't fall through to the action handler and log errors.
-      if (parsedUrl.pathname === "/.well-known/oauth-authorization-server") {
-        return new Response(null, { status: 404 });
       }
     }
 
