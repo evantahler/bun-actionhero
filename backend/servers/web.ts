@@ -74,6 +74,28 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       if (staticResponse) return staticResponse;
     }
 
+    // OAuth route interception (must come before MCP route check)
+    if (config.server.mcp.enabled && api.oauth?.handleRequest) {
+      const oauthResponse = await api.oauth.handleRequest(req);
+      if (oauthResponse) return oauthResponse;
+    }
+
+    // MCP route interception
+    if (config.server.mcp.enabled) {
+      if (
+        parsedUrl.pathname === config.server.mcp.route &&
+        api.mcp?.handleRequest
+      ) {
+        server.timeout(req, 0); // disable idle timeout for long-lived MCP SSE streams
+        return api.mcp.handleRequest(req);
+      }
+    }
+
+    // Don't route .well-known paths to actions
+    if (parsedUrl.pathname?.startsWith("/.well-known/")) {
+      return new Response(null, { status: 404 });
+    }
+
     return this.handleWebAction(req, parsedUrl, ip, id);
   }
 

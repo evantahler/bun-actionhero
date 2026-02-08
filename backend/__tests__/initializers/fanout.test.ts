@@ -284,7 +284,7 @@ describe("fanOut multi-action", () => {
   });
 
   test("per-job queue override works", async () => {
-    const result = await api.actions.fanOut([
+    await api.actions.fanOut([
       { action: "fanout:child", inputs: { itemId: "1" }, queue: "priority" },
       { action: "fanout:second-child", inputs: { name: "carol" } }, // falls back to "notifications"
     ]);

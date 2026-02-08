@@ -15,6 +15,7 @@ import { secret, zUserIdOrModel } from "../util/zodMixins";
 export class UserCreate implements Action {
   name = "user:create";
   description = "Create a new user";
+  mcp = false;
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({
     name: z
