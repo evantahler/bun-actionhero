@@ -3,7 +3,7 @@ name: commit-and-push
 description: Commit all changes and push to the current remote branch.
 disable-model-invocation: true
 argument-hint: "[commit message]"
-allowed-tools: Bash(git *), Bash(bun lint*), Bash(bun format*)
+allowed-tools: Bash(git *), Bash(bun lint*), Bash(bun format*), Bash(gh pr *)
 ---
 
 # Commit and Push
@@ -27,4 +27,15 @@ allowed-tools: Bash(git *), Bash(bun lint*), Bash(bun format*)
    )"
    ```
 7. Push to the current branch with `git push`
-8. Report the result
+8. If the current branch is not `main`, check if a PR already exists with `gh pr view --json url 2>&1`. If no PR exists, create a draft PR:
+   ```bash
+   gh pr create --draft --title "PR title" --body "$(cat <<'EOF'
+   ## Summary
+   <description>
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+   Use the commit message as the PR title (first line) and expand on the changes in the body.
+9. Report the result, including the PR URL if one was created
