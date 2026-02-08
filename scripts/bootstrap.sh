@@ -24,11 +24,6 @@ echo ""
 # -----------------------------------------------------------------------------
 echo "[1/6] Starting PostgreSQL..."
 
-# Fix SSL key permissions (often wrong in cloud/container environments, blocks PG startup)
-if [ -f /etc/ssl/private/ssl-cert-snakeoil.key ]; then
-    chmod 600 /etc/ssl/private/ssl-cert-snakeoil.key 2>/dev/null || true
-fi
-
 # Set pg_hba.conf to trust local connections so we can connect as postgres
 # without sudo (sudo is often unavailable in cloud environments)
 for PG_HBA in /etc/postgresql/16/main/pg_hba.conf /etc/postgresql/15/main/pg_hba.conf; do
