@@ -25,7 +25,7 @@
     "format-frontend": "cd frontend && bun format",
     "format-docs": "cd docs && bun format",
     "format": "bun format-backend && bun format-frontend && bun format-docs",
-    "test-docs": "cd docs && bun test",
+    "test-docs": "cd docs && bun run test",
     "ci": "bun lint-backend && bun lint-frontend && bun lint-docs && bun test-backend && bun test-frontend && bun test-docs",
     "docs:dev": "cd docs && bun run dev",
     "docs:build": "cd docs && bun run build"
