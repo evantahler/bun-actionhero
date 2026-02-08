@@ -74,6 +74,15 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       if (staticResponse) return staticResponse;
     }
 
+    // MCP route interception
+    if (
+      config.server.mcp.enabled &&
+      parsedUrl.pathname === config.server.mcp.route &&
+      api.mcp?.handleRequest
+    ) {
+      return api.mcp.handleRequest(req);
+    }
+
     return this.handleWebAction(req, parsedUrl, ip, id);
   }
 

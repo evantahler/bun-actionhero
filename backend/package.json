@@ -13,10 +13,11 @@
     "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
     "compile": "bun build actionhero.ts --compile --outfile actionhero",
-    "lint": "prettier --check .",
-    "format": "prettier --write ."
+    "lint": "tsc && prettier --check .",
+    "format": "tsc && prettier --write ."
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "colors": "^1.4.0",
     "commander": "^12.1.0",
     "cookie": "^0.6.0",
