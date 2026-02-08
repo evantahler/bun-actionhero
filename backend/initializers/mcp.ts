@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import colors from "colors";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import * as z4mini from "zod/v4-mini";
@@ -286,7 +287,9 @@ export class McpInitializer extends Initializer {
       );
     };
 
-    logger.info(`MCP server initialized at ${mcpRoute}`);
+    const mcpUrl = `${config.server.web.applicationUrl}${mcpRoute}`;
+    const startMessage = `started MCP server @ ${mcpUrl}`;
+    logger.info(logger.colorize ? colors.bgBlue(startMessage) : startMessage);
   }
 
   async stop() {
