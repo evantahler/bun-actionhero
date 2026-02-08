@@ -9,3 +9,6 @@ frontend/.env
 types
 dump.rdb
 .cache
+docs/.vitepress/dist
+docs/.vitepress/cache
+docs/.vitepress/data

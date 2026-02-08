@@ -126,6 +126,20 @@ Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concur
 ### Auto-discovery
 Actions, initializers, and servers are auto-discovered via `globLoader` (`backend/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped.
 
+## Documentation Site (`docs/`)
+
+VitePress site deployed to `bun.actionherojs.com` via GitHub Pages. Key commands:
+
+```bash
+bun docs:dev                       # Preview docs locally
+bun docs:build                     # Generate reference data + build static site
+cd docs && bun run generate        # Regenerate reference JSON from backend source
+```
+
+**Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
+
+The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
+
 ## Gotcha: Stale Processes
 
 If code changes aren't reflected in HTTP responses, check for stale `bun actionhero` processes:
