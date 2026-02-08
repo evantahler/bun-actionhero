@@ -91,7 +91,7 @@ describe("user:create", () => {
 
       // Find the log message that contains the action execution
       const actionLogMessage = logMessages.find(
-        (msg) => msg.includes("ACTION:") && msg.includes("user:create"),
+        (msg) => msg.includes("[ACTION:") && msg.includes("user:create"),
       );
 
       expect(actionLogMessage).toBeDefined();

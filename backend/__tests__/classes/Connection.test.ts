@@ -136,7 +136,7 @@ describe("Connection class", () => {
           (msg) => msg.includes("ACTION:") && msg.includes("status"),
         );
         expect(actionLog).toBeDefined();
-        expect(actionLog).toContain(`ACTION:${type}:`);
+        expect(actionLog).toContain(`[ACTION:${type}:`);
       }
     } finally {
       logger.info = originalInfo;

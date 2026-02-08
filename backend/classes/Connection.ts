@@ -104,7 +104,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
       ? colors.gray(JSON.stringify(sanitizedParams))
       : JSON.stringify(sanitizedParams);
 
-    const statusMessage = `ACTION:${this.type}:${loggerResponsePrefix}`;
+    const statusMessage = `[ACTION:${this.type}:${loggerResponsePrefix}]`;
     const messagePrefix = config.logger.colorize
       ? loggerResponsePrefix === "OK"
         ? colors.bgBlue(statusMessage)
