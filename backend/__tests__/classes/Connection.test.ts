@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Connection, api } from "../../api";
 import { ErrorType } from "../../classes/TypedError";
+import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {
@@ -77,6 +78,52 @@ describe("Connection class", () => {
     expect(response).toHaveProperty("name");
     expect(response).toHaveProperty("pid");
     expect(response).toHaveProperty("version");
+  });
+
+  test("act action-complete logs include trigger source", async () => {
+    const logs: string[] = [];
+    const priorOutputStream = api.logger.outputStream;
+    const priorLoggerColorize = api.logger.colorize;
+    const priorLoggerTimestamps = api.logger.includeTimestamps;
+    const priorConfigColorize = config.logger.colorize;
+    const priorConfigTimestamps = config.logger.includeTimestamps;
+
+    api.logger.outputStream = (line: any) => logs.push(String(line));
+    api.logger.colorize = false;
+    api.logger.includeTimestamps = false;
+    config.logger.colorize = false;
+    config.logger.includeTimestamps = false;
+
+    try {
+      const params = new FormData();
+
+      const webConn = new Connection("web", "127.0.0.1");
+      await webConn.act("status", params);
+
+      const cliConn = new Connection("cli", "cli:test");
+      await cliConn.act("status", params);
+
+      const jobConn = new Connection("resque", "job:test");
+      await jobConn.act("status", params);
+
+      const webLine = logs.find((l) => l.includes("127.0.0.1") && l.includes("status"));
+      const cliLine = logs.find((l) => l.includes("cli:test") && l.includes("status"));
+      const jobLine = logs.find((l) => l.includes("job:test") && l.includes("status"));
+
+      expect(webLine).toBeDefined();
+      expect(cliLine).toBeDefined();
+      expect(jobLine).toBeDefined();
+
+      expect(webLine!).toContain("trigger=web");
+      expect(cliLine!).toContain("trigger=cli");
+      expect(jobLine!).toContain("trigger=resque");
+    } finally {
+      api.logger.outputStream = priorOutputStream;
+      api.logger.colorize = priorLoggerColorize;
+      api.logger.includeTimestamps = priorLoggerTimestamps;
+      config.logger.colorize = priorConfigColorize;
+      config.logger.includeTimestamps = priorConfigTimestamps;
+    }
   });
 
   test("act returns error for non-existent action", async () => {
