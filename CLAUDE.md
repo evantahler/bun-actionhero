@@ -64,8 +64,15 @@ Key initializers and their priorities: `actions` (100), `db` (100), `redis` (def
 A parent action can distribute work across many child jobs using `api.actions.fanOut()`. Child results are automatically collected in Redis via `_fanOutId` injection.
 
 ```typescript
-// Fan out work
+// Single action: fan out same action with different inputs
 const result = await api.actions.fanOut("child:action", inputsArray, "worker", { batchSize: 100, resultTtl: 600 });
+
+// Multi action: fan out different actions in one batch
+const result = await api.actions.fanOut([
+  { action: "users:process", inputs: { userId: "1" } },
+  { action: "emails:send", inputs: { to: "a@b.com" }, queue: "priority" },
+], { resultTtl: 600 });
+
 // Query results
 const status = await api.actions.fanOutStatus(result.fanOutId);
 // → { total, completed, failed, results: [...], errors: [...] }

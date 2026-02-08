@@ -69,6 +69,20 @@ class FailingFanOutChildAction implements Action {
   };
 }
 
+const secondChildInputs = z.object({
+  name: z.string(),
+  _fanOutId: z.string().optional(),
+});
+
+class SecondChildAction implements Action {
+  name = "fanout:second-child";
+  inputs = secondChildInputs;
+  task = { queue: "notifications" };
+  run = async (params: z.infer<typeof secondChildInputs>) => {
+    return { greeted: params.name };
+  };
+}
+
 beforeEach(async () => {
   await api.redis.redis.flushdb();
   processedItems.length = 0;
@@ -82,15 +96,24 @@ beforeEach(async () => {
   api.actions.actions.push(failingChild);
   api.resque.jobs[failingChild.name] =
     api.resque.wrapActionAsJob(failingChild);
+
+  const secondChild = new SecondChildAction();
+  api.actions.actions.push(secondChild);
+  api.resque.jobs[secondChild.name] =
+    api.resque.wrapActionAsJob(secondChild);
 });
 
 afterEach(async () => {
   // Clean up test actions
   api.actions.actions = api.actions.actions.filter(
-    (a) => a.name !== "fanout:child" && a.name !== "fanout:failing-child",
+    (a) =>
+      a.name !== "fanout:child" &&
+      a.name !== "fanout:failing-child" &&
+      a.name !== "fanout:second-child",
   );
   delete api.resque.jobs["fanout:child"];
   delete api.resque.jobs["fanout:failing-child"];
+  delete api.resque.jobs["fanout:second-child"];
 });
 
 describe("fanOut", () => {
@@ -235,6 +258,118 @@ describe("enqueue queue-parameter fix", () => {
   });
 });
 
+describe("fanOut multi-action", () => {
+  test("enqueues jobs for multiple action types under one fanOutId", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" } },
+      { action: "fanout:child", inputs: { itemId: "2" } },
+      { action: "fanout:second-child", inputs: { name: "alice" } },
+    ]);
+
+    expect(result.enqueued).toBe(3);
+    expect(result.errors).toHaveLength(0);
+    expect(result.fanOutId).toBeTruthy();
+
+    // actionName should be an array when multiple actions are used
+    expect(result.actionName).toEqual(["fanout:child", "fanout:second-child"]);
+  });
+
+  test("each job resolves its own queue from its action", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" } }, // queue: "worker"
+      { action: "fanout:second-child", inputs: { name: "bob" } }, // queue: "notifications"
+    ]);
+
+    expect(result.queue).toEqual(["worker", "notifications"]);
+
+    const workerJobs = await api.actions.queued("worker");
+    const notifJobs = await api.actions.queued("notifications");
+    expect(workerJobs.length).toBe(1);
+    expect(notifJobs.length).toBe(1);
+  });
+
+  test("per-job queue override works", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" }, queue: "priority" },
+      { action: "fanout:second-child", inputs: { name: "carol" } }, // falls back to "notifications"
+    ]);
+
+    const priorityJobs = await api.actions.queued("priority");
+    const notifJobs = await api.actions.queued("notifications");
+    expect(priorityJobs.length).toBe(1);
+    expect(notifJobs.length).toBe(1);
+  });
+
+  test("throws if any action in the array does not exist", async () => {
+    expect(
+      api.actions.fanOut([
+        { action: "fanout:child", inputs: { itemId: "1" } },
+        { action: "nonexistent:action", inputs: {} },
+      ]),
+    ).rejects.toThrow("action nonexistent:action not found");
+  });
+
+  test("handles empty jobs array", async () => {
+    const result = await api.actions.fanOut([]);
+    expect(result.enqueued).toBe(0);
+    expect(result.errors).toHaveLength(0);
+  });
+
+  test("options work with multi-action form", async () => {
+    const result = await api.actions.fanOut(
+      [
+        { action: "fanout:child", inputs: { itemId: "1" } },
+        { action: "fanout:second-child", inputs: { name: "dan" } },
+      ],
+      { resultTtl: 30 },
+    );
+
+    const ttl = await api.redis.redis.ttl(`fanout:${result.fanOutId}`);
+    expect(ttl).toBeGreaterThan(0);
+    expect(ttl).toBeLessThanOrEqual(30);
+  });
+
+  test("single action in array returns string not array", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" } },
+      { action: "fanout:child", inputs: { itemId: "2" } },
+    ]);
+
+    // Only one unique action name, so it should be a string
+    expect(result.actionName).toBe("fanout:child");
+    expect(result.queue).toBe("worker");
+  });
+
+  test("_fanOutId is injected into all jobs", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" } },
+      { action: "fanout:second-child", inputs: { name: "eve" } },
+    ]);
+
+    const workerJobs = await api.actions.queued("worker");
+    const notifJobs = await api.actions.queued("notifications");
+
+    expect(workerJobs[0].args[0]._fanOutId).toBe(result.fanOutId);
+    expect(notifJobs[0].args[0]._fanOutId).toBe(result.fanOutId);
+  });
+
+  test("metadata in Redis lists all action names and queues", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "1" } },
+      { action: "fanout:second-child", inputs: { name: "frank" } },
+    ]);
+
+    const meta = await api.redis.redis.hgetall(
+      `fanout:${result.fanOutId}`,
+    );
+    expect(meta.total).toBe("2");
+    expect(meta.actionName).toContain("fanout:child");
+    expect(meta.actionName).toContain("fanout:second-child");
+    expect(meta.queue).toContain("worker");
+    expect(meta.queue).toContain("notifications");
+  });
+});
+
 describe("with workers", () => {
   afterEach(async () => {
     await api.resque.stopWorkers();
@@ -257,6 +392,30 @@ describe("with workers", () => {
 
     const processedIds = status.results.map((r) => r.result.processed).sort();
     expect(processedIds).toEqual(["x", "y", "z"]);
+  });
+
+  test("multi-action fan-out jobs are processed and results collected", async () => {
+    const result = await api.actions.fanOut([
+      { action: "fanout:child", inputs: { itemId: "m1" } },
+      { action: "fanout:child", inputs: { itemId: "m2" } },
+      { action: "fanout:second-child", inputs: { name: "grace" } },
+    ]);
+
+    await api.resque.startWorkers();
+    await Bun.sleep(2000);
+
+    const status = await api.actions.fanOutStatus(result.fanOutId);
+    expect(status.total).toBe(3);
+    expect(status.completed).toBe(3);
+    expect(status.failed).toBe(0);
+    expect(status.results).toHaveLength(3);
+
+    // Results from both action types should be present
+    const childResults = status.results.filter((r) => r.result.processed);
+    const secondResults = status.results.filter((r) => r.result.greeted);
+    expect(childResults).toHaveLength(2);
+    expect(secondResults).toHaveLength(1);
+    expect(secondResults[0].result.greeted).toBe("grace");
   });
 
   test("failed child jobs have errors collected", async () => {

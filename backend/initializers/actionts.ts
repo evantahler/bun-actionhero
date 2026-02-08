@@ -11,10 +11,21 @@ const namespace = "actions";
 const DEFAULT_FAN_OUT_BATCH_SIZE = 100;
 const DEFAULT_FAN_OUT_RESULT_TTL = 600; // 10 minutes in seconds
 
+export type FanOutJob = {
+  action: string;
+  inputs?: TaskInputs;
+  queue?: string;
+};
+
+export type FanOutOptions = {
+  batchSize?: number;
+  resultTtl?: number;
+};
+
 export type FanOutResult = {
   fanOutId: string;
-  actionName: string;
-  queue: string;
+  actionName: string | string[];
+  queue: string | string[];
   enqueued: number;
   errors: Array<{ index: number; error: string }>;
 };
@@ -63,43 +74,84 @@ export class Actions extends Initializer {
 
   /**
    * Fan out work to many child jobs for parallel processing.
-   * Enqueues one job per item in `inputsArray`, injects `_fanOutId` into each,
+   * Enqueues one job per item, injects `_fanOutId` into each,
    * and stores metadata in Redis for result collection.
+   *
+   * Two call signatures:
+   * - Single action:  fanOut(actionName, inputsArray, queue?, options?)
+   * - Multi action:   fanOut(jobs, options?) where each job specifies { action, inputs?, queue? }
    *
    * Returns a FanOutResult with the fanOutId for later status queries.
    */
   fanOut = async (
-    actionName: string,
-    inputsArray: TaskInputs[],
+    actionNameOrJobs: string | FanOutJob[],
+    inputsArrayOrOptions?: TaskInputs[] | FanOutOptions,
     queue?: string,
-    options?: { batchSize?: number; resultTtl?: number },
+    options?: FanOutOptions,
   ): Promise<FanOutResult> => {
-    const action = api.actions.actions.find((a) => a.name === actionName);
-    if (!action) {
-      throw new TypedError({
-        message: `action ${actionName} not found`,
-        type: ErrorType.CONNECTION_TASK_DEFINITION,
-      });
+    // Normalize both call signatures into a unified jobs array
+    let jobs: FanOutJob[];
+    let resolvedOptions: FanOutOptions;
+
+    if (typeof actionNameOrJobs === "string") {
+      // Single-action form: fanOut(actionName, inputsArray, queue?, options?)
+      const actionName = actionNameOrJobs;
+      const inputsArray = (inputsArrayOrOptions as TaskInputs[]) ?? [];
+      resolvedOptions = options ?? {};
+      jobs = inputsArray.map((inputs) => ({
+        action: actionName,
+        inputs,
+        queue,
+      }));
+    } else {
+      // Multi-action form: fanOut(jobs[], options?)
+      jobs = actionNameOrJobs;
+      resolvedOptions = (inputsArrayOrOptions as FanOutOptions) ?? {};
     }
 
-    const resolvedQueue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
-    const batchSize = options?.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
-    const resultTtl = options?.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
+    // Validate all action names up front
+    const actionNames = new Set<string>();
+    for (const job of jobs) {
+      const action = api.actions.actions.find((a) => a.name === job.action);
+      if (!action) {
+        throw new TypedError({
+          message: `action ${job.action} not found`,
+          type: ErrorType.CONNECTION_TASK_DEFINITION,
+        });
+      }
+      actionNames.add(job.action);
+    }
+
+    // Resolve queue per job: explicit job.queue > action's task.queue > DEFAULT_QUEUE
+    const resolvedJobs = jobs.map((job) => {
+      const action = api.actions.actions.find((a) => a.name === job.action)!;
+      const resolvedQueue =
+        job.queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+      return { ...job, queue: resolvedQueue, inputs: job.inputs ?? {} };
+    });
+
+    const batchSize =
+      resolvedOptions.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
+    const resultTtl =
+      resolvedOptions.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
     const fanOutId = randomUUID();
     const metaKey = `fanout:${fanOutId}`;
 
+    // Collect unique queues used
+    const queuesUsed = [...new Set(resolvedJobs.map((j) => j.queue))];
+    const actionNamesList = [...actionNames];
+
     // Store fan-out metadata in Redis
     await api.redis.redis.hset(metaKey, {
-      total: inputsArray.length.toString(),
+      total: resolvedJobs.length.toString(),
       completed: "0",
       failed: "0",
-      actionName,
-      queue: resolvedQueue,
+      actionName: actionNamesList.join(","),
+      queue: queuesUsed.join(","),
     });
     await api.redis.redis.expire(metaKey, resultTtl);
 
     // Pre-create results/errors lists with TTL so they exist for queries
-    // (Redis will auto-create on RPUSH, but we set TTL proactively)
     const resultsKey = `fanout:${fanOutId}:results`;
     const errorsKey = `fanout:${fanOutId}:errors`;
     await api.redis.redis.expire(resultsKey, resultTtl);
@@ -109,15 +161,15 @@ export class Actions extends Initializer {
     let enqueued = 0;
 
     // Enqueue in batches to avoid flooding Redis
-    for (let i = 0; i < inputsArray.length; i += batchSize) {
-      const batch = inputsArray.slice(i, i + batchSize);
+    for (let i = 0; i < resolvedJobs.length; i += batchSize) {
+      const batch = resolvedJobs.slice(i, i + batchSize);
       const results = await Promise.allSettled(
-        batch.map((inputs, batchIdx) => {
+        batch.map((job) => {
           const enrichedInputs = {
-            ...inputs,
+            ...job.inputs,
             _fanOutId: fanOutId,
           };
-          return this.enqueue(actionName, enrichedInputs, resolvedQueue);
+          return this.enqueue(job.action, enrichedInputs, job.queue);
         }),
       );
 
@@ -136,8 +188,9 @@ export class Actions extends Initializer {
 
     return {
       fanOutId,
-      actionName,
-      queue: resolvedQueue,
+      actionName:
+        actionNamesList.length === 1 ? actionNamesList[0] : actionNamesList,
+      queue: queuesUsed.length === 1 ? queuesUsed[0] : queuesUsed,
       enqueued,
       errors: enqueueErrors,
     };

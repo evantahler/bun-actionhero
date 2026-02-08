@@ -160,10 +160,12 @@ A scheduled parent task can distribute work across many child jobs for parallel 
 **Queue Priority**: Workers drain queues left-to-right. Configure `queues: ["worker", "scheduler"]` so child jobs on `"worker"` are processed before parent jobs on `"scheduler"`.
 
 **API**:
-- `api.actions.fanOut(actionName, inputsArray, queue?, options?)` — Bulk-enqueues child jobs with automatic result tracking. Options: `batchSize` (default 100), `resultTtl` (default 600s / 10 min).
+- `api.actions.fanOut(actionName, inputsArray, queue?, options?)` — Single-action form: bulk-enqueues the same action with different inputs.
+- `api.actions.fanOut(jobs[], options?)` — Multi-action form: each job specifies `{ action, inputs?, queue? }` so you can fan out to different action types in one batch.
 - `api.actions.fanOutStatus(fanOutId)` — Returns `{ total, completed, failed, results, errors }`.
+- Options: `batchSize` (default 100), `resultTtl` (default 600s / 10 min).
 
-**Example**:
+**Example — single action**:
 
 ```ts
 // Parent: scheduled task that fans out work
@@ -188,10 +190,23 @@ export class ProcessOneUser implements Action {
   inputs = z.object({ userId: z.string() });
   async run(params) { /* process one user */ }
 }
+```
 
-// Query results later
-const status = await api.actions.fanOutStatus(fanOutId);
-// → { total: 100, completed: 95, failed: 5, results: [...], errors: [...] }
+**Example — multiple actions**:
+
+```ts
+// Fan out to different action types in one batch
+const result = await api.actions.fanOut([
+  { action: "users:processOne", inputs: { userId: "1" } },
+  { action: "users:processOne", inputs: { userId: "2" } },
+  { action: "emails:send", inputs: { to: "a@b.com" }, queue: "priority" },
+]);
+// result.actionName → ["users:processOne", "emails:send"]
+// result.queue → ["worker", "priority"]
+
+// Query results — same API for both forms
+const status = await api.actions.fanOutStatus(result.fanOutId);
+// → { total: 3, completed: 3, failed: 0, results: [...], errors: [...] }
 ```
 
 Fan-out metadata and results are stored in Redis with a configurable TTL (default 10 minutes). The TTL is refreshed on each child job completion, so it's relative to the last activity rather than fan-out creation.

@@ -9,7 +9,12 @@ export {
   type ActionResponse,
 } from "./classes/Action";
 export { API, RUN_MODE } from "./classes/API";
-export type { FanOutResult, FanOutStatus } from "./initializers/actionts";
+export type {
+  FanOutJob,
+  FanOutOptions,
+  FanOutResult,
+  FanOutStatus,
+} from "./initializers/actionts";
 export {
   Channel,
   type ChannelConstructorInputs,
