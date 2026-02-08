@@ -177,6 +177,41 @@ describe("mcp initializer (enabled)", () => {
       expect(content).toBeArray();
       expect(content.length).toBeGreaterThan(0);
     });
+
+    test("session persists across tool calls (create user, sign in, send message)", async () => {
+      const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const email = `mcp-session-test-${unique}@example.com`;
+      const name = `MCP Test User ${unique}`;
+      const password = "password123!";
+
+      // 1. Create a user via tool
+      const createResult = await client.callTool({
+        name: "user-create",
+        arguments: { name, email, password },
+      });
+      expect(createResult.isError).toBeFalsy();
+
+      // 2. Sign in via session-create tool
+      const signInResult = await client.callTool({
+        name: "session-create",
+        arguments: { email, password },
+      });
+      expect(signInResult.isError).toBeFalsy();
+
+      // 3. Send a message - this requires an authenticated session
+      const messageResult = await client.callTool({
+        name: "message-create",
+        arguments: { body: "Hello from MCP session test" },
+      });
+      expect(messageResult.isError).toBeFalsy();
+      const messageContent = messageResult.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      const parsed = JSON.parse(messageContent[0].text!);
+      expect(parsed).toHaveProperty("message");
+      expect(parsed.message.body).toBe("Hello from MCP session test");
+    });
   });
 
   describe("schema sanitization", () => {
