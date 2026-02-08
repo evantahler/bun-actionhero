@@ -20,9 +20,37 @@ echo "Running in Claude Code cloud environment"
 echo ""
 
 # -----------------------------------------------------------------------------
-# 1. Start PostgreSQL
+# 1. Ensure Bun is installed
 # -----------------------------------------------------------------------------
-echo "[1/6] Starting PostgreSQL..."
+echo "[1/7] Ensuring Bun is installed..."
+
+if command -v bun &>/dev/null; then
+    echo "  Bun is already installed: $(bun --version 2>/dev/null || echo 'unknown')"
+else
+    echo "  Bun not found; installing..."
+    if command -v curl &>/dev/null; then
+        curl -fsSL https://bun.sh/install | bash
+    elif command -v wget &>/dev/null; then
+        wget -qO- https://bun.sh/install | bash
+    else
+        echo "  WARNING: Neither curl nor wget found; cannot install Bun automatically."
+    fi
+fi
+
+# Ensure Bun is available in this script's PATH even if shell profiles aren't sourced
+export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+if command -v bun &>/dev/null; then
+    echo "  Bun ready: $(bun --version 2>/dev/null || echo 'unknown')"
+else
+    echo "  WARNING: Bun is still not available on PATH. Dependency installation may fail."
+fi
+
+# -----------------------------------------------------------------------------
+# 2. Start PostgreSQL
+# -----------------------------------------------------------------------------
+echo "[2/7] Starting PostgreSQL..."
 
 # Check if PostgreSQL is already running
 if pg_isready -q 2>/dev/null; then
@@ -58,9 +86,9 @@ sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'postgres';" 2>/dev/
 echo "  PostgreSQL password configured"
 
 # -----------------------------------------------------------------------------
-# 2. Start Redis
+# 3. Start Redis
 # -----------------------------------------------------------------------------
-echo "[2/6] Starting Redis..."
+echo "[3/7] Starting Redis..."
 
 # Check if Redis is already running
 if redis-cli ping 2>/dev/null | grep -q PONG; then
@@ -87,9 +115,9 @@ if ! redis-cli ping 2>/dev/null | grep -q PONG; then
 fi
 
 # -----------------------------------------------------------------------------
-# 3. Create databases
+# 4. Create databases
 # -----------------------------------------------------------------------------
-echo "[3/6] Creating databases..."
+echo "[4/7] Creating databases..."
 
 # Determine PostgreSQL user - try postgres first, then current user
 if psql -U postgres -lqt &>/dev/null; then
@@ -117,9 +145,9 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 4. Install dependencies
+# 5. Install dependencies
 # -----------------------------------------------------------------------------
-echo "[4/6] Installing dependencies..."
+echo "[5/7] Installing dependencies..."
 
 cd "$CLAUDE_PROJECT_DIR"
 
@@ -131,9 +159,9 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 5. Set up environment files
+# 6. Set up environment files
 # -----------------------------------------------------------------------------
-echo "[5/6] Setting up environment files..."
+echo "[6/7] Setting up environment files..."
 
 # Backend .env
 if [ ! -f "$CLAUDE_PROJECT_DIR/backend/.env" ]; then
@@ -156,9 +184,9 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# 6. Export environment variables for the session
+# 7. Export environment variables for the session
 # -----------------------------------------------------------------------------
-echo "[6/6] Configuring session environment..."
+echo "[7/7] Configuring session environment..."
 
 if [ -n "$CLAUDE_ENV_FILE" ]; then
     # Use connection strings matching .env.example format (with password)
