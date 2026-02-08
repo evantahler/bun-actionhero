@@ -14,6 +14,7 @@ export type SessionImpl = { userId?: number };
 export class SessionCreate implements Action {
   name = "session:create";
   description = "Create a session";
+  mcp = false;
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = z.object({
     email: z

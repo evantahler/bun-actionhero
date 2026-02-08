@@ -5,7 +5,6 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import * as z4mini from "zod/v4-mini";
 import { api, logger } from "../api";
-import type { Action } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -57,23 +56,6 @@ export class McpInitializer extends Initializer {
       WebStandardStreamableHTTPServerTransport
     >();
 
-    async function getSessionAuth(
-      mcpSessionId: string,
-    ): Promise<string | null> {
-      return api.redis.redis.get(`mcp:auth:${mcpSessionId}`);
-    }
-
-    async function setSessionAuth(
-      mcpSessionId: string,
-      connectionId: string,
-    ): Promise<void> {
-      await api.redis.redis.set(`mcp:auth:${mcpSessionId}`, connectionId);
-      await api.redis.redis.expire(
-        `mcp:auth:${mcpSessionId}`,
-        config.session.ttl,
-      );
-    }
-
     function sendNotification(payload: PubSubMessage) {
       for (const server of mcpServers) {
         try {
@@ -100,8 +82,6 @@ export class McpInitializer extends Initializer {
       transports,
       handleRequest: null as McpHandleRequest | null,
       sendNotification,
-      getSessionAuth,
-      setSessionAuth,
       formatToolName,
       parseToolName,
       sanitizeSchemaForMcp,
@@ -112,7 +92,6 @@ export class McpInitializer extends Initializer {
     if (!config.server.mcp.enabled) return;
 
     const mcpRoute = config.server.mcp.route;
-    const authActionName = config.server.mcp.authenticationAction;
 
     // 1. Route validation
     if (!mcpRoute.startsWith("/")) {
@@ -142,34 +121,15 @@ export class McpInitializer extends Initializer {
       }
     }
 
-    // 2. Auth action validation
-    let authAction: Action | undefined;
-    if (authActionName) {
-      authAction = api.actions.actions.find(
-        (a: Action) => a.name === authActionName,
-      );
-      if (!authAction) {
-        throw new TypedError({
-          message: `MCP authentication action "${authActionName}" not found`,
-          type: ErrorType.INITIALIZER_VALIDATION,
-        });
-      }
-      if (!authAction.inputs) {
-        throw new TypedError({
-          message: `MCP authentication action "${authActionName}" must have an inputs schema`,
-          type: ErrorType.INITIALIZER_VALIDATION,
-        });
-      }
-    }
-
-    // 3. Build handleRequest — each new session creates a fresh McpServer
+    // 2. Build handleRequest — each new session creates a fresh McpServer
     const transports = api.mcp.transports;
     const mcpServers = api.mcp.mcpServers;
 
     const corsHeaders: Record<string, string> = {
       "Access-Control-Allow-Origin": config.server.web.allowedOrigins,
       "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, mcp-session-id",
+      "Access-Control-Allow-Headers":
+        "Content-Type, mcp-session-id, Authorization",
       "Access-Control-Expose-Headers": "mcp-session-id",
     };
 
@@ -188,11 +148,49 @@ export class McpInitializer extends Initializer {
         });
       }
 
+      // Extract and verify Bearer token for auth
+      let authInfo:
+        | {
+            token: string;
+            clientId: string;
+            scopes: string[];
+            extra?: Record<string, unknown>;
+          }
+        | undefined;
+      const authHeader = req.headers.get("authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.slice(7);
+        const tokenData = await api.oauth.verifyAccessToken(token);
+        if (tokenData) {
+          authInfo = {
+            token,
+            clientId: tokenData.clientId,
+            scopes: tokenData.scopes ?? [],
+            extra: { userId: tokenData.userId },
+          };
+        }
+      }
+
+      // Require authentication — return 401 so MCP clients initiate the OAuth flow
+      if (!authInfo) {
+        return new Response(
+          JSON.stringify({ error: "Authentication required" }),
+          {
+            status: 401,
+            headers: {
+              "Content-Type": "application/json",
+              "WWW-Authenticate": "Bearer",
+              ...corsHeaders,
+            },
+          },
+        );
+      }
+
       const sessionId = req.headers.get("mcp-session-id");
 
       if (method === "POST" && !sessionId) {
         // New session — create a new McpServer + transport
-        const mcpServer = createMcpServer(authActionName, authAction);
+        const mcpServer = createMcpServer();
         mcpServers.push(mcpServer);
 
         const transport = new WebStandardStreamableHTTPServerTransport({
@@ -219,7 +217,7 @@ export class McpInitializer extends Initializer {
         await mcpServer.connect(transport);
 
         try {
-          const response = await transport.handleRequest(req);
+          const response = await transport.handleRequest(req, { authInfo });
           return appendCorsHeaders(response, corsHeaders);
         } catch (e) {
           logger.error(`MCP transport error: ${e}`);
@@ -253,7 +251,7 @@ export class McpInitializer extends Initializer {
         }
 
         try {
-          const response = await transport.handleRequest(req);
+          const response = await transport.handleRequest(req, { authInfo });
           return appendCorsHeaders(response, corsHeaders);
         } catch (e) {
           logger.error(`MCP transport error: ${e}`);
@@ -322,17 +320,17 @@ export class McpInitializer extends Initializer {
 /**
  * Create a new McpServer instance with all actions registered as tools.
  * Each MCP session gets its own McpServer (the SDK requires 1:1 mapping).
+ * Actions with `mcp === false` are excluded from tool registration.
  */
-function createMcpServer(
-  authActionName: string | null,
-  authAction: Action | undefined,
-): McpServer {
+function createMcpServer(): McpServer {
   const mcpServer = new McpServer(
     { name: pkg.name, version: pkg.version },
     { instructions: pkg.description },
   );
 
   for (const action of api.actions.actions) {
+    if (action.mcp === false) continue;
+
     const toolName = formatToolName(action.name);
     const toolConfig: {
       description?: string;
@@ -347,121 +345,19 @@ function createMcpServer(
       toolConfig.inputSchema = sanitizeSchemaForMcp(action.inputs);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mcpServer.registerTool(
       toolName,
       toolConfig,
       async (args: any, extra: any) => {
-        const mcpSessionId =
-          extra.sessionId ?? (extra._meta?.sessionId as string | undefined);
+        const authInfo = extra.authInfo;
 
-        // Determine connection ID (reuse authenticated session if available)
-        let connectionId: string | undefined;
-        if (mcpSessionId) {
-          const existingConnectionId =
-            await api.mcp.getSessionAuth(mcpSessionId);
-          if (existingConnectionId) {
-            connectionId = existingConnectionId;
-          }
-        }
-
-        // Auth check via elicitation
-        if (authActionName && !connectionId && mcpSessionId) {
-          try {
-            const elicitResult = await mcpServer.server.elicitInput({
-              message: `Authentication required. Please provide credentials for ${authActionName}.`,
-              requestedSchema: {
-                type: "object" as const,
-                properties: getElicitationProperties(authAction!),
-              },
-            });
-
-            if (
-              elicitResult.action === "accept" &&
-              elicitResult.content &&
-              typeof elicitResult.content === "object"
-            ) {
-              const authConnection = new Connection(
-                "mcp",
-                "mcp-client",
-                randomUUID(),
-              );
-              try {
-                const authParams = new FormData();
-                for (const [key, value] of Object.entries(
-                  elicitResult.content,
-                )) {
-                  if (value !== undefined && value !== null) {
-                    authParams.set(key, String(value));
-                  }
-                }
-                const { error } = await authConnection.act(
-                  authActionName,
-                  authParams,
-                  "MCP",
-                );
-                if (error) {
-                  authConnection.destroy();
-                  return {
-                    content: [
-                      {
-                        type: "text" as const,
-                        text: JSON.stringify({
-                          error: error.message,
-                          type: error.type,
-                        }),
-                      },
-                    ],
-                    isError: true,
-                  };
-                }
-                connectionId = authConnection.id;
-                await api.mcp.setSessionAuth(mcpSessionId, connectionId);
-              } catch (e) {
-                authConnection.destroy();
-                return {
-                  content: [
-                    {
-                      type: "text" as const,
-                      text: JSON.stringify({
-                        error: `Authentication failed: ${e}`,
-                      }),
-                    },
-                  ],
-                  isError: true,
-                };
-              }
-            } else {
-              return {
-                content: [
-                  {
-                    type: "text" as const,
-                    text: JSON.stringify({
-                      error: "Authentication declined by client",
-                    }),
-                  },
-                ],
-                isError: true,
-              };
-            }
-          } catch (e) {
-            // Elicitation not supported by client, skip auth
-            logger.warn(
-              `MCP elicitation failed for session ${mcpSessionId}: ${e}`,
-            );
-          }
-        }
-
-        const connection = new Connection(
-          "mcp",
-          "mcp-client",
-          connectionId ?? randomUUID(),
-        );
+        const connection = new Connection("mcp", "mcp-client", randomUUID());
 
         try {
-          // If we have an authenticated session, load it
-          if (connectionId) {
+          // If Bearer token was verified, set up authenticated session
+          if (authInfo?.extra?.userId) {
             await connection.loadSession();
+            await connection.updateSession({ userId: authInfo.extra.userId });
           }
 
           const params = new FormData();
@@ -484,17 +380,6 @@ function createMcpServer(
             params,
             "MCP",
           );
-
-          // If this tool call newly established an authenticated session, persist the
-          // mapping so subsequent tool calls within this MCP session reuse it
-          if (
-            !error &&
-            !connectionId &&
-            mcpSessionId &&
-            connection.session?.data?.userId
-          ) {
-            await api.mcp.setSessionAuth(mcpSessionId, connection.id);
-          }
 
           if (error) {
             return {
@@ -573,18 +458,4 @@ function sanitizeSchemaForMcp(schema: any): any {
   }
 
   return needsSanitization ? z.object(newShape) : schema;
-}
-
-function getElicitationProperties(
-  action: Action,
-): Record<string, { type: "string"; description?: string }> {
-  const properties: Record<string, { type: "string"; description?: string }> =
-    {};
-  const schema = action.inputs as any;
-  if (schema?.shape) {
-    for (const [key] of Object.entries(schema.shape)) {
-      properties[key] = { type: "string" as const };
-    }
-  }
-  return properties;
 }
