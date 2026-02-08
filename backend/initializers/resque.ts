@@ -249,8 +249,7 @@ export class Resque extends Initializer {
           if (fanOutId) {
             const metaKey = `fanout:${fanOutId}`;
             const errorsKey = `fanout:${fanOutId}:errors`;
-            const errorMessage =
-              e instanceof Error ? e.message : String(e);
+            const errorMessage = e instanceof Error ? e.message : String(e);
             await api.redis.redis.rpush(
               errorsKey,
               JSON.stringify({ params, error: errorMessage }),
@@ -260,10 +259,7 @@ export class Resque extends Initializer {
             const ttl = await api.redis.redis.ttl(metaKey);
             if (ttl > 0) {
               await api.redis.redis.expire(metaKey, ttl);
-              await api.redis.redis.expire(
-                `fanout:${fanOutId}:results`,
-                ttl,
-              );
+              await api.redis.redis.expire(`fanout:${fanOutId}:results`, ttl);
               await api.redis.redis.expire(errorsKey, ttl);
             }
           }
@@ -292,10 +288,7 @@ export class Resque extends Initializer {
           if (ttl > 0) {
             await api.redis.redis.expire(metaKey, ttl);
             await api.redis.redis.expire(resultsKey, ttl);
-            await api.redis.redis.expire(
-              `fanout:${fanOutId}:errors`,
-              ttl,
-            );
+            await api.redis.redis.expire(`fanout:${fanOutId}:errors`, ttl);
           }
         }
 

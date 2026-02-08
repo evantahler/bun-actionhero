@@ -11,7 +11,6 @@ import {
   test,
 } from "bun:test";
 import { z } from "zod";
-import { DEFAULT_QUEUE } from "../../classes/Action";
 
 beforeAll(async () => {
   await api.initialize();
@@ -94,13 +93,11 @@ beforeEach(async () => {
 
   const failingChild = new FailingFanOutChildAction();
   api.actions.actions.push(failingChild);
-  api.resque.jobs[failingChild.name] =
-    api.resque.wrapActionAsJob(failingChild);
+  api.resque.jobs[failingChild.name] = api.resque.wrapActionAsJob(failingChild);
 
   const secondChild = new SecondChildAction();
   api.actions.actions.push(secondChild);
-  api.resque.jobs[secondChild.name] =
-    api.resque.wrapActionAsJob(secondChild);
+  api.resque.jobs[secondChild.name] = api.resque.wrapActionAsJob(secondChild);
 });
 
 afterEach(async () => {
@@ -190,9 +187,7 @@ describe("fanOut", () => {
     expect(result.enqueued).toBe(0);
     expect(result.errors).toHaveLength(0);
 
-    const meta = await api.redis.redis.hgetall(
-      `fanout:${result.fanOutId}`,
-    );
+    const meta = await api.redis.redis.hgetall(`fanout:${result.fanOutId}`);
     expect(meta.total).toBe("0");
   });
 
@@ -359,9 +354,7 @@ describe("fanOut multi-action", () => {
       { action: "fanout:second-child", inputs: { name: "frank" } },
     ]);
 
-    const meta = await api.redis.redis.hgetall(
-      `fanout:${result.fanOutId}`,
-    );
+    const meta = await api.redis.redis.hgetall(`fanout:${result.fanOutId}`);
     expect(meta.total).toBe("2");
     expect(meta.actionName).toContain("fanout:child");
     expect(meta.actionName).toContain("fanout:second-child");

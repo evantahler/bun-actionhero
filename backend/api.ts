@@ -9,12 +9,6 @@ export {
   type ActionResponse,
 } from "./classes/Action";
 export { API, RUN_MODE } from "./classes/API";
-export type {
-  FanOutJob,
-  FanOutOptions,
-  FanOutResult,
-  FanOutStatus,
-} from "./initializers/actionts";
 export {
   Channel,
   type ChannelConstructorInputs,
@@ -24,6 +18,12 @@ export { Connection } from "./classes/Connection";
 export { Initializer } from "./classes/Initializer";
 export { Logger } from "./classes/Logger";
 export { Server } from "./classes/Server";
+export type {
+  FanOutJob,
+  FanOutOptions,
+  FanOutResult,
+  FanOutStatus,
+} from "./initializers/actionts";
 
 declare namespace globalThis {
   let api: API;

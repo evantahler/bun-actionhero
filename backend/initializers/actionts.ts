@@ -125,15 +125,12 @@ export class Actions extends Initializer {
     // Resolve queue per job: explicit job.queue > action's task.queue > DEFAULT_QUEUE
     const resolvedJobs = jobs.map((job) => {
       const action = api.actions.actions.find((a) => a.name === job.action)!;
-      const resolvedQueue =
-        job.queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+      const resolvedQueue = job.queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
       return { ...job, queue: resolvedQueue, inputs: job.inputs ?? {} };
     });
 
-    const batchSize =
-      resolvedOptions.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
-    const resultTtl =
-      resolvedOptions.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
+    const batchSize = resolvedOptions.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
+    const resultTtl = resolvedOptions.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
     const fanOutId = randomUUID();
     const metaKey = `fanout:${fanOutId}`;
 
