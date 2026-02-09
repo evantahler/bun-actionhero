@@ -87,7 +87,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         api.mcp?.handleRequest
       ) {
         server.timeout(req, 0); // disable idle timeout for long-lived MCP SSE streams
-        return api.mcp.handleRequest(req);
+        return api.mcp.handleRequest(req, ip);
       }
     }
 

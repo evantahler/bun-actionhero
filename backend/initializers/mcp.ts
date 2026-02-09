@@ -12,7 +12,7 @@ import { config } from "../config";
 import pkg from "../package.json";
 import type { PubSubMessage } from "./pubsub";
 
-type McpHandleRequest = (req: Request) => Promise<Response>;
+type McpHandleRequest = (req: Request, ip: string) => Promise<Response>;
 
 const namespace = "mcp";
 
@@ -133,7 +133,7 @@ export class McpInitializer extends Initializer {
       "Access-Control-Expose-Headers": "mcp-session-id",
     };
 
-    api.mcp.handleRequest = async (req: Request): Promise<Response> => {
+    api.mcp.handleRequest = async (req: Request, ip: string): Promise<Response> => {
       const method = req.method.toUpperCase();
 
       // Handle OPTIONS for CORS preflight
@@ -166,7 +166,7 @@ export class McpInitializer extends Initializer {
             token,
             clientId: tokenData.clientId,
             scopes: tokenData.scopes ?? [],
-            extra: { userId: tokenData.userId },
+            extra: { userId: tokenData.userId, ip },
           };
         }
       }
@@ -351,7 +351,9 @@ function createMcpServer(): McpServer {
       async (args: any, extra: any) => {
         const authInfo = extra.authInfo;
 
-        const connection = new Connection("mcp", "mcp-client", randomUUID());
+        const clientIp = (authInfo?.extra?.ip as string) || "unknown";
+        const mcpSessionId = extra.sessionId || "";
+        const connection = new Connection("mcp", clientIp, randomUUID());
 
         try {
           // If Bearer token was verified, set up authenticated session
@@ -378,7 +380,8 @@ function createMcpServer(): McpServer {
           const { response, error } = await connection.act(
             action.name,
             params,
-            "MCP",
+            "",
+            mcpSessionId,
           );
 
           if (error) {
