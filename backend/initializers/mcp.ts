@@ -133,7 +133,10 @@ export class McpInitializer extends Initializer {
       "Access-Control-Expose-Headers": "mcp-session-id",
     };
 
-    api.mcp.handleRequest = async (req: Request, ip: string): Promise<Response> => {
+    api.mcp.handleRequest = async (
+      req: Request,
+      ip: string,
+    ): Promise<Response> => {
       const method = req.method.toUpperCase();
 
       // Handle OPTIONS for CORS preflight
