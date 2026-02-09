@@ -25,11 +25,11 @@
     "drizzle-zod": "^0.8.3",
     "ioredis": "^5.9.2",
     "mustache": "^4.2.0",
-    "node-resque": "^9.4.0",
-    "pg": "^8.17.2",
+    "node-resque": "^9.5.0",
+    "pg": "^8.18.0",
     "ts-morph": "^27.0.2",
     "typescript": "^5.9.3",
-    "zod": "^4.3.5"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
@@ -39,7 +39,7 @@
     "@types/mustache": "^4.2.6",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.20.18",
-    "prettier": "^3.8.0",
+    "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0"
   }
 }
