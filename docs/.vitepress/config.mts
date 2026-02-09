@@ -59,7 +59,7 @@ export default defineConfig({
           text: "Transports",
           items: [
             {
-              text: "Servers (HTTP, WebSocket, CLI)",
+              text: "Servers (HTTP, WebSocket, CLI, MCP)",
               link: "/reference/servers",
             },
           ],
