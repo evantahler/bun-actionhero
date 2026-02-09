@@ -11,7 +11,8 @@ import type { SessionImpl } from "./session";
 
 export class MessageCrete implements Action {
   name = "message:create";
-  description = "Create a message";
+  description =
+    "Create a new chat message as the currently authenticated user. The message is persisted to the database and broadcast in real-time to all connected users via the 'messages' PubSub channel. Requires an active session. Returns the created message with its ID and timestamps.";
   middleware = [SessionMiddleware];
   web = { route: "/message", method: HTTP_METHOD.PUT };
   inputs = z.object({
@@ -51,7 +52,8 @@ export class MessageCrete implements Action {
 
 export class MessagesList implements Action {
   name = "messages:list";
-  description = "List messages";
+  description =
+    "List chat messages in reverse chronological order (newest first) with pagination. Each message includes the author's name, message body, and timestamps. Requires an active session. Use 'limit' (1-100, default 10) and 'offset' (default 0) to paginate through results.";
   middleware = [SessionMiddleware];
   web = { route: "/messages/list", method: HTTP_METHOD.GET };
   inputs = z.object({
@@ -88,7 +90,8 @@ export class MessagesList implements Action {
 
 export class MessageView implements Action {
   name = "message:view";
-  description = "View a message";
+  description =
+    "Retrieve a single message by its ID. Returns the message body, author name, and timestamps. Requires an active session. The 'message' parameter accepts a numeric message ID.";
   middleware = [SessionMiddleware];
   web = { route: "/message/:message", method: HTTP_METHOD.GET };
   inputs = z.object({
@@ -111,7 +114,8 @@ export class MessageView implements Action {
 
 export class MessagesCleanup implements Action {
   name = "messages:cleanup";
-  description = "cleanup messages older than 24 hours";
+  description =
+    "Delete messages older than the specified age. Defaults to removing messages older than 24 hours. Also runs automatically as a background task every hour. Returns the count of deleted messages. The 'age' parameter is in milliseconds (minimum 1000).";
   task = { frequency: 1000 * 60 * 60, queue: "default" }; // run the task every hour
   inputs = z.object({
     age: z.coerce
@@ -134,7 +138,8 @@ export class MessagesCleanup implements Action {
 
 export class MessagesHello implements Action {
   name = "messages:hello";
-  description = "broadcast a hello message to all users in the chat room";
+  description =
+    "Post an automated greeting message containing the current server timestamp to the chat room as the system default user, and broadcast it to all connected clients. Also runs automatically as a background task every minute. Returns the message body text.";
   task = { frequency: 1000 * 60, queue: "default" }; // run the task every minute
 
   async run() {

@@ -5,7 +5,8 @@ import packageJSON from "../package.json";
 
 export class Status implements Action {
   name = "status";
-  description = "Return the status of the server";
+  description =
+    "Returns server health and runtime information including the server name, process ID, package version, uptime in milliseconds, and memory consumption in MB. Does not require authentication.";
   inputs = z.object({});
   web = { route: "/status", method: HTTP_METHOD.GET };
 

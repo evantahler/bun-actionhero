@@ -13,16 +13,18 @@
     "dev": "bun --watch actionhero.ts start",
     "migrations": "bun run migrations.ts",
     "compile": "bun build actionhero.ts --compile --outfile actionhero",
-    "lint": "prettier --check .",
-    "format": "prettier --write ."
+    "lint": "tsc && prettier --check .",
+    "format": "tsc && prettier --write ."
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "colors": "^1.4.0",
     "commander": "^12.1.0",
     "cookie": "^0.6.0",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
     "ioredis": "^5.9.2",
+    "mustache": "^4.2.0",
     "node-resque": "^9.4.0",
     "pg": "^8.17.2",
     "ts-morph": "^27.0.2",
@@ -34,6 +36,7 @@
     "@types/bun": "latest",
     "@types/cookie": "^0.6.0",
     "@types/formidable": "^3.4.6",
+    "@types/mustache": "^4.2.6",
     "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.20.18",
     "prettier": "^3.8.0",

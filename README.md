@@ -6,7 +6,7 @@
 
 This is a modern rewrite of [ActionHero](https://www.actionherojs.com), built on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — it was an attempt to take the best ideas from Rails and Node.js and shove them together — but the original framework needed a fresh start with modern tooling.
 
-The big idea: **write your controller once, and it works everywhere**. A single action class handles HTTP requests, WebSocket messages, CLI commands, and background tasks — same inputs, same validation, same middleware, same response. No duplication.
+The big idea: **write your controller once, and it works everywhere**. A single action class handles HTTP requests, WebSocket messages, CLI commands, background tasks, and MCP tool calls — same inputs, same validation, same middleware, same response. No duplication.
 
 ### One Action, Every Transport
 
@@ -56,11 +56,22 @@ curl -X PUT http://localhost:8080/api/user \
 await api.actions.enqueue("user:create", { name: "Evan", email: "evan@example.com", password: "secret123" });
 ```
 
+**MCP** — exposed as a tool for AI agents automatically:
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
 Same validation, same middleware chain, same `run()` method, same response shape. The only thing that changes is how the request arrives and how the response is delivered.
 
 ### Key Components
 
-- **Transport-agnostic Actions** — HTTP, WebSocket, CLI, and background tasks from one class
+- **Transport-agnostic Actions** — HTTP, WebSocket, CLI, background tasks, and MCP from one class
 - **Zod input validation** — type-safe params with automatic error responses and OpenAPI generation
 - **Built-in background tasks** via [node-resque](https://github.com/actionhero/node-resque), with a [fan-out pattern](#fan-out-tasks) for parallel job processing
 - **Strongly-typed frontend integration** — `ActionResponse<MyAction>` gives the frontend type-safe API responses, no code generation needed
@@ -162,7 +173,7 @@ cd backend && bun run migrations
 
 ## Actions, CLI Commands, and Tasks
 
-Unlike the original ActionHero, we've removed the distinction between actions, CLI commands, and tasks. They're all the same thing now. You can run any action from the CLI, schedule any action as a background task, and call any action via HTTP or WebSocket. Same input validation, same responses, same middleware.
+Unlike the original ActionHero, we've removed the distinction between actions, CLI commands, and tasks. They're all the same thing now. You can run any action from the CLI, schedule any action as a background task, call any action via HTTP or WebSocket, and expose any action as an MCP tool for AI agents. Same input validation, same responses, same middleware.
 
 ### Web Actions
 
@@ -193,6 +204,20 @@ Add a `task` property to schedule an action as a background job. A `queue` is re
 ```ts
 task = { queue: "default", frequency: 1000 * 60 * 60 }; // every hour
 ```
+
+### MCP Actions
+
+When the MCP server is enabled (`MCP_SERVER_ENABLED=true`), every action is automatically registered as an [MCP](https://modelcontextprotocol.io) tool. AI agents and LLM clients (Claude Desktop, VS Code, etc.) can discover and call your actions through the standard Model Context Protocol.
+
+Action names are converted to valid MCP tool names by replacing `:` with `-` (e.g., `user:create` becomes `user-create`). The action's Zod schema is converted to JSON Schema for tool parameter definitions.
+
+To exclude an action from MCP:
+
+```ts
+mcp = { enabled: false };
+```
+
+OAuth 2.1 with PKCE is used for authentication — MCP clients go through a browser-based login flow, and subsequent tool calls carry a Bearer token tied to the authenticated user's session.
 
 ### Fan-Out Tasks
 
@@ -260,7 +285,7 @@ inputs = z.object({
 
 ## Intentional Changes from ActionHero
 
-**Unified Controllers** — Actions, tasks, and CLI commands are the same thing. One class, configured for each transport via properties.
+**Unified Controllers** — Actions, tasks, CLI commands, and MCP tools are the same thing. One class, configured for each transport via properties.
 
 **Separate Applications** — Frontend and backend are separate Bun applications. Deploy them independently — frontend on Vercel, backend on a VPS, whatever works.
 

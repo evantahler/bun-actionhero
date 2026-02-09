@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with `backend/` (API server) and `frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, and background tasks simultaneously.
+A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with `backend/` (API server) and `frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
 
 ## Common Commands
 
@@ -38,6 +38,7 @@ Transport-agnostic controllers. Every action defines:
 - `task`: `{ queue, frequency }` for background job scheduling
 - `middleware`: Array of `ActionMiddleware` (e.g., `SessionMiddleware` for auth)
 - `run(params, connection)`: The handler. **Must throw `TypedError`** for errors.
+- `mcp`: `McpActionConfig` — `{ enabled, isLoginAction, isSignupAction }` (default `{ enabled: true }`)
 
 Type helpers: `ActionParams<A>` infers input types, `ActionResponse<A>` infers return types.
 
@@ -58,7 +59,7 @@ declare module "../classes/API" {
 }
 ```
 
-Key initializers and their priorities: `actions` (100), `db` (100), `redis` (default), `pubsub` (150), `swagger` (150), `resque` (250), `application` (1000).
+Key initializers and their priorities: `actions` (100), `db` (100), `redis` (default), `pubsub` (150), `swagger` (150), `oauth` (175), `mcp` (200/560/90), `resque` (250), `application` (1000).
 
 ### Fan-Out Tasks (`backend/initializers/actionts.ts`)
 A parent action can distribute work across many child jobs using `api.actions.fanOut()`. Child results are automatically collected in Redis via `_fanOutId` injection.
@@ -85,6 +86,16 @@ PubSub channels for WebSocket real-time messaging. Channels define a `name` (str
 
 ### Servers (`backend/servers/web.ts`)
 WebServer uses `Bun.serve` for HTTP + WebSocket. Handles routing, static files, cookies, and session management.
+
+### MCP Server & OAuth (`backend/initializers/mcp.ts`, `backend/initializers/oauth.ts`)
+MCP (Model Context Protocol) server that exposes actions as tools for AI agents. Enabled via `MCP_SERVER_ENABLED=true`.
+
+- **Tool registration**: All actions with `mcp.enabled !== false` are registered. Names convert `:` → `-`. Zod schemas are sanitized for `zod/v4-mini` compatibility before JSON Schema conversion.
+- **OAuth 2.1 endpoints**: `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`, `/oauth/register`, `/oauth/authorize` (GET/POST), `/oauth/token`
+- **Login/signup markers**: Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` are invoked during the OAuth authorization flow. Must return `OAuthActionResponse` (`{ user: { id: number } }`).
+- **Redis keys**: `oauth:client:{id}` (TTL 30d), `oauth:code:{code}` (TTL 5m), `oauth:token:{token}` (TTL = session TTL)
+- **Templates**: HTML pages for OAuth login/signup flow live in `backend/templates/`
+- **Per-session McpServer**: Each authenticated session creates its own `McpServer` instance, tracked via `mcp-session-id` header.
 
 ### Config (`backend/config/`)
 Modular config with per-environment overrides via `loadFromEnvIfSet()` — checks `ENV_VAR_NODEENV` first, then `ENV_VAR`, then falls back to the default value. Type-aware (auto-parses booleans and numbers).

@@ -7,6 +7,8 @@ export {
   type ActionConstructorInputs,
   type ActionParams,
   type ActionResponse,
+  type McpActionConfig,
+  type OAuthActionResponse,
 } from "./classes/Action";
 export { API, RUN_MODE } from "./classes/API";
 export {

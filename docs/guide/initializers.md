@@ -30,6 +30,8 @@ Each initializer has three priority values. Lower numbers run first:
 | `db`          | 100           | Sets up Drizzle ORM + connection pool   |
 | `pubsub`      | 150           | Redis PubSub for real-time messaging    |
 | `swagger`     | 150           | Parses source code for OpenAPI schemas  |
+| `oauth`       | 175           | OAuth 2.1 provider for MCP auth         |
+| `mcp`         | 200           | MCP server — exposes actions as tools   |
 | `resque`      | 250           | Background task queue                   |
 | `application` | 1000          | App-specific setup (default user, etc.) |
 
@@ -101,6 +103,8 @@ api.actions; // Action registry + fan-out
 api.session; // Session manager
 api.pubsub; // Redis PubSub
 api.swagger; // OpenAPI schema cache
+api.oauth; // OAuth 2.1 provider
+api.mcp; // MCP server
 api.resque; // Background task queue
 ```
 

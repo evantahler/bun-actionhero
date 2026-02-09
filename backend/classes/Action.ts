@@ -13,17 +13,48 @@ export enum HTTP_METHOD {
 
 export const DEFAULT_QUEUE = "default";
 
+export type OAuthActionResponse = {
+  user: { id: number };
+};
+
+export type McpActionConfig = {
+  /** Expose this action as an MCP tool (default true) */
+  enabled?: boolean;
+  /** Tag as the OAuth login action */
+  isLoginAction?: boolean;
+  /** Tag as the OAuth signup action */
+  isSignupAction?: boolean;
+};
+
 export type ActionConstructorInputs = {
+  /** Unique action name (also used for default routes, etc.) */
   name: string;
+
+  /** Human-friendly description (defaults to `An Action: ${name}`) */
   description?: string;
+
+  /** Zod schema used to validate/coerce inputs (and for type inference) */
   inputs?: z.ZodType<any>;
+
+  /** Middleware hooks to run before/after `run()` */
   middleware?: ActionMiddleware[];
+
+  /** Expose this action via the MCP server (defaults to `{ enabled: true }`) */
+  mcp?: McpActionConfig;
+
+  /** Expose this action via HTTP (defaults: route `/${name}`, method `GET`) */
   web?: {
+    /** HTTP route pattern (string with `:params` or a `RegExp`) */
     route?: RegExp | string;
+    /** HTTP method to bind the route to */
     method?: HTTP_METHOD;
   };
+
+  /** Configure this action as a background task/job */
   task?: {
+    /** Optional recurring frequency in milliseconds */
     frequency?: number;
+    /** Queue name to enqueue jobs onto (defaults to `"default"`) */
     queue: string;
   };
 };
@@ -49,6 +80,7 @@ export abstract class Action {
   description?: string;
   inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
+  mcp?: McpActionConfig;
   web?: {
     route: RegExp | string;
     method: HTTP_METHOD;
@@ -63,6 +95,7 @@ export abstract class Action {
     this.description = args.description ?? `An Action: ${this.name}`;
     this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
+    this.mcp = { enabled: true, ...args.mcp };
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
       method: args.web?.method ?? HTTP_METHOD.GET,
