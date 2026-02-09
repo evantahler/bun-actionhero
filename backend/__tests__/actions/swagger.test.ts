@@ -151,7 +151,7 @@ describe("swagger", () => {
     expect(response.paths["/swagger"]).toBeDefined();
     expect(response.paths["/swagger"]!.get).toBeDefined();
     expect(response.paths["/swagger"]!.get!.summary).toBe(
-      "Return API documentation in the OpenAPI specification",
+      "Returns the full API documentation as an OpenAPI 3.0.0 JSON document. Includes all available endpoints with their routes, methods, request schemas, response schemas, and parameter descriptions. Does not require authentication.",
     );
     expect(response.paths["/swagger"]!.get!.responses["200"]).toBeDefined();
   });

@@ -57,7 +57,8 @@ const swaggerResponses = {
 
 export class Swagger implements Action {
   name = "swagger";
-  description = "Return API documentation in the OpenAPI specification";
+  description =
+    "Returns the full API documentation as an OpenAPI 3.0.0 JSON document. Includes all available endpoints with their routes, methods, request schemas, response schemas, and parameter descriptions. Does not require authentication.";
   web = { route: "/swagger", method: HTTP_METHOD.GET };
 
   async run() {

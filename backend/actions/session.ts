@@ -13,7 +13,8 @@ export type SessionImpl = { userId?: number };
 
 export class SessionCreate implements Action {
   name = "session:create";
-  description = "Create a session";
+  description =
+    "Sign in by providing an email and password. If credentials are valid, creates an authenticated session and returns the user's profile along with session details. This is the login action — call this before using any endpoints that require authentication.";
   mcp = { enabled: false, isLoginAction: true };
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = z.object({
@@ -73,7 +74,8 @@ export class SessionCreate implements Action {
 
 export class SessionDestroy implements Action {
   name = "session:destroy";
-  description = "Destroy a session";
+  description =
+    "Sign out by destroying the current authenticated session. After calling this, the session token is invalidated and subsequent requests will be unauthenticated. Requires an active session. Returns {success: true} on success.";
   web = { route: "/session", method: HTTP_METHOD.DELETE };
   middleware = [SessionMiddleware];
 

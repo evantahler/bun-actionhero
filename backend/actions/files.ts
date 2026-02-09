@@ -4,7 +4,8 @@ import { HTTP_METHOD } from "../classes/Action";
 
 export class FileUpload implements Action {
   name = "fileUpload";
-  description = "A sample action that handles file uploads";
+  description =
+    "Upload a file along with a string parameter. Returns metadata about the uploaded file (name, MIME type, size in bytes) and the string parameter. Does not require authentication.";
   web = { route: "/file", method: HTTP_METHOD.POST };
   inputs = z.object({
     file: z.instanceof(File, { message: "File is required" }),

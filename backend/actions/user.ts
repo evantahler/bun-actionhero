@@ -14,7 +14,8 @@ import { secret, zUserIdOrModel } from "../util/zodMixins";
 
 export class UserCreate implements Action {
   name = "user:create";
-  description = "Create a new user";
+  description =
+    "Register a new user account with a name, email, and password. The email must be unique across all users (case-insensitive). Password must be at least 8 characters and is stored securely as a hash. Returns the created user's profile (ID, name, email, timestamps). Does not require an existing session.";
   mcp = { enabled: false, isSignupAction: true };
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({
@@ -70,7 +71,8 @@ export class UserCreate implements Action {
 
 export class UserEdit implements Action {
   name = "user:edit";
-  description = "Edit an existing user";
+  description =
+    "Update the currently authenticated user's profile. All fields are optional — only provided fields will be updated. You can change the user's name, email, and/or password. Requires an active session. Returns the updated user profile.";
   web = { route: "/user", method: HTTP_METHOD.POST };
   middleware = [SessionMiddleware];
   inputs = z.object({
@@ -98,7 +100,8 @@ export class UserEdit implements Action {
 
 export class UserView implements Action {
   name = "user:view";
-  description = "View a user";
+  description =
+    "Retrieve another user's public profile by their user ID. Returns public information only (ID, name, timestamps) — does not expose email or other private fields. Requires an active session.";
   middleware = [SessionMiddleware];
   web = { route: "/user/:user", method: HTTP_METHOD.GET };
   inputs = z.object({
