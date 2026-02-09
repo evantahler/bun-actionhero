@@ -20,7 +20,8 @@ backend/config/
 ├── session.ts      # Session TTL, cookie name
 ├── tasks.ts        # Task queue settings
 └── server/
-    └── web.ts      # Web server port, host, CORS, static files
+    ├── web.ts      # Web server port, host, CORS, static files
+    └── mcp.ts      # MCP server toggle, route, OAuth TTLs
 ```
 
 Everything rolls up into a single `config` object:
@@ -112,3 +113,12 @@ The helper is also type-aware — it parses `"true"`/`"false"` strings into bool
 | `enabled`        | `TASKS_ENABLED`   | `true`  |
 | `timeout`        | `TASK_TIMEOUT`    | `5000`  |
 | `taskProcessors` | `TASK_PROCESSORS` | `1`     |
+
+### MCP Server
+
+| Key              | Env Var                | Default   |
+| ---------------- | ---------------------- | --------- |
+| `enabled`        | `MCP_SERVER_ENABLED`   | `false`   |
+| `route`          | `MCP_SERVER_ROUTE`     | `"/mcp"`  |
+| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL` | `2592000` |
+| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`   | `300`     |

@@ -4,7 +4,7 @@ import llmstxt from "vitepress-plugin-llms";
 export default defineConfig({
   title: "bun-actionhero",
   description:
-    "The modern TypeScript API framework — transport-agnostic actions for HTTP, WebSocket, CLI, and background tasks, built on Bun.",
+    "The modern TypeScript API framework — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
   head: [["link", { rel: "icon", href: "/images/logo.svg" }]],
 
   themeConfig: {
@@ -31,6 +31,7 @@ export default defineConfig({
             { text: "Channels", link: "/guide/channels" },
             { text: "Tasks", link: "/guide/tasks" },
             { text: "Middleware", link: "/guide/middleware" },
+            { text: "MCP", link: "/guide/mcp" },
             { text: "Configuration", link: "/guide/config" },
           ],
         },

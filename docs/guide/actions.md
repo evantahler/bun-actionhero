@@ -1,12 +1,12 @@
 ---
-description: Actions are the universal controller — one class handles HTTP, WebSocket, CLI, and background tasks.
+description: Actions are the universal controller — one class handles HTTP, WebSocket, CLI, background tasks, and MCP.
 ---
 
 # Actions
 
 If there's one idea that defines bun-actionhero, it's this: **actions are the universal controller**. In the original ActionHero, we had actions, tasks, and CLI commands as separate concepts. That always felt like unnecessary duplication — you'd write the same validation logic three times for three different entry points. So in this version, we've collapsed them all into one thing.
 
-An action is a class with a `name`, a Zod schema for `inputs`, and a `run()` method that returns data. You add a `web` property to make it an HTTP endpoint. You add a `task` property to make it a background job. CLI support comes for free. Same validation, same error handling, same response shape — everywhere.
+An action is a class with a `name`, a Zod schema for `inputs`, and a `run()` method that returns data. You add a `web` property to make it an HTTP endpoint. You add a `task` property to make it a background job. CLI support comes for free. MCP tool exposure comes for free. Same validation, same error handling, same response shape — everywhere.
 
 ## A Simple Example
 
@@ -42,6 +42,7 @@ That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hi
 | `web`         | `{ route, method }`     | HTTP routing. Routes are strings with `:param` placeholders or RegExp patterns |
 | `task`        | `{ queue, frequency? }` | Makes this action schedulable as a background job                              |
 | `middleware`  | `ActionMiddleware[]`    | Runs before/after the action (auth, logging, etc.)                             |
+| `mcp`         | `McpActionConfig`       | Controls MCP tool exposure (default: enabled)                                  |
 
 ## Input Validation
 
@@ -106,6 +107,12 @@ Every action is automatically available as a CLI command. No extra configuration
 ```
 
 The `-q` flag suppresses server logs so you can pipe the JSON output cleanly. Use `--help` on any action to see its parameters.
+
+## MCP Tools
+
+When the MCP server is enabled, every action is automatically exposed as an [MCP](https://modelcontextprotocol.io) tool. AI agents can discover and call your actions through the Model Context Protocol — no extra configuration needed.
+
+To exclude an action from MCP, set `mcp = { enabled: false }`. See the [MCP guide](/guide/mcp) for full details on authentication, schema conversion, and configuration.
 
 ## Task Scheduling
 
