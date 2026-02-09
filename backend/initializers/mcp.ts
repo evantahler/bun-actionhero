@@ -329,7 +329,7 @@ function createMcpServer(): McpServer {
   );
 
   for (const action of api.actions.actions) {
-    if (action.mcp === false) continue;
+    if (!action.mcp?.enabled) continue;
 
     const toolName = formatToolName(action.name);
     const toolConfig: {

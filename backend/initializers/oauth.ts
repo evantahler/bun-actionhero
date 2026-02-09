@@ -1,11 +1,10 @@
 import { randomUUID } from "crypto";
-import { eq } from "drizzle-orm";
 import Mustache from "mustache";
 import { api } from "../api";
+import type { OAuthActionResponse } from "../classes/Action";
+import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
-import { checkPassword, hashPassword } from "../ops/UserOps";
-import { users } from "../schema/users";
 
 const templatesDir = import.meta.dir + "/../templates";
 let authTemplate: string;
@@ -276,64 +275,44 @@ async function handleAuthorizePost(req: Request): Promise<Response> {
   let userId: number;
 
   if (mode === "signup") {
-    if (!name || name.length < 3) {
-      oauthParams.error = "Name must be at least 3 characters";
-      return renderAuthPage(oauthParams);
+    const signupAction = api.actions.actions.find((a) => a.mcp?.isSignupAction);
+    const connection = new Connection("oauth", "oauth-signup");
+    try {
+      const params = new FormData();
+      params.set("name", name);
+      params.set("email", email);
+      params.set("password", password);
+      const { response, error } = await connection.act(
+        signupAction!.name,
+        params,
+      );
+      if (error) {
+        oauthParams.error = error.message;
+        return renderAuthPage(oauthParams);
+      }
+      userId = (response as OAuthActionResponse).user.id;
+    } finally {
+      connection.destroy();
     }
-    if (!email || !email.includes("@") || !email.includes(".")) {
-      oauthParams.error = "Invalid email address";
-      return renderAuthPage(oauthParams);
-    }
-    if (!password || password.length < 8) {
-      oauthParams.error = "Password must be at least 8 characters";
-      return renderAuthPage(oauthParams);
-    }
-
-    const [existingUser] = await api.db.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existingUser) {
-      oauthParams.error = "User already exists";
-      return renderAuthPage(oauthParams);
-    }
-
-    const [newUser] = await api.db.db
-      .insert(users)
-      .values({
-        name,
-        email,
-        password_hash: await hashPassword(password),
-      })
-      .returning();
-
-    userId = newUser.id;
   } else {
-    // Sign in
-    if (!email || !password) {
-      oauthParams.error = "Email and password are required";
-      return renderAuthPage(oauthParams);
+    const loginAction = api.actions.actions.find((a) => a.mcp?.isLoginAction);
+    const connection = new Connection("oauth", "oauth-login");
+    try {
+      const params = new FormData();
+      params.set("email", email);
+      params.set("password", password);
+      const { response, error } = await connection.act(
+        loginAction!.name,
+        params,
+      );
+      if (error) {
+        oauthParams.error = "Invalid email or password";
+        return renderAuthPage(oauthParams);
+      }
+      userId = (response as OAuthActionResponse).user.id;
+    } finally {
+      connection.destroy();
     }
-
-    const [user] = await api.db.db
-      .select()
-      .from(users)
-      .where(eq(users.email, email));
-
-    if (!user) {
-      oauthParams.error = "Invalid email or password";
-      return renderAuthPage(oauthParams);
-    }
-
-    const passwordMatch = await checkPassword(user, password);
-    if (!passwordMatch) {
-      oauthParams.error = "Invalid email or password";
-      return renderAuthPage(oauthParams);
-    }
-
-    userId = user.id;
   }
 
   // Generate auth code

@@ -13,6 +13,19 @@ export enum HTTP_METHOD {
 
 export const DEFAULT_QUEUE = "default";
 
+export type OAuthActionResponse = {
+  user: { id: number };
+};
+
+export type McpActionConfig = {
+  /** Expose this action as an MCP tool (default true) */
+  enabled?: boolean;
+  /** Tag as the OAuth login action */
+  isLoginAction?: boolean;
+  /** Tag as the OAuth signup action */
+  isSignupAction?: boolean;
+};
+
 export type ActionConstructorInputs = {
   /** Unique action name (also used for default routes, etc.) */
   name: string;
@@ -26,8 +39,8 @@ export type ActionConstructorInputs = {
   /** Middleware hooks to run before/after `run()` */
   middleware?: ActionMiddleware[];
 
-  /** Expose this action via the MCP server (defaults to `true`) */
-  mcp?: boolean;
+  /** Expose this action via the MCP server (defaults to `{ enabled: true }`) */
+  mcp?: McpActionConfig;
 
   /** Expose this action via HTTP (defaults: route `/${name}`, method `GET`) */
   web?: {
@@ -67,7 +80,7 @@ export abstract class Action {
   description?: string;
   inputs?: z.ZodType<any>;
   middleware?: ActionMiddleware[];
-  mcp?: boolean;
+  mcp?: McpActionConfig;
   web?: {
     route: RegExp | string;
     method: HTTP_METHOD;
@@ -82,7 +95,7 @@ export abstract class Action {
     this.description = args.description ?? `An Action: ${this.name}`;
     this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
-    this.mcp = args.mcp ?? true;
+    this.mcp = { enabled: true, ...args.mcp };
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
       method: args.web?.method ?? HTTP_METHOD.GET,

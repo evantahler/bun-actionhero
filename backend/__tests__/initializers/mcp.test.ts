@@ -250,7 +250,7 @@ describe("mcp initializer (enabled)", () => {
 
       // All registered actions with mcp !== false should be tools
       for (const action of api.actions.actions) {
-        if (action.mcp === false) continue;
+        if (!action.mcp?.enabled) continue;
         expect(toolNames).toContain(api.mcp.formatToolName(action.name));
       }
     });
