@@ -155,6 +155,13 @@ export class Channels extends Initializer {
     return Array.from(channelPresence.keys());
   };
 
+  /**
+   * Clear all presence data. Useful for test cleanup.
+   */
+  clearPresence = (): void => {
+    this.presence.clear();
+  };
+
   async initialize() {
     let channels: Channel[] = [];
 
@@ -181,6 +188,7 @@ export class Channels extends Initializer {
       addPresence: this.addPresence,
       removePresence: this.removePresence,
       members: this.members,
+      clearPresence: this.clearPresence,
     };
   }
 }

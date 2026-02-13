@@ -19,6 +19,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await api.db.clearDatabase();
+  api.channels.clearPresence();
 });
 
 test("should track presence when subscribing to a channel", async () => {
