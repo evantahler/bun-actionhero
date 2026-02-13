@@ -78,8 +78,20 @@ export const subscribeToChannel = async (
 ) => {
   socket.send(JSON.stringify({ messageType: "subscribe", channel }));
 
-  while (messages.length < 3) await Bun.sleep(10);
-  const response = JSON.parse(messages[2].data);
+  // Find the subscribe confirmation by content rather than index, because
+  // presence broadcast events (join/leave) delivered via Redis pub/sub can
+  // arrive before the subscribe confirmation, shifting message indices.
+  let response: Record<string, any> | undefined;
+  while (!response) {
+    for (const m of messages) {
+      const parsed = JSON.parse(m.data);
+      if (parsed.subscribed?.channel === channel) {
+        response = parsed;
+        break;
+      }
+    }
+    if (!response) await Bun.sleep(10);
+  }
   return response;
 };
 
