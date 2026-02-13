@@ -157,7 +157,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
-  handleWebSocketConnectionClose(ws: ServerWebSocket) {
+  async handleWebSocketConnectionClose(ws: ServerWebSocket) {
     const { connection } = api.connections.find(
       "websocket",
       //@ts-expect-error
@@ -166,6 +166,15 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       ws.data.id,
     );
     try {
+      // Remove presence from all subscribed channels before destroying
+      for (const channel of connection.subscriptions) {
+        try {
+          await api.channels.removePresence(channel, connection);
+        } catch (e) {
+          logger.error(`Error removing presence on close: ${e}`);
+        }
+      }
+
       connection.destroy();
       logger.info(
         `websocket connection closed from ${connection.identifier} (${connection.id})`,
@@ -226,6 +235,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       );
 
       connection.subscribe(formattedMessage.channel);
+      await api.channels.addPresence(formattedMessage.channel, connection);
       ws.send(
         JSON.stringify({
           messageId: formattedMessage.messageId,
@@ -255,6 +265,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ClientUnsubscribeMessage,
   ) {
+    // Remove presence before unsubscribing (needs subscription still active for key resolution)
+    try {
+      await api.channels.removePresence(formattedMessage.channel, connection);
+    } catch (e) {
+      logger.error(`Error removing presence: ${e}`);
+    }
+
     connection.unsubscribe(formattedMessage.channel);
 
     // Call channel middleware unsubscription hooks (for cleanup/presence)

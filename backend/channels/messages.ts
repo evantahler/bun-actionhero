@@ -1,4 +1,6 @@
+import type { SessionImpl } from "../actions/session";
 import { Channel } from "../api";
+import type { Connection } from "../classes/Connection";
 import { SessionChannelMiddleware } from "../middleware/channel";
 
 /**
@@ -12,5 +14,9 @@ export class MessagesChannel extends Channel {
       description: "Authenticated channel for real-time messages",
       middleware: [SessionChannelMiddleware],
     });
+  }
+
+  async presenceKey(connection: Connection<SessionImpl>): Promise<string> {
+    return connection.session?.data?.userId?.toString() ?? connection.id;
   }
 }

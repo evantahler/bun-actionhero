@@ -67,4 +67,13 @@ export abstract class Channel {
   ): Promise<void> {
     // Default implementation allows all subscriptions
   }
+
+  /**
+   * Returns the presence identifier for a connection in this channel.
+   * Override to use a custom key (e.g. user ID from session).
+   * Defaults to `connection.id`.
+   */
+  async presenceKey(connection: Connection): Promise<string> {
+    return connection.id;
+  }
 }
