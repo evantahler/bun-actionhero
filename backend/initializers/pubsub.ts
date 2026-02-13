@@ -6,8 +6,6 @@ import pkg from "../package.json";
 const namespace = "pubsub";
 const redisPubSubChannel = `actionhero:pubsub:${pkg.name}`;
 
-// TODO: Presence (connections in room), including join/leave
-
 export type PubSubMessage = {
   channel: string;
   message: string;

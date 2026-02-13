@@ -178,7 +178,7 @@ describe("channel authorization", () => {
       );
       await waitForMessages(messages, 3);
 
-      // Unsubscribe
+      // Unsubscribe (presence broadcasts may add extra messages)
       socket.send(
         JSON.stringify({
           messageType: "unsubscribe",
@@ -186,10 +186,12 @@ describe("channel authorization", () => {
           channel: "messages",
         }),
       );
-      await waitForMessages(messages, 4);
+      await Bun.sleep(200);
 
-      const unsubscribeResponse = JSON.parse(messages[3].data);
-      expect(unsubscribeResponse.messageId).toBe("unsub-1");
+      const unsubscribeResponse = messages
+        .map((m) => JSON.parse(m.data))
+        .find((m) => m.messageId === "unsub-1");
+      expect(unsubscribeResponse).toBeDefined();
       expect(unsubscribeResponse.unsubscribed).toEqual({ channel: "messages" });
 
       socket.close();

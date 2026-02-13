@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button, Col, Form, Row, Table } from "react-bootstrap";
+import { Badge, Button, Col, Form, Row, Table } from "react-bootstrap";
+import type { ChannelMembers } from "../../backend/actions/channel";
 import type { MessagesList } from "../../backend/actions/message";
 import type { ActionResponse } from "../../backend/api";
 import pkg from "../package.json";
@@ -22,17 +23,28 @@ export default function ChatCard({
     ActionResponse<MessagesList>["messages"]
   >([]);
   const [connected, setConnected] = useState<boolean>(false);
+  const [membersOnline, setMembersOnline] = useState<number>(0);
 
   function connect() {
     ws = new WebSocket(process.env.NEXT_PUBLIC_API_URL + "/api", pkg.name); // connect to the server hosting *this* page.  We use the protocol to ensure that we distinguish the 'application' websocket from the next.js hot-reloading websocket
 
     // Connection opened
-    ws.addEventListener("open", (event) => {
+    ws.addEventListener("open", async (event) => {
       console.log("Websocket connected");
       ws.send(
         JSON.stringify({ messageType: "subscribe", channel: "messages" }),
       );
       setConnected(true);
+
+      // Fetch initial member count
+      const membersResponse = await wrappedFetch<
+        ActionResponse<ChannelMembers>
+      >("/channel/messages/members", { method: "GET" }, (error) => {
+        console.error("Failed to fetch members:", error.message);
+      });
+      if (membersResponse) {
+        setMembersOnline(membersResponse.members.length);
+      }
     });
 
     // Listen for messages
@@ -42,6 +54,24 @@ export default function ChatCard({
 
       if (response.error) setErrorMessage(response.error.message);
       if (response.message && response.message.channel === "messages") {
+        // Check for presence events (join/leave)
+        try {
+          const parsed =
+            typeof response.message.message === "string"
+              ? JSON.parse(response.message.message)
+              : response.message.message;
+          if (parsed.event === "join") {
+            setMembersOnline((prev) => prev + 1);
+            return;
+          }
+          if (parsed.event === "leave") {
+            setMembersOnline((prev) => Math.max(0, prev - 1));
+            return;
+          }
+        } catch {
+          // Not a JSON presence event, treat as a normal message
+        }
+
         setMessages((prevMessages) => {
           const newMessages = [
             response.message.message.message as (typeof messages)[number],
@@ -117,6 +147,8 @@ export default function ChatCard({
       </Row>
 
       <hr />
+
+      <Badge bg="info">{membersOnline} online</Badge>
 
       <Row>
         <Table striped bordered hover>
