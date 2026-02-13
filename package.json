@@ -11,7 +11,7 @@
     "docs"
   ],
   "scripts": {
-    "dev": "bun run concurrently --kill-others --prefix name --names 💻,🎨 \"bun run dev:backend\" \"bun run dev:frontend\"",
+    "dev": "bun run --parallel dev:backend dev:frontend",
     "dev:backend": "cd backend && bun run dev",
     "dev:frontend": "cd frontend && bun run dev",
     "tests": "bun test-backend && bun test-frontend",
@@ -30,9 +30,7 @@
     "docs:dev": "cd docs && bun run dev",
     "docs:build": "cd docs && bun run build"
   },
-  "dependencies": {
-    "concurrently": "^8.2.2"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/bun": "^1.1.8",
     "prettier": "^3.3.3"
