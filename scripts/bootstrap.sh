@@ -10,8 +10,6 @@ set -e
 # Only run in Claude Code cloud environment
 # -----------------------------------------------------------------------------
 if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
-    echo "Not running in Claude Code cloud environment (CLAUDE_CODE_REMOTE != true)"
-    echo "Skipping bootstrap. Use 'docker compose up' for local development."
     exit 0
 fi
 
