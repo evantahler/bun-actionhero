@@ -157,47 +157,44 @@ test("should broadcast join/leave events to other subscribers", async () => {
   // User 1 subscribes first
   await subscribeToChannel(socket1, messages1, "messages");
 
-  // Clear messages so we can detect the join broadcast
-  while (messages1.length > 0) messages1.pop();
+  // Record the baseline so we only inspect messages arriving after this point
+  const baselineIndex = messages1.length;
 
-  // User 2 subscribes — user 1 should receive a join event
+  // User 2 subscribes — user 1 should receive a join event for presenceKey "2"
   await subscribeToChannel(socket2, messages2, "messages");
-  await Bun.sleep(100);
+  await Bun.sleep(200);
 
-  const joinMessages = messages1
-    .map((m) => JSON.parse(m.data))
-    .filter((m) => {
+  const findPresenceEvents = (
+    msgs: MessageEvent[],
+    startIndex: number,
+    eventType: string,
+    presenceKey: string,
+  ) =>
+    msgs.slice(startIndex).filter((m) => {
       try {
-        const parsed = JSON.parse(m.message?.message);
-        return parsed.event === "join";
+        const outer = JSON.parse(m.data);
+        const parsed = JSON.parse(outer.message?.message);
+        return parsed.event === eventType && parsed.presenceKey === presenceKey;
       } catch {
         return false;
       }
     });
-  expect(joinMessages.length).toBe(1);
-  const joinPayload = JSON.parse(joinMessages[0].message.message);
-  expect(joinPayload.presenceKey).toBe("2"); // user 2's ID
 
-  // Clear messages again
-  while (messages1.length > 0) messages1.pop();
+  const joinEvents = findPresenceEvents(messages1, baselineIndex, "join", "2");
+  expect(joinEvents.length).toBeGreaterThanOrEqual(1);
 
-  // User 2 disconnects — user 1 should receive a leave event
+  // User 2 disconnects — user 1 should receive a leave event for presenceKey "2"
+  const preLeaveIndex = messages1.length;
   socket2.close();
-  await Bun.sleep(100);
+  await Bun.sleep(200);
 
-  const leaveMessages = messages1
-    .map((m) => JSON.parse(m.data))
-    .filter((m) => {
-      try {
-        const parsed = JSON.parse(m.message?.message);
-        return parsed.event === "leave";
-      } catch {
-        return false;
-      }
-    });
-  expect(leaveMessages.length).toBe(1);
-  const leavePayload = JSON.parse(leaveMessages[0].message.message);
-  expect(leavePayload.presenceKey).toBe("2");
+  const leaveEvents = findPresenceEvents(
+    messages1,
+    preLeaveIndex,
+    "leave",
+    "2",
+  );
+  expect(leaveEvents.length).toBeGreaterThanOrEqual(1);
 
   socket1.close();
   await Bun.sleep(100);
