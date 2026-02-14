@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with `backend/` (API server) and `frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
 
+## Environment Setup
+
+Backend requires a `backend/.env` file. In a fresh clone or new git worktree, copy from the example and adjust:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+The defaults in `.env.example` assume a local macOS PostgreSQL where your shell `$USER` is a superuser with no password (typical for Homebrew Postgres). If that matches your setup, no edits are needed.
+
+Similarly for frontend:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
 ## Common Commands
 
 All commands from root unless noted. Backend tests require PostgreSQL (`bun` and `bun-test` databases) and Redis running locally.
