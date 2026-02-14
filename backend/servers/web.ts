@@ -476,7 +476,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     try {
       // Construct the full file path, ensuring proper path joining
-      const fullPath = path.join(staticDir, finalPath);
+      const fullPath = path.resolve(path.join(staticDir, finalPath));
+      const basePath = path.resolve(staticDir);
+
+      // Prevent path traversal attacks (e.g. symlinks or encoded sequences)
+      if (!fullPath.startsWith(basePath + path.sep) && fullPath !== basePath) {
+        return null;
+      }
 
       // Check if file exists
       const file = Bun.file(fullPath);
@@ -485,9 +491,16 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       if (!exists) {
         // Try serving index.html for directory requests
         if (!finalPath.endsWith(".html")) {
-          const indexFile = Bun.file(
+          const indexPath = path.resolve(
             path.join(staticDir, finalPath, "index.html"),
           );
+          if (
+            !indexPath.startsWith(basePath + path.sep) &&
+            indexPath !== basePath
+          ) {
+            return null;
+          }
+          const indexFile = Bun.file(indexPath);
           const indexExists = await indexFile.exists();
           if (indexExists) {
             return new Response(indexFile, {
