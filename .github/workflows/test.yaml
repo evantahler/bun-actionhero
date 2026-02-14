@@ -62,6 +62,8 @@ jobs:
       - run: bun install
       - run: cp backend/.env.example backend/.env
       - run: bun test-backend
+        env:
+          DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/bun-test
 
   test-frontend:
     runs-on: ubuntu-latest
