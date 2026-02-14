@@ -1,7 +1,11 @@
+import {
+  api,
+  HTTP_METHOD,
+  SessionMiddleware,
+  type Action,
+  type ActionParams,
+} from "bun-actionhero";
 import { z } from "zod";
-import { api, type Action, type ActionParams } from "../api";
-import { HTTP_METHOD } from "../classes/Action";
-import { SessionMiddleware } from "../middleware/session";
 
 export class ChannelMembers implements Action {
   name = "channel:members";

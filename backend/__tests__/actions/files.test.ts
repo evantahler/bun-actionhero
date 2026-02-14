@@ -1,8 +1,7 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import path from "path";
 import type { FileUpload } from "../../actions/files";
-import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;

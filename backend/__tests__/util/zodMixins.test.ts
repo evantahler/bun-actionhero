@@ -1,5 +1,5 @@
+import { api } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { api } from "../../api";
 import { users, type User } from "../../schema/users";
 import { isUser, zUserIdOrModel, zUserSchema } from "../../util/zodMixins";
 import { HOOK_TIMEOUT } from "./../setup";

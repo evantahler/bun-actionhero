@@ -1,3 +1,4 @@
+import { existsSync } from "fs";
 import { mkdir } from "fs/promises";
 import path from "path";
 import { Project, Type, ts } from "ts-morph";
@@ -179,14 +180,20 @@ export class SwaggerInitializer extends Initializer {
     const cacheDir = path.join(api.rootDir, ".cache");
     const cacheFile = path.join(cacheDir, "swagger-schemas.json");
 
-    // Hash action source files to detect changes
-    const actionsDir = path.join(api.rootDir, "actions");
+    // Hash action source files from both framework and user dirs to detect changes
+    const frameworkActionsDir = path.join(api.frameworkDir, "actions");
+    const userActionsDir = path.join(api.rootDir, "actions");
+    const actionDirs = [frameworkActionsDir];
+    if (existsSync(userActionsDir)) actionDirs.push(userActionsDir);
+
     const glob = new Bun.Glob("**/*.ts");
-    const actionFiles = Array.from(glob.scanSync(actionsDir)).sort();
     const hasher = new Bun.CryptoHasher("sha256");
-    for (const file of actionFiles) {
-      const content = await Bun.file(path.join(actionsDir, file)).text();
-      hasher.update(content);
+    for (const actionsDir of actionDirs) {
+      const actionFiles = Array.from(glob.scanSync(actionsDir)).sort();
+      for (const file of actionFiles) {
+        const content = await Bun.file(path.join(actionsDir, file)).text();
+        hasher.update(content);
+      }
     }
     const hash = hasher.digest("hex") as string;
 
@@ -224,6 +231,7 @@ export class SwaggerInitializer extends Initializer {
       });
 
       // Add all source files so types can be resolved across the codebase
+      project.addSourceFilesAtPaths(path.join(api.frameworkDir, "**/*.ts"));
       project.addSourceFilesAtPaths(path.join(api.rootDir, "**/*.ts"));
       // Exclude test files
       for (const sourceFile of project.getSourceFiles()) {

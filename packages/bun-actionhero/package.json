@@ -1,0 +1,50 @@
+{
+  "name": "bun-actionhero",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "main": "index.ts",
+  "types": "index.ts",
+  "bin": {
+    "actionhero": "actionhero.ts"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./actionhero": "./actionhero.ts",
+    "./migrations": "./migrations.ts",
+    "./actions/*": "./actions/*.ts",
+    "./classes/*": "./classes/*.ts",
+    "./config": "./config/index.ts",
+    "./util/*": "./util/*.ts",
+    "./middleware/*": "./middleware/*.ts"
+  },
+  "files": [
+    "**/*.ts",
+    "templates/**",
+    "package.json"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.9.2",
+    "mustache": "^4.2.0",
+    "node-resque": "^9.5.0",
+    "pg": "^8.18.0",
+    "ts-morph": "^27.0.2",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "drizzle-zod": "^0.8.3",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cookie": "^0.6.0",
+    "@types/mustache": "^4.2.6",
+    "@types/pg": "^8.16.0"
+  }
+}

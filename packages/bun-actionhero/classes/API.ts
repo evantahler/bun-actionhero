@@ -1,3 +1,4 @@
+import { existsSync } from "fs";
 import path from "path";
 import { config } from "../config";
 import { globLoader } from "../util/glob";
@@ -13,6 +14,9 @@ export enum RUN_MODE {
 let flapPreventer = false;
 
 export class API {
+  /** The framework package directory (where bun-actionhero is installed) */
+  frameworkDir: string;
+  /** The user's application root directory (process.cwd()) */
   rootDir: string;
   initialized: boolean;
   started: boolean;
@@ -27,7 +31,8 @@ export class API {
 
   constructor() {
     this.bootTime = new Date().getTime();
-    this.rootDir = path.join(import.meta.path, "..", "..");
+    this.frameworkDir = path.join(import.meta.path, "..", "..");
+    this.rootDir = process.cwd();
     this.logger = new Logger(config.logger);
 
     this.initialized = false;
@@ -38,7 +43,7 @@ export class API {
   }
 
   async initialize() {
-    this.logger.warn("--- 🔄  Initializing process ---");
+    this.logger.warn("--- \u{1F504}  Initializing process ---");
     this.initialized = false;
 
     await this.findInitializers();
@@ -60,7 +65,7 @@ export class API {
     }
 
     this.initialized = true;
-    this.logger.warn("--- 🔄  Initializing complete ---");
+    this.logger.warn("--- \u{1F504}  Initializing complete ---");
   }
 
   async start(runMode: RUN_MODE = RUN_MODE.SERVER) {
@@ -69,7 +74,7 @@ export class API {
     this.runMode = runMode;
     if (!this.initialized) await this.initialize();
 
-    this.logger.warn("--- 🔼  Starting process ---");
+    this.logger.warn("--- \u{1F53C}  Starting process ---");
 
     this.sortInitializers("startPriority");
 
@@ -95,7 +100,7 @@ export class API {
     }
 
     this.started = true;
-    this.logger.warn("--- 🔼  Starting complete ---");
+    this.logger.warn("--- \u{1F53C}  Starting complete ---");
   }
 
   async stop() {
@@ -104,7 +109,7 @@ export class API {
       return;
     }
 
-    this.logger.warn("--- 🔽  Stopping process ---");
+    this.logger.warn("--- \u{1F53D}  Stopping process ---");
 
     this.sortInitializers("stopPriority");
 
@@ -124,7 +129,7 @@ export class API {
 
     this.stopped = true;
     this.started = false;
-    this.logger.warn("--- 🔽  Stopping complete ---");
+    this.logger.warn("--- \u{1F53D}  Stopping complete ---");
   }
 
   async restart() {
@@ -137,9 +142,25 @@ export class API {
   }
 
   private async findInitializers() {
-    const initializers = await globLoader<Initializer>("initializers");
-    for (const i of initializers) {
+    // Load framework initializers first
+    const frameworkInitializersDir = path.join(
+      this.frameworkDir,
+      "initializers",
+    );
+    const frameworkInitializers =
+      await globLoader<Initializer>(frameworkInitializersDir);
+    for (const i of frameworkInitializers) {
       this.initializers.push(i);
+    }
+
+    // Load user-app initializers (if they exist)
+    const userInitializersDir = path.join(this.rootDir, "initializers");
+    if (existsSync(userInitializersDir)) {
+      const userInitializers =
+        await globLoader<Initializer>(userInitializersDir);
+      for (const i of userInitializers) {
+        this.initializers.push(i);
+      }
     }
   }
 

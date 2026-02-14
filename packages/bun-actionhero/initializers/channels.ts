@@ -1,3 +1,5 @@
+import { existsSync } from "fs";
+import path from "path";
 import { api, logger } from "../api";
 import type { Channel } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
@@ -165,13 +167,16 @@ export class Channels extends Initializer {
   async initialize() {
     let channels: Channel[] = [];
 
-    try {
-      channels = await globLoader<Channel>("channels");
-    } catch (e) {
-      // channels directory may not exist, which is fine
-      logger.debug(
-        `No channels directory found or error loading channels: ${e}`,
-      );
+    // Load user-app channels (no framework channels)
+    const userChannelsDir = path.join(api.rootDir, "channels");
+    if (existsSync(userChannelsDir)) {
+      try {
+        channels = await globLoader<Channel>(userChannelsDir);
+      } catch (e) {
+        logger.debug(
+          `No channels directory found or error loading channels: ${e}`,
+        );
+      }
     }
 
     for (const c of channels) {

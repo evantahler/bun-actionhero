@@ -1,5 +1,5 @@
+import { api } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { api } from "../../api";
 import { serializeMessage } from "../../ops/MessageOps";
 import type { Message } from "../../schema/messages";
 import { HOOK_TIMEOUT } from "./../setup";

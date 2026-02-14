@@ -1,16 +1,23 @@
+import {
+  Action,
+  type ActionParams,
+  api,
+  Connection,
+  ErrorType,
+  HTTP_METHOD,
+  secret,
+  SessionMiddleware,
+  TypedError,
+} from "bun-actionhero";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { Action, type ActionParams, api, Connection } from "../api";
-import { HTTP_METHOD } from "../classes/Action";
-import { ErrorType, TypedError } from "../classes/TypedError";
-import { SessionMiddleware } from "../middleware/session";
 import {
   hashPassword,
   serializePublicUser,
   serializeUser,
 } from "../ops/UserOps";
 import { users } from "../schema/users";
-import { secret, zUserIdOrModel } from "../util/zodMixins";
+import { zUserIdOrModel } from "../util/zodMixins";
 
 export class UserCreate implements Action {
   name = "user:create";

@@ -1,5 +1,5 @@
+import { config } from "bun-actionhero";
 import { expect } from "bun:test";
-import { config } from "../../api";
 
 const wsUrl = config.server.web.applicationUrl
   .replace("https://", "wss://")

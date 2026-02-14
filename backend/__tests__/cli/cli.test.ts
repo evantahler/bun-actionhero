@@ -1,6 +1,6 @@
 import { $ } from "bun";
+import { api } from "bun-actionhero";
 import { beforeAll, describe, expect, test } from "bun:test";
-import { api } from "../../api";
 import pkg from "./../../package.json";
 import { HOOK_TIMEOUT } from "./../setup";
 

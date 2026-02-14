@@ -1,8 +1,8 @@
+import type { ActionResponse } from "bun-actionhero";
 import { useEffect, useState } from "react";
 import { Badge, Button, Col, Form, Row, Table } from "react-bootstrap";
 import type { ChannelMembers } from "../../backend/actions/channel";
 import type { MessagesList } from "../../backend/actions/message";
-import type { ActionResponse } from "../../backend/api";
 import pkg from "../package.json";
 import { wrappedFetch } from "../utils/client";
 import type { AppUser } from "./App";

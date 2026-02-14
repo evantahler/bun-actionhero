@@ -1,10 +1,12 @@
 #! /usr/bin/env bun
 
-import { Action, addActionToProgram, api, globLoader } from "bun-actionhero";
-import { Command } from "commander";
 import { existsSync } from "fs";
 import path from "path";
+import { Command } from "commander";
+import { Action, api } from "./api";
 import pkg from "./package.json";
+import { addActionToProgram } from "./util/cli";
+import { globLoader } from "./util/glob";
 
 const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);
@@ -18,9 +20,10 @@ program
   });
 
 // Load framework + user actions for CLI
+const frameworkDir = path.join(import.meta.path, "..");
 const actions: Action[] = [];
 const frameworkActions = await globLoader<Action>(
-  path.join(api.frameworkDir, "actions"),
+  path.join(frameworkDir, "actions"),
 );
 actions.push(...frameworkActions);
 const userActionsDir = path.join(process.cwd(), "actions");

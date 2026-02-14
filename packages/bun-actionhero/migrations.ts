@@ -1,4 +1,4 @@
-import { api } from "bun-actionhero";
+import { api } from "./api";
 
 await api.initialize();
 await api.db.generateMigrations();

@@ -1,4 +1,4 @@
-import { RUN_MODE } from "./../api";
+import { RUN_MODE } from "./API";
 
 /**
  * Create a new Initializer. The required properties of an initializer. These can be defined statically (this.name) or as methods which return a value.

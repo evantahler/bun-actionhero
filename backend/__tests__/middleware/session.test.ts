@@ -1,7 +1,11 @@
+import {
+  api,
+  Connection,
+  ErrorType,
+  SessionMiddleware,
+  TypedError,
+} from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Connection, api } from "../../api";
-import { ErrorType, TypedError } from "../../classes/TypedError";
-import { SessionMiddleware } from "../../middleware/session";
 import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {

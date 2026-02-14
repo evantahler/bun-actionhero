@@ -1,3 +1,4 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
 import {
   afterAll,
   beforeAll,
@@ -8,8 +9,6 @@ import {
 } from "bun:test";
 import type { ChannelMembers } from "../../actions/channel";
 import type { SessionCreate } from "../../actions/session";
-import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import {
   buildWebSocket,
   createSession,

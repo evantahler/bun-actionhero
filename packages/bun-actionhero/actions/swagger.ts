@@ -1,7 +1,17 @@
 import { z } from "zod";
 import { Action, api, config } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
-import packageJSON from "../package.json";
+import { existsSync } from "fs";
+import path from "path";
+import frameworkPackageJSON from "../package.json";
+
+// Use the user's package.json for swagger metadata, falling back to the framework's
+const userPkgPath = path.join(process.cwd(), "package.json");
+let packageJSON: Record<string, any> = frameworkPackageJSON;
+if (existsSync(userPkgPath)) {
+  const mod = await import(userPkgPath);
+  packageJSON = mod.default || mod;
+}
 
 const SWAGGER_VERSION = "3.0.0";
 

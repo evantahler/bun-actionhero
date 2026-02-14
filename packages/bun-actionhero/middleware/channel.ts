@@ -1,4 +1,3 @@
-import type { SessionImpl } from "../actions/session";
 import type { ChannelMiddleware } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -20,11 +19,9 @@ import { ErrorType, TypedError } from "../classes/TypedError";
  * ```
  */
 export const SessionChannelMiddleware: ChannelMiddleware = {
-  runBefore: async (
-    _channel: string,
-    connection: Connection<SessionImpl>,
-  ): Promise<void> => {
-    if (!connection.session || !connection.session.data.userId) {
+  runBefore: async (_channel: string, connection: Connection): Promise<void> => {
+    const data = connection.session?.data as Record<string, unknown> | undefined;
+    if (!connection.session || !data?.userId) {
       throw new TypedError({
         message: "Authentication required to join this channel",
         type: ErrorType.CONNECTION_CHANNEL_AUTHORIZATION,

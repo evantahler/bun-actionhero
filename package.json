@@ -1,11 +1,12 @@
 {
-  "name": "bun-actionhero",
+  "name": "bun-actionhero-monorepo",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
   "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
   "workspaces": [
+    "packages/bun-actionhero",
     "backend",
     "frontend",
     "docs"

@@ -1,16 +1,14 @@
 import { Glob } from "bun";
 import path from "path";
-import { api } from "../api";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
 /**
- *
- * @param searchDir From the root of the project, the directory to search for files
+ * Load and instantiate all exported classes from .ts/.tsx files in a directory.
+ * @param dir Absolute path to the directory to scan
  */
-export async function globLoader<T>(searchDir: string) {
+export async function globLoader<T>(dir: string) {
   const results: T[] = [];
   const globs = [new Glob("**/*.{ts,tsx}")];
-  const dir = path.join(api.rootDir, searchDir);
 
   for (const glob of globs) {
     for await (const file of glob.scan(dir)) {

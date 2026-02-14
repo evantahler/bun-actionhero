@@ -1,7 +1,6 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
+import type { Swagger } from "bun-actionhero/actions/swagger";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import type { Swagger } from "../../actions/swagger";
-import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;
@@ -22,7 +21,7 @@ describe("swagger", () => {
 
     // OpenAPI 3.0 structure
     expect(response.openapi).toBe("3.0.0");
-    expect(response.info.title).toBe("actionhero");
+    expect(response.info.title).toBe("bun-actionhero-example");
     expect(response.info.version).toBeDefined();
     expect(response.info.license).toBeDefined();
     expect(response.info.description).toBeDefined();

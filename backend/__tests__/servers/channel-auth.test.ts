@@ -1,3 +1,4 @@
+import { api, config } from "bun-actionhero";
 import {
   afterAll,
   beforeAll,
@@ -6,7 +7,6 @@ import {
   expect,
   test,
 } from "bun:test";
-import { api, config } from "../../api";
 import { HOOK_TIMEOUT } from "./../setup";
 
 const wsUrl = config.server.web.applicationUrl

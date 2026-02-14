@@ -1,4 +1,6 @@
+import { existsSync } from "fs";
 import { randomUUID } from "crypto";
+import path from "path";
 import type { ErrorPayload } from "node-resque";
 import { api, logger } from "../api";
 import { DEFAULT_QUEUE, type Action } from "../classes/Action";
@@ -217,8 +219,8 @@ export class Actions extends Initializer {
       total: parseInt(meta.total, 10) || 0,
       completed: parseInt(meta.completed, 10) || 0,
       failed: parseInt(meta.failed, 10) || 0,
-      results: rawResults.map((r) => JSON.parse(r)),
-      errors: rawErrors.map((e) => JSON.parse(e)),
+      results: rawResults.map((r: string) => JSON.parse(r)),
+      errors: rawErrors.map((e: string) => JSON.parse(e)),
     };
   };
 
@@ -603,7 +605,19 @@ export class Actions extends Initializer {
   };
 
   async initialize() {
-    const actions = await globLoader<Action>("actions");
+    const actions: Action[] = [];
+
+    // Load framework actions
+    const frameworkActionsDir = path.join(api.frameworkDir, "actions");
+    const frameworkActions = await globLoader<Action>(frameworkActionsDir);
+    actions.push(...frameworkActions);
+
+    // Load user-app actions
+    const userActionsDir = path.join(api.rootDir, "actions");
+    if (existsSync(userActionsDir)) {
+      const userActions = await globLoader<Action>(userActionsDir);
+      actions.push(...userActions);
+    }
 
     for (const a of actions) {
       if (!a.description) a.description = `An Action: ${a.name}`;

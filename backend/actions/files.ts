@@ -1,6 +1,5 @@
+import { Action, type ActionParams, HTTP_METHOD } from "bun-actionhero";
 import { z } from "zod";
-import { Action, type ActionParams } from "../api";
-import { HTTP_METHOD } from "../classes/Action";
 
 export class FileUpload implements Action {
   name = "fileUpload";

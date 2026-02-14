@@ -1,14 +1,14 @@
+import { api, Initializer, logger } from "bun-actionhero";
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
-import { api, logger } from "../api";
-import { Initializer } from "../classes/Initializer";
+
 import { hashPassword } from "../ops/UserOps";
 import { users, type User } from "../schema/users";
 const namespace = "application";
 
 const defaultUserEmail = "admin@actionherojs.com";
 
-declare module "../classes/API" {
+declare module "bun-actionhero/classes/API" {
   export interface API {
     [namespace]: Awaited<ReturnType<Application["initialize"]>>;
   }

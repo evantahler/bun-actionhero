@@ -1,3 +1,4 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type {
   MessageCrete,
@@ -5,8 +6,6 @@ import type {
   MessageView,
 } from "../../actions/message";
 import type { SessionCreate } from "../../actions/session";
-import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { messages } from "../../schema/messages";
 import { HOOK_TIMEOUT } from "./../setup";
 

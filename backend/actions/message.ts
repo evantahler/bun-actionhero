@@ -1,8 +1,13 @@
+import {
+  api,
+  Connection,
+  HTTP_METHOD,
+  SessionMiddleware,
+  type Action,
+  type ActionParams,
+} from "bun-actionhero";
 import { desc, eq, lt } from "drizzle-orm";
 import { z } from "zod";
-import { api, Connection, type Action, type ActionParams } from "../api";
-import { HTTP_METHOD } from "../classes/Action";
-import { SessionMiddleware } from "../middleware/session";
 import { serializeMessage } from "../ops/MessageOps";
 import { messages } from "../schema/messages";
 import { users } from "../schema/users";
@@ -81,7 +86,7 @@ export class MessagesList implements Action {
       .leftJoin(users, eq(users.id, messages.user_id));
 
     return {
-      messages: _messages.map((m) =>
+      messages: _messages.map((m: (typeof _messages)[number]) =>
         serializeMessage(m, m.user_name ? m.user_name : undefined),
       ),
     };

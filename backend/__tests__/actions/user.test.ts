@@ -1,8 +1,7 @@
+import { api, config, logger, type ActionResponse } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
 import type { UserCreate, UserEdit, UserView } from "../../actions/user";
-import { api, logger, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;

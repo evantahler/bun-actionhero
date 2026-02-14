@@ -1,6 +1,6 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
+import type { Status } from "bun-actionhero/actions/status";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import type { Status } from "../../actions/status";
-import { api, config, type ActionResponse } from "../../api";
 import { HOOK_TIMEOUT } from "./../setup";
 
 const url = config.server.web.applicationUrl;

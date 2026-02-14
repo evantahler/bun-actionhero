@@ -1,18 +1,14 @@
-import { configDatabase } from "./database";
-import { configLogger } from "./logger";
-import { configProcess } from "./process";
-import { configRedis } from "./redis";
-import { configServerMcp } from "./server/mcp";
-import { configServerWeb } from "./server/web";
-import { configSession } from "./session";
-import { configTasks } from "./tasks";
+import { loadFromEnvIfSet } from "bun-actionhero";
 
+/**
+ * User config overrides. These are deep-merged onto the framework defaults.
+ * Only specify values you want to override.
+ */
 export const config = {
-  process: configProcess,
-  logger: configLogger,
-  database: configDatabase,
-  redis: configRedis,
-  session: configSession,
-  server: { web: configServerWeb, mcp: configServerMcp },
-  tasks: configTasks,
+  process: {
+    name: await loadFromEnvIfSet("PROCESS_NAME", "bun-actionhero-example"),
+  },
+  database: {
+    connectionString: await loadFromEnvIfSet("DATABASE_URL", "x"),
+  },
 };

@@ -1,4 +1,4 @@
-import { Action, api } from "../../api";
+import { Action, api } from "bun-actionhero";
 import { HOOK_TIMEOUT } from "./../setup";
 
 import {

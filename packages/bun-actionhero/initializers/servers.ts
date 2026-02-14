@@ -1,3 +1,5 @@
+import { existsSync } from "fs";
+import path from "path";
 import { api, RUN_MODE } from "../api";
 import { Initializer } from "../classes/Initializer";
 import type { Server } from "../classes/Server";
@@ -21,7 +23,19 @@ export class Servers extends Initializer {
   }
 
   async initialize() {
-    const servers = await globLoader<Server<any>>("servers");
+    const servers: Server<any>[] = [];
+
+    // Load framework servers
+    const frameworkServersDir = path.join(api.frameworkDir, "servers");
+    const frameworkServers = await globLoader<Server<any>>(frameworkServersDir);
+    servers.push(...frameworkServers);
+
+    // Load user-app servers
+    const userServersDir = path.join(api.rootDir, "servers");
+    if (existsSync(userServersDir)) {
+      const userServers = await globLoader<Server<any>>(userServersDir);
+      servers.push(...userServers);
+    }
 
     for (const server of servers) {
       await server.initialize();

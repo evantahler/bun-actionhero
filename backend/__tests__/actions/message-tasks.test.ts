@@ -1,3 +1,4 @@
+import { api } from "bun-actionhero";
 import {
   afterAll,
   beforeAll,
@@ -8,7 +9,6 @@ import {
 } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 import { MessagesCleanup, MessagesHello } from "../../actions/message";
-import { api } from "../../api";
 import { messages } from "../../schema/messages";
 import { users } from "../../schema/users";
 import { HOOK_TIMEOUT } from "./../setup";

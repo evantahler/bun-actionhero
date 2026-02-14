@@ -1,7 +1,6 @@
+import { api, config, type ActionResponse } from "bun-actionhero";
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
-import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { hashPassword } from "../../ops/UserOps";
 import { users } from "../../schema/users";
 import { HOOK_TIMEOUT } from "./../setup";

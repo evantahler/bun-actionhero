@@ -1,7 +1,7 @@
+import type { ActionResponse } from "bun-actionhero";
 import React from "react";
 import { Button, Form } from "react-bootstrap";
 import type { SessionCreate } from "../../backend/actions/session";
-import type { ActionResponse } from "../../backend/api";
 import { wrappedFetch } from "../utils/client";
 import type { AppUser } from "./App";
 
