@@ -543,8 +543,11 @@ const buildHeaders = (connection?: Connection) => {
   headers["Access-Control-Allow-Credentials"] = "true";
 
   if (connection) {
+    const secure = config.server.web.applicationUrl.startsWith("https")
+      ? "; Secure"
+      : "";
     headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly`;
+      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly; SameSite=Lax${secure}`;
   }
 
   return headers;
