@@ -1,7 +1,6 @@
 import path from "path";
 import { config } from "../config";
 import { globLoader } from "../util/glob";
-import type { ActionMiddleware } from "./Action";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
 import { ErrorType, TypedError } from "./TypedError";
@@ -22,7 +21,6 @@ export class API {
   logger: Logger;
   runMode!: RUN_MODE;
   initializers: Initializer[];
-  globalMiddleware: ActionMiddleware[];
 
   // allow arbitrary properties to be set on the API, to be added and typed later
   [key: string]: any;
@@ -37,7 +35,6 @@ export class API {
     this.stopped = false;
 
     this.initializers = [];
-    this.globalMiddleware = [];
   }
 
   async initialize() {

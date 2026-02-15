@@ -175,19 +175,32 @@ describe("RateLimitMiddleware", () => {
   });
 
   describe("HTTP integration", () => {
-    test("rate limit headers are present in responses", async () => {
-      const res = await fetch(`${url}/api/status`);
-      expect(res.status).toBe(200);
+    test("rate limit headers are present on rate-limited actions", async () => {
+      // PUT /api/session (login) has RateLimitMiddleware
+      const res = await fetch(`${url}/api/session`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "nobody@test.com",
+          password: "password123",
+        }),
+      });
+      // Will fail auth but middleware still runs and sets headers
       expect(res.headers.get("X-RateLimit-Limit")).toBeDefined();
       expect(res.headers.get("X-RateLimit-Remaining")).toBeDefined();
       expect(res.headers.get("X-RateLimit-Reset")).toBeDefined();
     });
 
+    test("non-rate-limited actions do not have rate limit headers", async () => {
+      const res = await fetch(`${url}/api/status`);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-RateLimit-Limit")).toBeNull();
+    });
+
     test("returns 429 with Retry-After when rate limited", async () => {
-      // Exhaust rate limit for a specific identifier in Redis
+      // Exhaust rate limit for localhost IPs in Redis
       const windowMs = config.rateLimit.windowMs;
       const currentWindow = Math.floor(Date.now() / windowMs);
-      // Tests connect via localhost/127.0.0.1
       for (const ip of ["ip:::1", "ip:127.0.0.1", "ip:::ffff:127.0.0.1"]) {
         const key = `${config.rateLimit.keyPrefix}:${ip}:${currentWindow}`;
         await api.redis.redis.set(
@@ -198,7 +211,15 @@ describe("RateLimitMiddleware", () => {
         );
       }
 
-      const res = await fetch(`${url}/api/status`);
+      // PUT /api/session has RateLimitMiddleware
+      const res = await fetch(`${url}/api/session`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: "nobody@test.com",
+          password: "password123",
+        }),
+      });
       expect(res.status).toBe(429);
       expect(res.headers.get("Retry-After")).toBeDefined();
 

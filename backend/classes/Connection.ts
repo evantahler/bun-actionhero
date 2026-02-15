@@ -63,20 +63,6 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
 
       let formattedParams = await this.formatParams(params, action);
 
-      // Run global middleware (e.g. rate limiting) unless the action opts out
-      if (action.rateLimit !== false) {
-        for (const middleware of api.globalMiddleware ?? []) {
-          if (middleware.runBefore) {
-            const middlewareResponse = await middleware.runBefore(
-              formattedParams,
-              this,
-            );
-            if (middlewareResponse && middlewareResponse?.updatedParams)
-              formattedParams = middlewareResponse.updatedParams;
-          }
-        }
-      }
-
       for (const middleware of action.middleware ?? []) {
         if (middleware.runBefore) {
           const middlewareResponse = await middleware.runBefore(
@@ -98,20 +84,6 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
           );
           if (middlewareResponse && middlewareResponse?.updatedResponse)
             response = middlewareResponse.updatedResponse;
-        }
-      }
-
-      // Run global middleware runAfter hooks
-      if (action.rateLimit !== false) {
-        for (const middleware of api.globalMiddleware ?? []) {
-          if (middleware.runAfter) {
-            const middlewareResponse = await middleware.runAfter(
-              formattedParams,
-              this,
-            );
-            if (middlewareResponse && middlewareResponse?.updatedResponse)
-              response = middlewareResponse.updatedResponse;
-          }
         }
       }
     } catch (e) {

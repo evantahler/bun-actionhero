@@ -4,6 +4,7 @@ import { api, Connection, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import type { SessionData } from "../initializers/session";
+import { RateLimitMiddleware } from "../middleware/rateLimit";
 import { SessionMiddleware } from "../middleware/session";
 import { checkPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";
@@ -16,6 +17,7 @@ export class SessionCreate implements Action {
   description =
     "Sign in by providing an email and password. If credentials are valid, creates an authenticated session and returns the user's profile along with session details. This is the login action — call this before using any endpoints that require authentication.";
   mcp = { enabled: false, isLoginAction: true };
+  middleware = [RateLimitMiddleware];
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = z.object({
     email: z

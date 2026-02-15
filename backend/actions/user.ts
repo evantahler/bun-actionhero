@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Action, type ActionParams, api, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { RateLimitMiddleware } from "../middleware/rateLimit";
 import { SessionMiddleware } from "../middleware/session";
 import {
   hashPassword,
@@ -17,6 +18,7 @@ export class UserCreate implements Action {
   description =
     "Register a new user account with a name, email, and password. The email must be unique across all users (case-insensitive). Password must be at least 8 characters and is stored securely as a hash. Returns the created user's profile (ID, name, email, timestamps). Does not require an existing session.";
   mcp = { enabled: false, isSignupAction: true };
+  middleware = [RateLimitMiddleware];
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({
     name: z
