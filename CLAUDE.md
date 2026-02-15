@@ -150,6 +150,8 @@ test("...", async () => {
 
 Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concurrently to avoid port conflicts.
 
+**Every code change should include tests.** When adding features, fixing bugs, or modifying behavior, always write or update tests to cover the change. If a PR has no test changes, that's a red flag.
+
 ### Auto-discovery
 Actions, initializers, and servers are auto-discovered via `globLoader` (`backend/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped.
 
@@ -166,15 +168,6 @@ cd docs && bun run generate        # Regenerate reference JSON from backend sour
 **Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
 
 The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
-
-## Planning Mode
-
-When using Claude Code's planning mode (`/plan`), the finalized plan **must be filed as a GitHub issue** before implementation begins. Use the `Github_CreateIssue` tool (or `gh issue create`) to create the issue in this repo (`evantahler/bun-actionhero`) with:
-- A clear title summarizing the planned work
-- The full plan as the issue body (markdown)
-- Appropriate labels if relevant (e.g., `enhancement`, `refactor`)
-
-Do not begin implementation until the issue is created and the URL is shared with the user.
 
 ## Gotcha: Stale Processes
 

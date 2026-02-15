@@ -5,6 +5,7 @@ import type { OAuthActionResponse } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
+import { checkRateLimit } from "../middleware/rateLimit";
 
 const templatesDir = import.meta.dir + "/../templates";
 let authTemplate: string;
@@ -65,7 +66,10 @@ export class OAuthInitializer extends Initializer {
       return JSON.parse(raw) as TokenData;
     }
 
-    async function handleRequest(req: Request): Promise<Response | null> {
+    async function handleRequest(
+      req: Request,
+      ip?: string,
+    ): Promise<Response | null> {
       const url = new URL(req.url);
       const path = url.pathname;
       const method = req.method.toUpperCase();
@@ -82,6 +86,36 @@ export class OAuthInitializer extends Initializer {
       ) {
         return handleMetadata(url.origin);
       }
+
+      // Rate-limit mutable OAuth endpoints by IP
+      if (
+        config.rateLimit.enabled &&
+        ip &&
+        (path === "/oauth/register" ||
+          path === "/oauth/authorize" ||
+          path === "/oauth/token")
+      ) {
+        const info = await checkRateLimit(`ip:${ip}`, false);
+        if (info.retryAfter !== undefined) {
+          return new Response(
+            JSON.stringify({
+              error: "rate_limit_exceeded",
+              error_description: `Rate limit exceeded. Try again in ${info.retryAfter} seconds.`,
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "Retry-After": String(info.retryAfter),
+                "X-RateLimit-Limit": String(info.limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": String(info.resetAt),
+              },
+            },
+          );
+        }
+      }
+
       if (path === "/oauth/register" && method === "POST") {
         return handleRegister(req);
       }

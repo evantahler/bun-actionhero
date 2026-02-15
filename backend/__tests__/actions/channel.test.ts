@@ -62,6 +62,21 @@ describe("channel:members", () => {
     api.channels.members("messages"); // no-op, just ensures channel initializer is ready
   });
 
+  test("rejects invalid channel name", async () => {
+    const res = await fetch(
+      url + "/api/channel/" + encodeURIComponent("bad channel!@#") + "/members",
+      {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+        },
+      },
+    );
+    expect(res.status).toBe(406);
+    const response = (await res.json()) as ActionResponse<ChannelMembers>;
+    expect(response.error).toBeDefined();
+  });
+
   test("fails without a session", async () => {
     const res = await fetch(url + "/api/channel/messages/members", {
       method: "GET",

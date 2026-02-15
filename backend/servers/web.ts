@@ -6,6 +6,7 @@ import path from "node:path";
 import { parse } from "node:url";
 import { api, logger } from "../api";
 import { type ActionParams, type HTTP_METHOD } from "../classes/Action";
+import { CHANNEL_NAME_PATTERN } from "../classes/Channel";
 import { Connection } from "../classes/Connection";
 import { Server } from "../classes/Server";
 import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
@@ -15,6 +16,15 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
+
+function validateChannelName(channel: string) {
+  if (!CHANNEL_NAME_PATTERN.test(channel)) {
+    throw new TypedError({
+      message: `Invalid channel name`,
+      type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+    });
+  }
+}
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   /** The actual port the server bound to (resolved after start, e.g. when config port is 0). */
@@ -84,7 +94,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     // OAuth route interception (must come before MCP route check)
     if (config.server.mcp.enabled && api.oauth?.handleRequest) {
-      const oauthResponse = await api.oauth.handleRequest(req);
+      const oauthResponse = await api.oauth.handleRequest(req, ip);
       if (oauthResponse) return oauthResponse;
     }
 
@@ -231,6 +241,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     formattedMessage: ClientSubscribeMessage,
   ) {
     try {
+      validateChannelName(formattedMessage.channel);
+
       // Ensure session is loaded before checking authorization
       if (!connection.sessionLoaded) {
         await connection.loadSession();
@@ -273,32 +285,51 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ClientUnsubscribeMessage,
   ) {
-    // Remove presence before unsubscribing (needs subscription still active for key resolution)
     try {
-      await api.channels.removePresence(formattedMessage.channel, connection);
-    } catch (e) {
-      logger.error(`Error removing presence: ${e}`);
-    }
+      validateChannelName(formattedMessage.channel);
 
-    connection.unsubscribe(formattedMessage.channel);
+      // Remove presence before unsubscribing (needs subscription still active for key resolution)
+      try {
+        await api.channels.removePresence(formattedMessage.channel, connection);
+      } catch (e) {
+        logger.error(`Error removing presence: ${e}`);
+      }
 
-    // Call channel middleware unsubscription hooks (for cleanup/presence)
-    try {
-      await api.channels.handleUnsubscription(
-        formattedMessage.channel,
-        connection,
+      connection.unsubscribe(formattedMessage.channel);
+
+      // Call channel middleware unsubscription hooks (for cleanup/presence)
+      try {
+        await api.channels.handleUnsubscription(
+          formattedMessage.channel,
+          connection,
+        );
+      } catch (e) {
+        // Log but don't fail the unsubscription
+        logger.error(`Error in channel unsubscription hook: ${e}`);
+      }
+
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          unsubscribed: { channel: formattedMessage.channel },
+        }),
       );
     } catch (e) {
-      // Log but don't fail the unsubscription
-      logger.error(`Error in channel unsubscription hook: ${e}`);
+      const error =
+        e instanceof TypedError
+          ? e
+          : new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+              originalError: e,
+            });
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          error: buildErrorPayload(error),
+        }),
+      );
     }
-
-    ws.send(
-      JSON.stringify({
-        messageId: formattedMessage.messageId,
-        unsubscribed: { channel: formattedMessage.channel },
-      }),
-    );
   }
 
   async handleWebAction(
@@ -563,11 +594,30 @@ const buildHeaders = (connection?: Connection) => {
   Object.assign(headers, getSecurityHeaders());
 
   if (connection) {
-    const secure = config.server.web.applicationUrl.startsWith("https")
-      ? "; Secure"
-      : "";
-    headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly; SameSite=Lax${secure}`;
+    const secure =
+      config.session.cookieSecure ||
+      config.server.web.applicationUrl.startsWith("https");
+    const flags = [
+      `${config.session.cookieName}=${connection.id}`,
+      `Max-Age=${config.session.ttl}`,
+      "Path=/",
+      config.session.cookieHttpOnly ? "HttpOnly" : "",
+      `SameSite=${config.session.cookieSameSite}`,
+      secure ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    headers["Set-Cookie"] = flags;
+
+    if (connection.rateLimitInfo) {
+      const rateLimitInfo = connection.rateLimitInfo;
+      headers["X-RateLimit-Limit"] = String(rateLimitInfo.limit);
+      headers["X-RateLimit-Remaining"] = String(rateLimitInfo.remaining);
+      headers["X-RateLimit-Reset"] = String(rateLimitInfo.resetAt);
+      if (rateLimitInfo.retryAfter !== undefined) {
+        headers["Retry-After"] = String(rateLimitInfo.retryAfter);
+      }
+    }
   }
 
   return headers;

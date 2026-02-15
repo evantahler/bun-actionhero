@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Action, type ActionParams, api, Connection } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { RateLimitMiddleware } from "../middleware/rateLimit";
 import { SessionMiddleware } from "../middleware/session";
 import {
   hashPassword,
@@ -17,6 +18,7 @@ export class UserCreate implements Action {
   description =
     "Register a new user account with a name, email, and password. The email must be unique across all users (case-insensitive). Password must be at least 8 characters and is stored securely as a hash. Returns the created user's profile (ID, name, email, timestamps). Does not require an existing session.";
   mcp = { enabled: false, isSignupAction: true };
+  middleware = [RateLimitMiddleware];
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({
     name: z
@@ -74,7 +76,7 @@ export class UserEdit implements Action {
   description =
     "Update the currently authenticated user's profile. All fields are optional — only provided fields will be updated. You can change the user's name, email, and/or password. Requires an active session. Returns the updated user profile.";
   web = { route: "/user", method: HTTP_METHOD.POST };
-  middleware = [SessionMiddleware];
+  middleware = [RateLimitMiddleware, SessionMiddleware];
   inputs = z.object({
     name: z.string().min(1).max(256).optional(),
     email: z.string().email().toLowerCase().optional(),
@@ -102,7 +104,7 @@ export class UserView implements Action {
   name = "user:view";
   description =
     "Retrieve another user's public profile by their user ID. Returns public information only (ID, name, timestamps) — does not expose email or other private fields. Requires an active session.";
-  middleware = [SessionMiddleware];
+  middleware = [RateLimitMiddleware, SessionMiddleware];
   web = { route: "/user/:user", method: HTTP_METHOD.GET };
   inputs = z.object({
     user: zUserIdOrModel(),
