@@ -108,7 +108,63 @@ const status = await api.actions.fanOutStatus(result.fanOutId);
 
 Results and metadata are stored in Redis with a configurable TTL (default 10 minutes). The TTL refreshes on each child job completion, so it's relative to the last activity — not the fan-out creation time.
 
+### How Fan-Out Works Internally
+
+When you call `fanOut()`, each child job gets a `_fanOutId` injected into its inputs automatically. The child action doesn't need to know about this — the Resque worker checks for `_fanOutId` after each job completes and stores the result (or error) in Redis. This means any existing action works as a fan-out child with zero changes.
+
+Redis keys for a fan-out operation:
+
+- `fanout:{id}` — hash with metadata (total, completed, failed)
+- `fanout:{id}:results` — list of successful results
+- `fanout:{id}:errors` — list of failed results
+
+### Error Handling
+
+If a child job fails, it's recorded in the errors list. The fan-out doesn't abort — other children continue processing. Use `fanOutStatus()` to check for failures:
+
+```ts
+const status = await api.actions.fanOutStatus(result.fanOutId);
+if (status.failed > 0) {
+  for (const error of status.errors) {
+    logger.error(`Failed for ${JSON.stringify(error.params)}: ${error.error}`);
+  }
+}
+```
+
+Enqueue-time errors (e.g., invalid action name) are returned immediately in the `FanOutResult.errors` array, separate from runtime errors collected via `fanOutStatus()`.
+
 ### Options
 
-- **`batchSize`** — how many jobs to enqueue per batch (default: 100)
-- **`resultTtl`** — how long to keep results in Redis, in seconds (default: 600)
+- **`batchSize`** — how many jobs to enqueue per Redis round-trip (default: 100). Jobs are enqueued in batches to avoid flooding Redis.
+- **`resultTtl`** — how long to keep results in Redis, in seconds (default: 600). The TTL refreshes on each child completion, so it's relative to the last activity — not the fan-out creation time.
+
+### Additional Task APIs
+
+Beyond fan-out, the actions initializer exposes the full Resque API for job management:
+
+```ts
+// Schedule for later
+await api.actions.enqueueAt(timestamp, "actionName", inputs, queue);
+await api.actions.enqueueIn(delayMs, "actionName", inputs, queue);
+
+// Inspect queues
+const jobs = await api.actions.queued("default", 0, 100);
+const delayed = await api.actions.allDelayed();
+
+// Manage failures
+const failedCount = await api.actions.failedCount();
+const failures = await api.actions.failed(0, 10);
+await api.actions.retryAndRemoveFailed(failedJob);
+
+// Worker management
+const workers = await api.actions.workers();
+const working = await api.actions.allWorkingOn();
+await api.actions.cleanOldWorkers(3600000); // clean workers older than 1 hour
+
+// Recurrent task control
+await api.actions.stopRecurrentAction("messages:cleanup");
+
+// Full system overview
+const details = await api.actions.taskDetails();
+// → { queues, workers, stats, leader }
+```

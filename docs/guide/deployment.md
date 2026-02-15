@@ -1,16 +1,16 @@
 ---
-description: Deploying Keryx — Docker, production builds, and running frontend and backend independently.
+description: Deploying Keryx — Docker, production builds, reverse proxies, and scaling.
 ---
 
 # Deployment
 
-Keryx runs as two separate applications — a backend API server and a frontend Next.js app. This is intentional. You can deploy them together on the same box, or put the frontend on Vercel and the backend on a VPS, or containerize everything with Docker. Each app is independent.
+Keryx is a backend API server. The included Next.js frontend is a demo app — in production you'll bring your own client. This guide focuses on deploying the backend.
 
 ## Production Build
 
 ```bash
-# compile both applications
-bun compile
+# compile the backend
+cd backend && bun compile
 
 # set NODE_ENV=production in .env, then start
 bun start
@@ -18,23 +18,13 @@ bun start
 
 ## Docker
 
-Each app has its own `Dockerfile`, and there's a `docker-compose.yml` to run everything together:
+There's a `docker-compose.yml` to run the backend with PostgreSQL and Redis:
 
 ```bash
 docker compose up
 ```
 
-This starts the backend, frontend, PostgreSQL, and Redis. You probably won't use this exact setup in production, but it shows how the pieces fit together and gives you a working reference for your own deployment config.
-
-## Separate Applications
-
-Rather than bundling the frontend into the backend (like the original ActionHero did with plugins), the frontend and backend are separate Bun applications. This means you can:
-
-- Deploy them independently — frontend on Vercel, backend on Railway, whatever works
-- Scale them independently — maybe you need more API capacity but the frontend is fine
-- Develop them independently — `cd frontend && bun dev` works without the backend
-
-In development, `bun dev` from the root runs both concurrently with hot reload.
+You probably won't use this exact setup in production, but it shows how the pieces fit together and gives you a working reference for your own deployment config.
 
 ## Environment Variables
 
@@ -84,3 +74,57 @@ cd backend && bun run migrations
 ```
 
 This generates migration files from schema changes into `./drizzle/`. They'll be applied automatically the next time the server starts — or you can set `DATABASE_AUTO_MIGRATE=false` and handle it yourself.
+
+## Reverse Proxy
+
+In production, you'll typically put the backend behind a reverse proxy (nginx, Caddy, etc.) for TLS termination, compression, and load balancing. Here's a minimal nginx config:
+
+```nginx
+upstream keryx_backend {
+    server 127.0.0.1:8080;
+}
+
+server {
+    listen 443 ssl;
+    server_name api.example.com;
+
+    ssl_certificate /etc/ssl/certs/api.example.com.pem;
+    ssl_certificate_key /etc/ssl/private/api.example.com.key;
+
+    location / {
+        proxy_pass http://keryx_backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+}
+```
+
+Make sure to include the WebSocket upgrade headers — without them, WebSocket connections and MCP Streamable HTTP transport will fail.
+
+## Scaling
+
+Keryx backends can run as multiple instances behind a load balancer. Redis handles the shared state:
+
+- **Sessions** are stored in Redis, so any instance can serve any request
+- **PubSub** broadcasts go through Redis, so channel messages reach subscribers on all instances
+- **Background tasks** use Resque with Redis, so workers on any instance can process jobs
+- **Presence tracking** is per-instance (in-memory), so `api.channels.members()` returns members for the current instance only
+
+For horizontal scaling, the main consideration is that each instance runs its own Resque workers. Configure `TASK_PROCESSORS` per instance to control how many workers each one runs. Use `["*"]` for queues unless you need dedicated worker instances for specific queues.
+
+## Process Management
+
+In production, use a process manager to keep the backend running:
+
+- **Docker** — use `restart: unless-stopped` in docker-compose
+- **systemd** — create a service unit for the backend process
+- **PM2** — `pm2 start "bun start" --name keryx-backend`
+
+Keryx handles `SIGINT` and `SIGTERM` for graceful shutdown — it stops accepting new connections, finishes in-flight requests, and disconnects from Redis and Postgres before exiting.
