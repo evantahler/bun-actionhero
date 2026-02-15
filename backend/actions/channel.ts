@@ -11,7 +11,10 @@ export class ChannelMembers implements Action {
   middleware = [RateLimitMiddleware, SessionMiddleware];
   web = { route: "/channel/:channel/members", method: HTTP_METHOD.GET };
   inputs = z.object({
-    channel: z.string().describe("The channel name to query"),
+    channel: z
+      .string()
+      .regex(/^[a-zA-Z0-9:._-]{1,200}$/, "Invalid channel name")
+      .describe("The channel name to query"),
   });
 
   async run(params: ActionParams<ChannelMembers>) {
