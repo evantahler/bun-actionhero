@@ -464,6 +464,67 @@ describe("mcp initializer (enabled)", () => {
       expect(html).toContain("Invalid redirect URI");
     });
 
+    test("OAuth registration has a stricter rate limit than other endpoints", async () => {
+      const origEnabled = config.rateLimit.enabled;
+      const origLimit = config.rateLimit.oauthRegisterLimit;
+      const origWindowMs = config.rateLimit.oauthRegisterWindowMs;
+      (config.rateLimit as any).enabled = true;
+      (config.rateLimit as any).oauthRegisterLimit = 2;
+      (config.rateLimit as any).oauthRegisterWindowMs = 60_000;
+
+      // Clean up any existing rate limit keys
+      const keys = await api.redis.redis.keys(
+        `${config.rateLimit.keyPrefix}:*`,
+      );
+      if (keys.length > 0) await api.redis.redis.del(...keys);
+
+      try {
+        // First two registrations should succeed
+        for (let i = 0; i < 2; i++) {
+          const res = await fetch(`${baseUrl()}/oauth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              redirect_uris: ["http://localhost:3000/callback"],
+              client_name: `Rate Limit Test ${i}`,
+            }),
+          });
+          expect(res.status).toBe(201);
+        }
+
+        // Third registration should be rate-limited
+        const res = await fetch(`${baseUrl()}/oauth/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            redirect_uris: ["http://localhost:3000/callback"],
+            client_name: "Rate Limit Test Blocked",
+          }),
+        });
+        expect(res.status).toBe(429);
+        const body = (await res.json()) as {
+          error: string;
+          error_description: string;
+        };
+        expect(body.error).toBe("rate_limit_exceeded");
+        expect(res.headers.get("Retry-After")).toBeTruthy();
+
+        // Non-register OAuth endpoint should still work (different rate limit)
+        const metaRes = await fetch(
+          `${baseUrl()}/.well-known/oauth-authorization-server`,
+        );
+        expect(metaRes.status).toBe(200);
+      } finally {
+        (config.rateLimit as any).enabled = origEnabled;
+        (config.rateLimit as any).oauthRegisterLimit = origLimit;
+        (config.rateLimit as any).oauthRegisterWindowMs = origWindowMs;
+        const cleanupKeys = await api.redis.redis.keys(
+          `${config.rateLimit.keyPrefix}:*`,
+        );
+        if (cleanupKeys.length > 0) await api.redis.redis.del(...cleanupKeys);
+      }
+    });
+
     test("OAuth client registration requires redirect_uris", async () => {
       const res = await fetch(`${baseUrl()}/oauth/register`, {
         method: "POST",
