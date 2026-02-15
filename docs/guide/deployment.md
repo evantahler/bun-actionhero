@@ -1,16 +1,16 @@
 ---
-description: Deploying Keryx — Docker, production builds, and running frontend and backend independently.
+description: Deploying Keryx — Docker, production builds, reverse proxies, and scaling.
 ---
 
 # Deployment
 
-Keryx runs as two separate applications — a backend API server and a frontend Next.js app. This is intentional. You can deploy them together on the same box, or put the frontend on Vercel and the backend on a VPS, or containerize everything with Docker. Each app is independent.
+Keryx is a backend API server. The included Next.js frontend is a demo app — in production you'll bring your own client. This guide focuses on deploying the backend.
 
 ## Production Build
 
 ```bash
-# compile both applications
-bun compile
+# compile the backend
+cd backend && bun compile
 
 # set NODE_ENV=production in .env, then start
 bun start
@@ -18,23 +18,13 @@ bun start
 
 ## Docker
 
-Each app has its own `Dockerfile`, and there's a `docker-compose.yml` to run everything together:
+There's a `docker-compose.yml` to run the backend with PostgreSQL and Redis:
 
 ```bash
 docker compose up
 ```
 
-This starts the backend, frontend, PostgreSQL, and Redis. You probably won't use this exact setup in production, but it shows how the pieces fit together and gives you a working reference for your own deployment config.
-
-## Separate Applications
-
-Rather than bundling the frontend into the backend (like the original ActionHero did with plugins), the frontend and backend are separate Bun applications. This means you can:
-
-- Deploy them independently — frontend on Vercel, backend on Railway, whatever works
-- Scale them independently — maybe you need more API capacity but the frontend is fine
-- Develop them independently — `cd frontend && bun dev` works without the backend
-
-In development, `bun dev` from the root runs both concurrently with hot reload.
+You probably won't use this exact setup in production, but it shows how the pieces fit together and gives you a working reference for your own deployment config.
 
 ## Environment Variables
 
@@ -128,20 +118,6 @@ Keryx backends can run as multiple instances behind a load balancer. Redis handl
 - **Presence tracking** is per-instance (in-memory), so `api.channels.members()` returns members for the current instance only
 
 For horizontal scaling, the main consideration is that each instance runs its own Resque workers. Configure `TASK_PROCESSORS` per instance to control how many workers each one runs. Use `["*"]` for queues unless you need dedicated worker instances for specific queues.
-
-## Frontend Deployment
-
-The Next.js frontend can be deployed anywhere that supports Node.js or Bun:
-
-- **Vercel** — `cd frontend && vercel deploy` (zero config for Next.js)
-- **Docker** — use the frontend's `Dockerfile`
-- **Static export** — if your app supports it, `next export` for CDN hosting
-
-Set `NEXT_PUBLIC_API_URL` in the frontend environment to point at your backend:
-
-```bash
-NEXT_PUBLIC_API_URL=https://api.example.com
-```
 
 ## Process Management
 
