@@ -205,6 +205,28 @@ async function handleRegister(req: Request): Promise<Response> {
     );
   }
 
+  for (const uri of body.redirect_uris) {
+    if (typeof uri !== "string") {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: "Each redirect_uri must be a string",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    const validation = validateRedirectUri(uri);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: validation.error,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }
+
   const clientId = randomUUID();
   const client: OAuthClient = {
     client_id: clientId,
@@ -296,7 +318,10 @@ async function handleAuthorizePost(req: Request): Promise<Response> {
   }
   const client = JSON.parse(clientRaw) as OAuthClient;
 
-  if (!client.redirect_uris.includes(redirectUri)) {
+  const uriMatch = client.redirect_uris.some((registered) =>
+    redirectUrisMatch(registered, redirectUri),
+  );
+  if (!uriMatch) {
     oauthParams.error = "Invalid redirect URI";
     return renderAuthPage(oauthParams);
   }
@@ -494,6 +519,56 @@ async function handleToken(req: Request): Promise<Response> {
       headers: { "Content-Type": "application/json" },
     },
   );
+}
+
+function validateRedirectUri(uri: string): {
+  valid: boolean;
+  error?: string;
+} {
+  let parsed: URL;
+  try {
+    parsed = new URL(uri);
+  } catch {
+    return { valid: false, error: `Invalid URI: ${uri}` };
+  }
+
+  if (parsed.hash) {
+    return { valid: false, error: "Redirect URI must not contain a fragment" };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { valid: false, error: "Redirect URI must not contain userinfo" };
+  }
+
+  const isLocalhost =
+    parsed.hostname === "localhost" ||
+    parsed.hostname === "127.0.0.1" ||
+    parsed.hostname === "[::1]";
+
+  if (!isLocalhost && parsed.protocol !== "https:") {
+    return {
+      valid: false,
+      error: "Redirect URI must use HTTPS for non-localhost URIs",
+    };
+  }
+
+  return { valid: true };
+}
+
+function redirectUrisMatch(
+  registeredUri: string,
+  requestedUri: string,
+): boolean {
+  try {
+    const registered = new URL(registeredUri);
+    const requested = new URL(requestedUri);
+    return (
+      registered.origin === requested.origin &&
+      registered.pathname === requested.pathname
+    );
+  } catch {
+    return false;
+  }
 }
 
 function base64UrlEncode(buffer: Uint8Array): string {
