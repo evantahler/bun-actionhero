@@ -14,16 +14,23 @@ import {
   checkRateLimit,
   RateLimitMiddleware,
 } from "../../middleware/rateLimit";
-import { HOOK_TIMEOUT } from "../setup";
+import { HOOK_TIMEOUT, serverUrl } from "../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
+  // Enable rate limiting for this test file (disabled by default in test env)
+  (config.rateLimit as any).enabled = true;
 }, HOOK_TIMEOUT);
 
 afterAll(async () => {
+  // Disable rate limiting and clear keys so subsequent test files aren't throttled
+  (config.rateLimit as any).enabled = false;
+  const keys = await api.redis.redis.keys(`${config.rateLimit.keyPrefix}:*`);
+  if (keys.length > 0) await api.redis.redis.del(...keys);
   await api.stop();
 }, HOOK_TIMEOUT);
 

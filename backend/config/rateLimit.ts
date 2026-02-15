@@ -1,7 +1,10 @@
 import { loadFromEnvIfSet } from "../util/config";
 
 export const configRateLimit = {
-  enabled: await loadFromEnvIfSet("RATE_LIMIT_ENABLED", true),
+  enabled: await loadFromEnvIfSet(
+    "RATE_LIMIT_ENABLED",
+    Bun.env.NODE_ENV === "test" ? false : true,
+  ),
   windowMs: await loadFromEnvIfSet("RATE_LIMIT_WINDOW_MS", 60_000), // 60 seconds
   unauthenticatedLimit: await loadFromEnvIfSet("RATE_LIMIT_UNAUTH_LIMIT", 20),
   authenticatedLimit: await loadFromEnvIfSet("RATE_LIMIT_AUTH_LIMIT", 200),
