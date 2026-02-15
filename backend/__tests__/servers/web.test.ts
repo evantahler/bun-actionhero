@@ -48,6 +48,38 @@ describe("actions", () => {
   });
 });
 
+describe("security headers", () => {
+  test("API responses include security headers", async () => {
+    const res = await fetch(url + "/api/status");
+    expect(res.headers.get("Content-Security-Policy")).toBe(
+      "default-src 'self'",
+    );
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(res.headers.get("Strict-Transport-Security")).toBe(
+      "max-age=31536000; includeSubDomains",
+    );
+    expect(res.headers.get("Referrer-Policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
+  });
+
+  test("static file responses include security headers", async () => {
+    const res = await fetch(url + "/test.txt");
+    expect(res.headers.get("Content-Security-Policy")).toBe(
+      "default-src 'self'",
+    );
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(res.headers.get("Strict-Transport-Security")).toBe(
+      "max-age=31536000; includeSubDomains",
+    );
+    expect(res.headers.get("Referrer-Policy")).toBe(
+      "strict-origin-when-cross-origin",
+    );
+  });
+});
+
 describe("static files", () => {
   test("serves a file from the static directory", async () => {
     const res = await fetch(url + "/test.txt");

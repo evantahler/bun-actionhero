@@ -27,4 +27,26 @@ export const configServerWeb = {
     "assets",
   ),
   staticFilesRoute: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
+  securityHeaders: {
+    "Content-Security-Policy": await loadFromEnvIfSet(
+      "WEB_SECURITY_CSP",
+      "default-src 'self'",
+    ),
+    "X-Content-Type-Options": await loadFromEnvIfSet(
+      "WEB_SECURITY_CONTENT_TYPE_OPTIONS",
+      "nosniff",
+    ),
+    "X-Frame-Options": await loadFromEnvIfSet(
+      "WEB_SECURITY_FRAME_OPTIONS",
+      "DENY",
+    ),
+    "Strict-Transport-Security": await loadFromEnvIfSet(
+      "WEB_SECURITY_HSTS",
+      "max-age=31536000; includeSubDomains",
+    ),
+    "Referrer-Policy": await loadFromEnvIfSet(
+      "WEB_SECURITY_REFERRER_POLICY",
+      "strict-origin-when-cross-origin",
+    ),
+  } as Record<string, string>,
 };
