@@ -106,6 +106,7 @@ describe("mcp initializer (enabled)", () => {
 
   beforeAll(async () => {
     config.server.mcp.enabled = true;
+    config.rateLimit.enabled = false;
     await api.start();
     accessToken = await getAccessToken();
   }, HOOK_TIMEOUT);
@@ -113,6 +114,7 @@ describe("mcp initializer (enabled)", () => {
   afterAll(async () => {
     await api.stop();
     config.server.mcp.enabled = false;
+    config.rateLimit.enabled = true;
   }, HOOK_TIMEOUT);
 
   test("MCP server boots when enabled", () => {
