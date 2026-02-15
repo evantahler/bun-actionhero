@@ -97,6 +97,53 @@ await api.pubsub.broadcast(
 
 Messages go through Redis PubSub, so they work across server instances. If you're running three backend processes behind a load balancer, a broadcast from one reaches subscribers on all three.
 
+## Presence Tracking
+
+Channels have built-in presence tracking — you can see who's currently subscribed to a channel. When a connection subscribes, it's registered with a presence key. When the last connection for a key leaves, a leave event is broadcast.
+
+### How It Works
+
+By default, the presence key is the connection ID. Override `presenceKey()` on your channel to use something more meaningful, like a user ID from the session:
+
+```ts
+export class RoomChannel extends Channel {
+  constructor() {
+    super({ name: /^room:.*$/ });
+  }
+
+  async presenceKey(connection: Connection): Promise<string> {
+    return `user:${connection.session?.userId}`;
+  }
+}
+```
+
+### Presence API
+
+```ts
+// Get all presence keys for a channel (across all server instances)
+const members = await api.channels.members("room:123");
+// → ["user:1", "user:42", "user:7"]
+```
+
+Presence data is stored in Redis, so `members()` returns a global view across all instances in a multi-server deployment.
+
+Presence events are broadcast automatically via PubSub when a key joins or leaves:
+
+```json
+{ "event": "join", "presenceKey": "user:42" }
+{ "event": "leave", "presenceKey": "user:42" }
+```
+
+A single presence key can have multiple connections (e.g., a user with multiple browser tabs). The `join` event fires when the first connection for that key subscribes, and the `leave` event fires when the last connection for that key unsubscribes.
+
+### Clearing Presence
+
+For test cleanup:
+
+```ts
+await api.channels.clearPresence();
+```
+
 ## WebSocket Security
 
 Channels and WebSocket connections have several built-in protections. See the [Security guide](/guide/security) for the full picture.
@@ -122,3 +169,64 @@ Each WebSocket connection is subject to:
 - **Subscription count** — each connection can subscribe to at most `websocketMaxSubscriptions` (default 100) channels
 
 All of these are configurable via environment variables. See [Configuration](/guide/config) for details.
+
+## WebSocket Client Examples
+
+### Connecting and Running Actions
+
+```js
+const ws = new WebSocket("ws://localhost:8080");
+
+ws.onopen = () => {
+  // Run an action over WebSocket
+  ws.send(
+    JSON.stringify({
+      messageType: "action",
+      action: "status",
+      messageId: "req-1", // echoed back in response for correlation
+    }),
+  );
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log(data);
+  // → { messageId: "req-1", name: "server", uptime: 12345, ... }
+};
+```
+
+### Subscribing to Channels
+
+```js
+// Subscribe
+ws.send(
+  JSON.stringify({
+    messageType: "subscribe",
+    channel: "messages",
+  }),
+);
+
+// Listen for broadcasts
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  if (data.channel) {
+    console.log(`Broadcast on ${data.channel}:`, data.message);
+  }
+};
+
+// Unsubscribe
+ws.send(
+  JSON.stringify({
+    messageType: "unsubscribe",
+    channel: "messages",
+  }),
+);
+```
+
+### Message Types Reference
+
+| messageType     | Fields                                     | Description                |
+| --------------- | ------------------------------------------ | -------------------------- |
+| `"action"`      | `action`, `params`, `messageId` (optional) | Execute an action          |
+| `"subscribe"`   | `channel`                                  | Subscribe to a channel     |
+| `"unsubscribe"` | `channel`                                  | Unsubscribe from a channel |

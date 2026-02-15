@@ -59,7 +59,7 @@ describe("channel:members", () => {
 
   beforeEach(async () => {
     // Clear any leftover presence data
-    api.channels.members("messages"); // no-op, just ensures channel initializer is ready
+    await api.channels.clearPresence();
   });
 
   test("rejects invalid channel name", async () => {

@@ -1,3 +1,4 @@
+import { configChannels } from "./channels";
 import { configDatabase } from "./database";
 import { configLogger } from "./logger";
 import { configProcess } from "./process";
@@ -17,6 +18,7 @@ export const configPaths = {
 };
 
 export const config = {
+  channels: configChannels,
   process: configProcess,
   logger: configLogger,
   database: configDatabase,

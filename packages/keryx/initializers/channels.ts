@@ -1,5 +1,5 @@
 import { existsSync } from "fs";
-import path from "path";
+import path, { join } from "path";
 import { api, logger } from "../index";
 import type { Channel } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
@@ -9,6 +9,8 @@ import { config } from "../config";
 import { globLoader } from "../util/glob";
 
 const namespace = "channels";
+const PRESENCE_KEY_PREFIX = "presence:";
+const LUA_DIR = join(import.meta.dir, "..", "lua");
 
 declare module "../classes/API" {
   export interface API {
@@ -17,15 +19,16 @@ declare module "../classes/API" {
 }
 
 export class Channels extends Initializer {
-  /**
-   * Presence data: channelName → presenceKey → Set<connectionId>
-   * Tracks which connections map to which presence keys per channel.
-   */
-  presence = new Map<string, Map<string, Set<string>>>();
+  private addPresenceLua = "";
+  private removePresenceLua = "";
+  private refreshPresenceLua = "";
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     super(namespace);
     this.loadPriority = 100;
+    this.startPriority = 600;
+    this.stopPriority = 50;
   }
 
   /**
@@ -90,6 +93,10 @@ export class Channels extends Initializer {
   /**
    * Record a connection's presence in a channel and broadcast a join event
    * if this is the first connection for that presence key.
+   *
+   * Redis keys:
+   *   presence:{channelName} — Set of presence keys
+   *   presence:{channelName}:{presenceKey} — Set of connection IDs
    */
   addPresence = async (
     channelName: string,
@@ -98,18 +105,20 @@ export class Channels extends Initializer {
     const channel = this.findChannel(channelName);
     const key = channel ? await channel.presenceKey(connection) : connection.id;
 
-    if (!this.presence.has(channelName)) {
-      this.presence.set(channelName, new Map());
-    }
-    const channelPresence = this.presence.get(channelName)!;
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    const isNewKey = !channelPresence.has(key);
-    if (!channelPresence.has(key)) {
-      channelPresence.set(key, new Set());
-    }
-    channelPresence.get(key)!.add(connection.id);
+    const added = await api.redis.redis.eval(
+      this.addPresenceLua,
+      2,
+      connectionSetKey,
+      channelKey,
+      connection.id,
+      key,
+      config.channels.presenceTTL,
+    );
 
-    if (isNewKey) {
+    if (added === 1) {
       await api.pubsub.broadcast(
         channelName,
         JSON.stringify({ event: "join", presenceKey: key }),
@@ -126,48 +135,101 @@ export class Channels extends Initializer {
     channelName: string,
     connection: Connection,
   ): Promise<void> => {
-    const channelPresence = this.presence.get(channelName);
-    if (!channelPresence) return;
-
     const channel = this.findChannel(channelName);
     const key = channel ? await channel.presenceKey(connection) : connection.id;
 
-    const connectionIds = channelPresence.get(key);
-    if (!connectionIds) return;
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    connectionIds.delete(connection.id);
+    const shouldLeave = await api.redis.redis.eval(
+      this.removePresenceLua,
+      2,
+      connectionSetKey,
+      channelKey,
+      connection.id,
+      key,
+    );
 
-    if (connectionIds.size === 0) {
-      channelPresence.delete(key);
+    if (shouldLeave === 1) {
       await api.pubsub.broadcast(
         channelName,
         JSON.stringify({ event: "leave", presenceKey: key }),
         "presence",
       );
     }
-
-    if (channelPresence.size === 0) {
-      this.presence.delete(channelName);
-    }
   };
 
   /**
-   * Returns the list of presence keys for members currently in the channel on this server.
+   * Returns the list of presence keys for members currently in the channel
+   * across all server instances.
    */
-  members = (channelName: string): string[] => {
-    const channelPresence = this.presence.get(channelName);
-    if (!channelPresence) return [];
-    return Array.from(channelPresence.keys());
+  members = async (channelName: string): Promise<string[]> => {
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    return api.redis.redis.smembers(channelKey);
+  };
+
+  /**
+   * Refresh TTLs on all presence keys owned by local connections.
+   * Called periodically by the heartbeat timer to prevent keys from
+   * expiring while the server is still alive.
+   */
+  refreshPresence = async (): Promise<void> => {
+    const keysToRefresh = new Set<string>();
+
+    for (const connection of api.connections.connections) {
+      for (const channelName of connection.subscriptions) {
+        const channel = this.findChannel(channelName);
+        const key = channel
+          ? await channel.presenceKey(connection)
+          : connection.id;
+
+        keysToRefresh.add(`${PRESENCE_KEY_PREFIX}${channelName}`);
+        keysToRefresh.add(`${PRESENCE_KEY_PREFIX}${channelName}:${key}`);
+      }
+    }
+
+    if (keysToRefresh.size === 0) return;
+
+    const keys = [...keysToRefresh];
+    await api.redis.redis.eval(
+      this.refreshPresenceLua,
+      keys.length,
+      ...keys,
+      config.channels.presenceTTL,
+    );
   };
 
   /**
    * Clear all presence data. Useful for test cleanup.
    */
-  clearPresence = (): void => {
-    this.presence.clear();
+  clearPresence = async (): Promise<void> => {
+    let cursor = "0";
+    do {
+      const [nextCursor, keys] = await api.redis.redis.scan(
+        cursor,
+        "MATCH",
+        `${PRESENCE_KEY_PREFIX}*`,
+        "COUNT",
+        100,
+      );
+      cursor = nextCursor;
+      if (keys.length > 0) {
+        await api.redis.redis.del(...keys);
+      }
+    } while (cursor !== "0");
   };
 
   async initialize() {
+    this.addPresenceLua = await Bun.file(
+      join(LUA_DIR, "add-presence.lua"),
+    ).text();
+    this.removePresenceLua = await Bun.file(
+      join(LUA_DIR, "remove-presence.lua"),
+    ).text();
+    this.refreshPresenceLua = await Bun.file(
+      join(LUA_DIR, "refresh-presence.lua"),
+    ).text();
+
     let channels: Channel[] = [];
 
     // Channels are user-defined only (no framework channels)
@@ -195,8 +257,31 @@ export class Channels extends Initializer {
       handleUnsubscription: this.handleUnsubscription,
       addPresence: this.addPresence,
       removePresence: this.removePresence,
+      refreshPresence: this.refreshPresence,
       members: this.members,
       clearPresence: this.clearPresence,
     };
+  }
+
+  async start() {
+    const intervalMs = config.channels.presenceHeartbeatInterval * 1000;
+    this.heartbeatTimer = setInterval(async () => {
+      try {
+        await this.refreshPresence();
+      } catch (e) {
+        logger.error(`presence heartbeat error: ${e}`);
+      }
+    }, intervalMs);
+
+    logger.info(
+      `presence heartbeat started (interval=${config.channels.presenceHeartbeatInterval}s, ttl=${config.channels.presenceTTL}s)`,
+    );
+  }
+
+  async stop() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 }

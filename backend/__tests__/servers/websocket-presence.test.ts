@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 import { api } from "../../api";
+import { config } from "../../api";
 import { HOOK_TIMEOUT } from "./../setup";
 import {
   buildWebSocket,
@@ -9,17 +10,19 @@ import {
 } from "./websocket-helpers";
 
 beforeAll(async () => {
+  (config.rateLimit as any).enabled = false;
   await api.start();
   await api.db.clearDatabase();
 }, HOOK_TIMEOUT);
 
 afterAll(async () => {
+  (config.rateLimit as any).enabled = true;
   await api.stop();
 }, HOOK_TIMEOUT);
 
 beforeEach(async () => {
   await api.db.clearDatabase();
-  api.channels.clearPresence();
+  await api.channels.clearPresence();
 });
 
 test("should track presence when subscribing to a channel", async () => {
@@ -39,12 +42,12 @@ test("should track presence when subscribing to a channel", async () => {
 
   // Subscribe first user
   await subscribeToChannel(socket1, messages1, "messages");
-  let members = api.channels.members("messages");
+  let members = await api.channels.members("messages");
   expect(members.length).toBe(1);
 
   // Subscribe second user
   await subscribeToChannel(socket2, messages2, "messages");
-  members = api.channels.members("messages");
+  members = await api.channels.members("messages");
   expect(members.length).toBe(2);
 
   socket1.close();
@@ -59,7 +62,7 @@ test("should remove presence on unsubscribe", async () => {
   await createSession(socket, messages, "marco@example.com", "abc12345");
   await subscribeToChannel(socket, messages, "messages");
 
-  expect(api.channels.members("messages").length).toBe(1);
+  expect((await api.channels.members("messages")).length).toBe(1);
 
   // Unsubscribe
   socket.send(
@@ -67,7 +70,7 @@ test("should remove presence on unsubscribe", async () => {
   );
   await Bun.sleep(100);
 
-  expect(api.channels.members("messages").length).toBe(0);
+  expect((await api.channels.members("messages")).length).toBe(0);
 
   socket.close();
   await Bun.sleep(100);
@@ -80,13 +83,13 @@ test("should remove presence on disconnect", async () => {
   await createSession(socket, messages, "marco@example.com", "abc12345");
   await subscribeToChannel(socket, messages, "messages");
 
-  expect(api.channels.members("messages").length).toBe(1);
+  expect((await api.channels.members("messages")).length).toBe(1);
 
   // Close the socket (disconnect)
   socket.close();
   await Bun.sleep(100);
 
-  expect(api.channels.members("messages").length).toBe(0);
+  expect((await api.channels.members("messages")).length).toBe(0);
 });
 
 test("should use presenceKey from channel (user ID for messages channel)", async () => {
@@ -124,19 +127,81 @@ test("should use presenceKey from channel (user ID for messages channel)", async
   while (messages2.length < 2) await Bun.sleep(10);
 
   // Same user = same presenceKey, so only 1 member
-  const members = api.channels.members("messages");
+  const members = await api.channels.members("messages");
   expect(members.length).toBe(1);
   expect(members[0]).toBe("1"); // userId as string
 
   // Close first tab — user still present via second tab
   socket1.close();
   await Bun.sleep(100);
-  expect(api.channels.members("messages").length).toBe(1);
+  expect((await api.channels.members("messages")).length).toBe(1);
 
   // Close second tab — now fully gone
   socket2.close();
   await Bun.sleep(100);
-  expect(api.channels.members("messages").length).toBe(0);
+  expect((await api.channels.members("messages")).length).toBe(0);
+});
+
+test("should expire orphaned presence keys after TTL", async () => {
+  // Use a very short TTL for this test
+  const originalTTL = config.channels.presenceTTL;
+  (config.channels as any).presenceTTL = 2;
+
+  const { socket, messages } = await buildWebSocket();
+
+  await createUser(socket, messages, "Marco", "marco@example.com", "abc12345");
+  await createSession(socket, messages, "marco@example.com", "abc12345");
+  await subscribeToChannel(socket, messages, "messages");
+
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  // Verify the Redis keys have a TTL set
+  const ttl = await api.redis.redis.ttl("presence:messages");
+  expect(ttl).toBeGreaterThan(0);
+  expect(ttl).toBeLessThanOrEqual(2);
+
+  // Simulate a crash by NOT calling removePresence — just splice out all
+  // connections so the heartbeat won't refresh their keys
+  const savedConnections = api.connections.connections.splice(
+    0,
+    api.connections.connections.length,
+  );
+
+  // Presence should still exist immediately
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  // Wait for TTL to expire
+  await Bun.sleep(3000);
+
+  // Now the orphaned presence should be gone
+  expect((await api.channels.members("messages")).length).toBe(0);
+
+  // Restore connections so cleanup can proceed, then close
+  api.connections.connections.push(...savedConnections);
+  (config.channels as any).presenceTTL = originalTTL;
+  socket.close();
+  await Bun.sleep(100);
+});
+
+test("should refresh presence TTL via heartbeat", async () => {
+  const { socket, messages } = await buildWebSocket();
+
+  await createUser(socket, messages, "Marco", "marco@example.com", "abc12345");
+  await createSession(socket, messages, "marco@example.com", "abc12345");
+  await subscribeToChannel(socket, messages, "messages");
+
+  // Manually trigger a heartbeat refresh
+  await api.channels.refreshPresence();
+
+  // Verify presence keys still exist with TTLs
+  const ttl = await api.redis.redis.ttl("presence:messages");
+  expect(ttl).toBeGreaterThan(0);
+  expect(ttl).toBeLessThanOrEqual(config.channels.presenceTTL);
+
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  socket.close();
+  await Bun.sleep(100);
 });
 
 test("should broadcast join/leave events to other subscribers", async () => {
