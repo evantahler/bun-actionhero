@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { api } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { Channel } from "../../classes/Channel";
+import { config } from "../../config";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 import { buildWebSocket } from "./websocket-helpers";
 
 beforeAll(async () => {
@@ -106,4 +108,178 @@ test("unknown actions", async () => {
   expect(message.error.message).toBe("Action not found: unknown");
   expect(message.error.type).toBe("CONNECTION_ACTION_NOT_FOUND");
   socket.close();
+});
+
+test("rate limits rapid messages", async () => {
+  const originalLimit = config.server.web.websocketMaxMessagesPerSecond;
+  (config.server.web as any).websocketMaxMessagesPerSecond = 3;
+
+  try {
+    const { socket, messages } = await buildWebSocket();
+
+    // Send 5 messages in quick succession (limit is 3)
+    for (let i = 0; i < 5; i++) {
+      socket.send(
+        JSON.stringify({
+          messageType: "action",
+          action: "status",
+          messageId: i,
+          params: {},
+        }),
+      );
+    }
+
+    // Wait for responses
+    while (messages.length < 5) await Bun.sleep(10);
+
+    const parsed = messages.map((m) => JSON.parse(m.data));
+    const rateLimited = parsed.filter(
+      (m: any) => m.error?.type === "CONNECTION_RATE_LIMITED",
+    );
+    expect(rateLimited.length).toBeGreaterThan(0);
+    expect(rateLimited[0].error.message).toBe("WebSocket rate limit exceeded");
+
+    socket.close();
+  } finally {
+    (config.server.web as any).websocketMaxMessagesPerSecond = originalLimit;
+  }
+});
+
+test("limits max subscriptions per connection", async () => {
+  const originalLimit = config.server.web.websocketMaxSubscriptions;
+  (config.server.web as any).websocketMaxSubscriptions = 2;
+
+  // Register temporary test channels so they pass authorization
+  class TestChannel extends Channel {
+    constructor(name: string) {
+      super({ name });
+    }
+  }
+  const testChannels = [
+    new TestChannel("test-chan-0"),
+    new TestChannel("test-chan-1"),
+    new TestChannel("test-chan-overflow"),
+  ];
+  api.channels.channels.push(...testChannels);
+
+  try {
+    const { socket, messages } = await buildWebSocket();
+
+    // Subscribe to 2 channels (the limit)
+    for (let i = 0; i < 2; i++) {
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          channel: `test-chan-${i}`,
+          messageId: i,
+        }),
+      );
+    }
+
+    while (messages.length < 2) await Bun.sleep(10);
+
+    // Third subscription should fail
+    socket.send(
+      JSON.stringify({
+        messageType: "subscribe",
+        channel: "test-chan-overflow",
+        messageId: 99,
+      }),
+    );
+
+    // Wait for the error response (presence broadcast events may interleave)
+    let errorMsg: any;
+    while (!errorMsg) {
+      for (const m of messages) {
+        const parsed = JSON.parse(m.data);
+        if (parsed.error?.type === "CONNECTION_CHANNEL_VALIDATION") {
+          errorMsg = parsed;
+          break;
+        }
+      }
+      if (!errorMsg) await Bun.sleep(10);
+    }
+
+    expect(errorMsg.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+    expect(errorMsg.error.message).toContain("Too many subscriptions");
+
+    socket.close();
+  } finally {
+    (config.server.web as any).websocketMaxSubscriptions = originalLimit;
+    // Remove temporary test channels
+    for (const tc of testChannels) {
+      const idx = api.channels.channels.indexOf(tc);
+      if (idx !== -1) api.channels.channels.splice(idx, 1);
+    }
+  }
+});
+
+test("rejects WebSocket upgrade with disallowed Origin header", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = "http://allowed.example.com";
+
+  try {
+    const res = await fetch(serverUrl(), {
+      headers: {
+        Upgrade: "websocket",
+        Connection: "Upgrade",
+        Origin: "http://evil.example.com",
+        "Sec-WebSocket-Key": btoa(crypto.randomUUID()),
+        "Sec-WebSocket-Version": "13",
+      },
+    });
+
+    expect(res.status).toBe(403);
+    expect(await res.text()).toBe("WebSocket origin not allowed");
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
+  }
+});
+
+test("allows WebSocket upgrade with matching Origin header", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = serverUrl();
+
+  try {
+    const { socket } = await buildWebSocket({
+      headers: { Origin: serverUrl() },
+    });
+
+    socket.send(
+      JSON.stringify({
+        messageType: "action",
+        action: "status",
+        messageId: 1,
+        params: {},
+      }),
+    );
+
+    socket.close();
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
+  }
+});
+
+test("allows WebSocket upgrade with wildcard allowedOrigins", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = "*";
+
+  try {
+    const { socket } = await buildWebSocket({
+      headers: { Origin: "http://any-origin.example.com" },
+    });
+
+    socket.send(
+      JSON.stringify({
+        messageType: "action",
+        action: "status",
+        messageId: 1,
+        params: {},
+      }),
+    );
+
+    socket.close();
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
+  }
 });

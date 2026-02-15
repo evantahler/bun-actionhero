@@ -1,13 +1,13 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Swagger } from "../../actions/swagger";
 import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
 }, HOOK_TIMEOUT);
 
 afterAll(async () => {

@@ -1,6 +1,7 @@
 import { Command } from "commander";
 import os from "node:os";
 import { Action, api, Connection, RUN_MODE } from "../api";
+import { config } from "../config";
 import { ExitCode } from "./../classes/ExitCode";
 import { TypedError } from "./../classes/TypedError";
 
@@ -49,7 +50,7 @@ The server will be initialized and started, except for initialized with the skip
 
 async function runActionViaCLI(options: Record<string, string>, command: any) {
   const actionName: string = command.parent.args[0];
-  if (options.quiet) api.logger.quiet = true;
+  if (options.quiet || config.server.cli.quiet) api.logger.quiet = true;
 
   await api.initialize();
 
@@ -76,10 +77,12 @@ async function runActionViaCLI(options: Record<string, string>, command: any) {
     if (error instanceof TypedError) {
       payload.error = {
         message: error.message,
-        stack: error.stack,
         type: error.type,
         key: error.key,
         value: error.value,
+        ...(config.server.cli.includeStackInErrors
+          ? { stack: error.stack }
+          : {}),
       };
     } else {
       payload.error = error;

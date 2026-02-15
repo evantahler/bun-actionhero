@@ -6,6 +6,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with `backend/` (API server) and `frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
 
+## Environment Setup
+
+Backend requires a `backend/.env` file. In a fresh clone or new git worktree, copy from the example and adjust:
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+The defaults in `.env.example` assume a local macOS PostgreSQL where your shell `$USER` is a superuser with no password (typical for Homebrew Postgres). If that matches your setup, no edits are needed.
+
+Similarly for frontend:
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
 ## Common Commands
 
 All commands from root unless noted. Backend tests require PostgreSQL (`bun` and `bun-test` databases) and Redis running locally.
@@ -114,6 +130,10 @@ Drizzle ORM table definitions. Migrations auto-apply on server start when `confi
 ### TypedError (`backend/classes/TypedError.ts`)
 All action errors must use `TypedError` with an `ErrorType` enum. Each error type maps to an HTTP status code via `ErrorStatusCodes`.
 
+## Coding Conventions
+
+- **No `as any`** — Never use `as any` type assertions. Use `@ts-expect-error` with an explanatory comment when the type system can't express something, or add a proper type/interface.
+
 ## Testing Patterns
 
 Tests use Bun's built-in test runner. Each test file boots/stops the full server:
@@ -134,6 +154,8 @@ test("...", async () => {
 
 Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concurrently to avoid port conflicts.
 
+**Every code change should include tests.** When adding features, fixing bugs, or modifying behavior, always write or update tests to cover the change. If a PR has no test changes, that's a red flag.
+
 ### Auto-discovery
 Actions, initializers, and servers are auto-discovered via `globLoader` (`backend/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped.
 
@@ -150,15 +172,6 @@ cd docs && bun run generate        # Regenerate reference JSON from backend sour
 **Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
 
 The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
-
-## Planning Mode
-
-When using Claude Code's planning mode (`/plan`), the finalized plan **must be filed as a GitHub issue** before implementation begins. Use the `Github_CreateIssue` tool (or `gh issue create`) to create the issue in this repo (`evantahler/keryx`) with:
-- A clear title summarizing the planned work
-- The full plan as the issue body (markdown)
-- Appropriate labels if relevant (e.g., `enhancement`, `refactor`)
-
-Do not begin implementation until the issue is created and the URL is shared with the user.
 
 ## Gotcha: Stale Processes
 

@@ -6,15 +6,14 @@ import {
   expect,
   test,
 } from "bun:test";
-import { api, config } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { api } from "../../api";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const wsUrl = config.server.web.applicationUrl
-  .replace("https://", "wss://")
-  .replace("http://", "ws://");
+let wsUrl: string;
 
 beforeAll(async () => {
   await api.start();
+  wsUrl = serverUrl().replace("https://", "wss://").replace("http://", "ws://");
   await api.db.clearDatabase();
 }, HOOK_TIMEOUT);
 
@@ -47,6 +46,23 @@ const waitForMessages = async (
   while (messages.length < count && Date.now() - start < timeout) {
     await Bun.sleep(10);
   }
+};
+
+// Helper to wait for a message matching a specific messageId
+const waitForMessageId = async (
+  messages: MessageEvent[],
+  messageId: string,
+  timeout = 2000,
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    for (const m of messages) {
+      const parsed = JSON.parse(m.data);
+      if (parsed.messageId === messageId) return parsed;
+    }
+    await Bun.sleep(10);
+  }
+  throw new Error(`Timed out waiting for messageId "${messageId}"`);
 };
 
 describe("channel authorization", () => {
@@ -128,9 +144,7 @@ describe("channel authorization", () => {
         }),
       );
 
-      await waitForMessages(messages, 3);
-      const subscribeResponse = JSON.parse(messages[2].data);
-      expect(subscribeResponse.messageId).toBe("sub-1");
+      const subscribeResponse = await waitForMessageId(messages, "sub-1");
       expect(subscribeResponse.error).toBeUndefined();
       expect(subscribeResponse.subscribed).toEqual({ channel: "messages" });
 
@@ -176,7 +190,7 @@ describe("channel authorization", () => {
           channel: "messages",
         }),
       );
-      await waitForMessages(messages, 3);
+      await waitForMessageId(messages, "sub-1");
 
       // Unsubscribe (presence broadcasts may add extra messages)
       socket.send(
@@ -198,12 +212,11 @@ describe("channel authorization", () => {
     });
   });
 
-  describe("unprotected channels", () => {
-    test("should allow subscription to channels without middleware", async () => {
+  describe("undefined channels", () => {
+    test("should deny subscription to channels without a Channel definition", async () => {
       const { socket, messages } = await buildWebSocket();
 
       // Try to subscribe to a channel that doesn't have a Channel definition
-      // (no middleware protection)
       socket.send(
         JSON.stringify({
           messageType: "subscribe",
@@ -216,8 +229,159 @@ describe("channel authorization", () => {
 
       const response = JSON.parse(messages[0].data);
       expect(response.messageId).toBe("sub-1");
-      expect(response.error).toBeUndefined();
-      expect(response.subscribed).toEqual({ channel: "public-announcements" });
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_AUTHORIZATION");
+      expect(response.error.message).toBe(
+        "Channel not found: public-announcements",
+      );
+
+      socket.close();
+    });
+  });
+
+  describe("channel name validation", () => {
+    test("should reject empty channel name", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.messageId).toBe("sub-1");
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+      expect(response.error.message).toBe("Invalid channel name");
+
+      socket.close();
+    });
+
+    test("should reject channel name over 200 characters", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "a".repeat(201),
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+
+      socket.close();
+    });
+
+    test("should reject channel name with spaces", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "bad channel name",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+
+      socket.close();
+    });
+
+    test("should reject channel name with control characters", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "bad\x00channel",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+
+      socket.close();
+    });
+
+    test("should reject channel name with unicode", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "channel-\u{1F600}",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
+
+      socket.close();
+    });
+
+    test("should reject valid channel names that have no Channel definition", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "subscribe",
+          messageId: "sub-1",
+          channel: "room:lobby.main-chat_v2",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.messageId).toBe("sub-1");
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_AUTHORIZATION");
+      expect(response.error.message).toBe(
+        "Channel not found: room:lobby.main-chat_v2",
+      );
+
+      socket.close();
+    });
+
+    test("should reject invalid channel name on unsubscribe", async () => {
+      const { socket, messages } = await buildWebSocket();
+
+      socket.send(
+        JSON.stringify({
+          messageType: "unsubscribe",
+          messageId: "unsub-1",
+          channel: "bad channel!@#$",
+        }),
+      );
+
+      await waitForMessages(messages, 1);
+
+      const response = JSON.parse(messages[0].data);
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_VALIDATION");
 
       socket.close();
     });

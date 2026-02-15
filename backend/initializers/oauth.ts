@@ -5,6 +5,13 @@ import type { OAuthActionResponse } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
+import { checkRateLimit } from "../middleware/rateLimit";
+import {
+  base64UrlEncode,
+  escapeHtml,
+  redirectUrisMatch,
+  validateRedirectUri,
+} from "../util/oauth";
 
 const templatesDir = import.meta.dir + "/../templates";
 let authTemplate: string;
@@ -65,7 +72,10 @@ export class OAuthInitializer extends Initializer {
       return JSON.parse(raw) as TokenData;
     }
 
-    async function handleRequest(req: Request): Promise<Response | null> {
+    async function handleRequest(
+      req: Request,
+      ip?: string,
+    ): Promise<Response | null> {
       const url = new URL(req.url);
       const path = url.pathname;
       const method = req.method.toUpperCase();
@@ -74,14 +84,53 @@ export class OAuthInitializer extends Initializer {
         path.startsWith("/.well-known/oauth-protected-resource") &&
         method === "GET"
       ) {
-        return handleProtectedResourceMetadata();
+        return handleProtectedResourceMetadata(url.origin);
       }
       if (
         path === "/.well-known/oauth-authorization-server" &&
         method === "GET"
       ) {
-        return handleMetadata();
+        return handleMetadata(url.origin);
       }
+
+      // Rate-limit mutable OAuth endpoints by IP
+      if (
+        config.rateLimit.enabled &&
+        ip &&
+        (path === "/oauth/register" ||
+          path === "/oauth/authorize" ||
+          path === "/oauth/token")
+      ) {
+        // /oauth/register gets a stricter, dedicated rate limit
+        const overrides =
+          path === "/oauth/register"
+            ? {
+                limit: config.rateLimit.oauthRegisterLimit,
+                windowMs: config.rateLimit.oauthRegisterWindowMs,
+                keyPrefix: `${config.rateLimit.keyPrefix}:oauth-register`,
+              }
+            : undefined;
+        const info = await checkRateLimit(`ip:${ip}`, false, overrides);
+        if (info.retryAfter !== undefined) {
+          return new Response(
+            JSON.stringify({
+              error: "rate_limit_exceeded",
+              error_description: `Rate limit exceeded. Try again in ${info.retryAfter} seconds.`,
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "Retry-After": String(info.retryAfter),
+                "X-RateLimit-Limit": String(info.limit),
+                "X-RateLimit-Remaining": "0",
+                "X-RateLimit-Reset": String(info.resetAt),
+              },
+            },
+          );
+        }
+      }
+
       if (path === "/oauth/register" && method === "POST") {
         return handleRegister(req);
       }
@@ -109,12 +158,11 @@ export class OAuthInitializer extends Initializer {
  * RFC 9728 — Protected Resource Metadata.
  * MCP clients fetch this first to discover the authorization server.
  */
-function handleProtectedResourceMetadata(): Response {
-  const resource = config.server.web.applicationUrl;
+function handleProtectedResourceMetadata(origin: string): Response {
   return new Response(
     JSON.stringify({
-      resource,
-      authorization_servers: [`${resource}`],
+      resource: origin,
+      authorization_servers: [origin],
     }),
     {
       status: 200,
@@ -123,8 +171,8 @@ function handleProtectedResourceMetadata(): Response {
   );
 }
 
-function handleMetadata(): Response {
-  const issuer = config.server.web.applicationUrl;
+function handleMetadata(origin: string): Response {
+  const issuer = origin;
   return new Response(
     JSON.stringify({
       issuer,
@@ -169,6 +217,28 @@ async function handleRegister(req: Request): Promise<Response> {
       }),
       { status: 400, headers: { "Content-Type": "application/json" } },
     );
+  }
+
+  for (const uri of body.redirect_uris) {
+    if (typeof uri !== "string") {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: "Each redirect_uri must be a string",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    const validation = validateRedirectUri(uri);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: validation.error,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
   }
 
   const clientId = randomUUID();
@@ -262,7 +332,10 @@ async function handleAuthorizePost(req: Request): Promise<Response> {
   }
   const client = JSON.parse(clientRaw) as OAuthClient;
 
-  if (!client.redirect_uris.includes(redirectUri)) {
+  const uriMatch = client.redirect_uris.some((registered) =>
+    redirectUrisMatch(registered, redirectUri),
+  );
+  if (!uriMatch) {
     oauthParams.error = "Invalid redirect URI";
     return renderAuthPage(oauthParams);
   }
@@ -442,36 +515,24 @@ async function handleToken(req: Request): Promise<Response> {
     scopes: [],
   };
 
-  const tokenTtl = Math.floor(config.session.ttl / 1000); // config.session.ttl is in ms
   await api.redis.redis.set(
     `oauth:token:${accessToken}`,
     JSON.stringify(tokenData),
     "EX",
-    tokenTtl,
+    config.session.ttl,
   );
 
   return new Response(
     JSON.stringify({
       access_token: accessToken,
       token_type: "Bearer",
-      expires_in: tokenTtl,
+      expires_in: config.session.ttl,
     }),
     {
       status: 200,
       headers: { "Content-Type": "application/json" },
     },
   );
-}
-
-function base64UrlEncode(buffer: Uint8Array): string {
-  let binary = "";
-  for (const byte of buffer) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
 }
 
 type AuthPageParams = {
@@ -521,13 +582,4 @@ function renderSuccessPage(redirectUrl: string): Response {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

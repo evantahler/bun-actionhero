@@ -6,6 +6,7 @@ import path from "node:path";
 import { parse } from "node:url";
 import { api, logger } from "../api";
 import { type ActionParams, type HTTP_METHOD } from "../classes/Action";
+import { CHANNEL_NAME_PATTERN } from "../classes/Channel";
 import { Connection } from "../classes/Connection";
 import { Server } from "../classes/Server";
 import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
@@ -16,7 +17,23 @@ import type {
   PubSubMessage,
 } from "../initializers/pubsub";
 
+function validateChannelName(channel: string) {
+  if (!CHANNEL_NAME_PATTERN.test(channel)) {
+    throw new TypedError({
+      message: `Invalid channel name`,
+      type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+    });
+  }
+}
+
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  /** The actual port the server bound to (resolved after start, e.g. when config port is 0). */
+  port: number = 0;
+  /** The actual application URL (resolved after start). */
+  url: string = "";
+  /** Per-connection message rate tracking (keyed by connection id). */
+  private wsRateMap = new Map<string, { count: number; windowStart: number }>();
+
   constructor() {
     super("web");
   }
@@ -28,17 +45,21 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     let startupAttempts = 0;
     try {
-      this.server = Bun.serve({
+      const server = Bun.serve({
         port: config.server.web.port,
         hostname: config.server.web.host,
         fetch: this.handleIncomingConnection.bind(this),
         websocket: {
+          maxPayloadLength: config.server.web.websocketMaxPayloadSize,
           open: this.handleWebSocketConnectionOpen.bind(this),
           message: this.handleWebSocketConnectionMessage.bind(this),
           close: this.handleWebSocketConnectionClose.bind(this),
         },
       });
-      const startMessage = `started server @ http://${config.server.web.host}:${config.server.web.port}`;
+      this.server = server;
+      this.port = server.port ?? config.server.web.port;
+      this.url = `http://${config.server.web.host}:${this.port}`;
+      const startMessage = `started server @ ${this.url}`;
       logger.info(logger.colorize ? colors.bgBlue(startMessage) : startMessage);
     } catch (e) {
       await Bun.sleep(1000);
@@ -64,6 +85,17 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const cookies = cookie.parse(req.headers.get("cookie") ?? "");
     const id = cookies[config.session.cookieName] || randomUUID();
 
+    // Validate Origin header before WebSocket upgrade to prevent CSWSH
+    if (req.headers.get("upgrade")?.toLowerCase() === "websocket") {
+      const origin = req.headers.get("origin");
+      if (
+        origin &&
+        !isOriginAllowed(origin, config.server.web.allowedOrigins)
+      ) {
+        return new Response("WebSocket origin not allowed", { status: 403 });
+      }
+    }
+
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
@@ -76,7 +108,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     // OAuth route interception (must come before MCP route check)
     if (config.server.mcp.enabled && api.oauth?.handleRequest) {
-      const oauthResponse = await api.oauth.handleRequest(req);
+      const oauthResponse = await api.oauth.handleRequest(req, ip);
       if (oauthResponse) return oauthResponse;
     }
 
@@ -129,6 +161,31 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       });
     }
 
+    // Per-connection message rate limiting
+    const maxMps = config.server.web.websocketMaxMessagesPerSecond;
+    if (maxMps > 0) {
+      const now = Date.now();
+      const entry = this.wsRateMap.get(connection.id);
+      if (!entry || now - entry.windowStart >= 1000) {
+        this.wsRateMap.set(connection.id, { count: 1, windowStart: now });
+      } else {
+        entry.count++;
+        if (entry.count > maxMps) {
+          ws.send(
+            JSON.stringify({
+              error: buildErrorPayload(
+                new TypedError({
+                  message: "WebSocket rate limit exceeded",
+                  type: ErrorType.CONNECTION_RATE_LIMITED,
+                }),
+              ),
+            }),
+          );
+          return;
+        }
+      }
+    }
+
     try {
       const parsedMessage = JSON.parse(message.toString());
       if (parsedMessage["messageType"] === "action") {
@@ -165,6 +222,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.id,
     );
+    this.wsRateMap.delete(connection.id);
+
     try {
       // Remove presence from all subscribed channels before destroying
       for (const channel of connection.subscriptions) {
@@ -223,6 +282,17 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     formattedMessage: ClientSubscribeMessage,
   ) {
     try {
+      validateChannelName(formattedMessage.channel);
+
+      // Check subscription limit
+      const maxSubs = config.server.web.websocketMaxSubscriptions;
+      if (maxSubs > 0 && connection.subscriptions.size >= maxSubs) {
+        throw new TypedError({
+          message: `Too many subscriptions (max ${maxSubs})`,
+          type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+        });
+      }
+
       // Ensure session is loaded before checking authorization
       if (!connection.sessionLoaded) {
         await connection.loadSession();
@@ -265,32 +335,51 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ClientUnsubscribeMessage,
   ) {
-    // Remove presence before unsubscribing (needs subscription still active for key resolution)
     try {
-      await api.channels.removePresence(formattedMessage.channel, connection);
-    } catch (e) {
-      logger.error(`Error removing presence: ${e}`);
-    }
+      validateChannelName(formattedMessage.channel);
 
-    connection.unsubscribe(formattedMessage.channel);
+      // Remove presence before unsubscribing (needs subscription still active for key resolution)
+      try {
+        await api.channels.removePresence(formattedMessage.channel, connection);
+      } catch (e) {
+        logger.error(`Error removing presence: ${e}`);
+      }
 
-    // Call channel middleware unsubscription hooks (for cleanup/presence)
-    try {
-      await api.channels.handleUnsubscription(
-        formattedMessage.channel,
-        connection,
+      connection.unsubscribe(formattedMessage.channel);
+
+      // Call channel middleware unsubscription hooks (for cleanup/presence)
+      try {
+        await api.channels.handleUnsubscription(
+          formattedMessage.channel,
+          connection,
+        );
+      } catch (e) {
+        // Log but don't fail the unsubscription
+        logger.error(`Error in channel unsubscription hook: ${e}`);
+      }
+
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          unsubscribed: { channel: formattedMessage.channel },
+        }),
       );
     } catch (e) {
-      // Log but don't fail the unsubscription
-      logger.error(`Error in channel unsubscription hook: ${e}`);
+      const error =
+        e instanceof TypedError
+          ? e
+          : new TypedError({
+              message: `${e}`,
+              type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+              originalError: e,
+            });
+      ws.send(
+        JSON.stringify({
+          messageId: formattedMessage.messageId,
+          error: buildErrorPayload(error),
+        }),
+      );
     }
-
-    ws.send(
-      JSON.stringify({
-        messageId: formattedMessage.messageId,
-        unsubscribed: { channel: formattedMessage.channel },
-      }),
-    );
   }
 
   async handleWebAction(
@@ -310,10 +399,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const connection = new Connection("web", ip, id);
+    const requestOrigin = req.headers.get("origin") ?? undefined;
 
     // Handle OPTIONS requests.
     // As we don't really know what action the client wants (HTTP Method is always OPTIONS), we just return a 200 response.
-    if (httpMethod === "OPTIONS") return buildResponse(connection, {});
+    if (httpMethod === "OPTIONS")
+      return buildResponse(connection, {}, 200, requestOrigin);
 
     const { actionName, pathParams } = await this.determineActionName(
       url,
@@ -398,8 +489,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
 
     return error
-      ? buildError(connection, error, errorStatusCode)
-      : buildResponse(connection, response);
+      ? buildError(connection, error, errorStatusCode, requestOrigin)
+      : buildResponse(connection, response, 200, requestOrigin);
   }
 
   async determineActionName(
@@ -476,7 +567,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     try {
       // Construct the full file path, ensuring proper path joining
-      const fullPath = path.join(staticDir, finalPath);
+      const fullPath = path.resolve(path.join(staticDir, finalPath));
+      const basePath = path.resolve(staticDir);
+
+      // Prevent path traversal attacks (e.g. symlinks or encoded sequences)
+      if (!fullPath.startsWith(basePath + path.sep) && fullPath !== basePath) {
+        return null;
+      }
 
       // Check if file exists
       const file = Bun.file(fullPath);
@@ -485,9 +582,16 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       if (!exists) {
         // Try serving index.html for directory requests
         if (!finalPath.endsWith(".html")) {
-          const indexFile = Bun.file(
+          const indexPath = path.resolve(
             path.join(staticDir, finalPath, "index.html"),
           );
+          if (
+            !indexPath.startsWith(basePath + path.sep) &&
+            indexPath !== basePath
+          ) {
+            return null;
+          }
+          const indexFile = Bun.file(indexPath);
           const indexExists = await indexFile.exists();
           if (indexExists) {
             return new Response(indexFile, {
@@ -514,33 +618,80 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     const mimeType = Bun.file(filePath).type || "application/octet-stream";
     headers["Content-Type"] = mimeType;
+    Object.assign(headers, getSecurityHeaders());
 
     return headers;
   }
 }
 
-const buildHeaders = (connection?: Connection) => {
+function getSecurityHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(
+    config.server.web.securityHeaders,
+  )) {
+    if (value) headers[key] = value;
+  }
+  return headers;
+}
+
+const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
   const headers: Record<string, string> = {};
 
   headers["Content-Type"] = "application/json";
   headers["X-SERVER-NAME"] = config.process.name;
-  headers["Access-Control-Allow-Origin"] = config.server.web.allowedOrigins;
   headers["Access-Control-Allow-Methods"] = config.server.web.allowedMethods;
   headers["Access-Control-Allow-Headers"] = config.server.web.allowedHeaders;
-  headers["Access-Control-Allow-Credentials"] = "true";
+
+  const allowedOrigins = config.server.web.allowedOrigins;
+  if (allowedOrigins === "*" && !requestOrigin) {
+    headers["Access-Control-Allow-Origin"] = "*";
+  } else if (requestOrigin && isOriginAllowed(requestOrigin, allowedOrigins)) {
+    headers["Access-Control-Allow-Origin"] = requestOrigin;
+    headers["Access-Control-Allow-Credentials"] = "true";
+    headers["Vary"] = "Origin";
+  }
+
+  Object.assign(headers, getSecurityHeaders());
 
   if (connection) {
-    headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly`;
+    const secure =
+      config.session.cookieSecure ||
+      config.server.web.applicationUrl.startsWith("https");
+    const flags = [
+      `${config.session.cookieName}=${connection.id}`,
+      `Max-Age=${config.session.ttl}`,
+      "Path=/",
+      config.session.cookieHttpOnly ? "HttpOnly" : "",
+      `SameSite=${config.session.cookieSameSite}`,
+      secure ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    headers["Set-Cookie"] = flags;
+
+    if (connection.rateLimitInfo) {
+      const rateLimitInfo = connection.rateLimitInfo;
+      headers["X-RateLimit-Limit"] = String(rateLimitInfo.limit);
+      headers["X-RateLimit-Remaining"] = String(rateLimitInfo.remaining);
+      headers["X-RateLimit-Reset"] = String(rateLimitInfo.resetAt);
+      if (rateLimitInfo.retryAfter !== undefined) {
+        headers["Retry-After"] = String(rateLimitInfo.retryAfter);
+      }
+    }
   }
 
   return headers;
 };
 
-function buildResponse(connection: Connection, response: Object, status = 200) {
+function buildResponse(
+  connection: Connection,
+  response: Object,
+  status = 200,
+  requestOrigin?: string,
+) {
   return new Response(JSON.stringify(response, null, 2) + EOL, {
     status,
-    headers: buildHeaders(connection),
+    headers: buildHeaders(connection, requestOrigin),
   });
 }
 
@@ -548,12 +699,13 @@ function buildError(
   connection: Connection | undefined,
   error: TypedError,
   status = 500,
+  requestOrigin?: string,
 ) {
   return new Response(
     JSON.stringify({ error: buildErrorPayload(error) }, null, 2) + EOL,
     {
       status,
-      headers: buildHeaders(connection),
+      headers: buildHeaders(connection, requestOrigin),
     },
   );
 }
@@ -565,8 +717,14 @@ function buildErrorPayload(error: TypedError) {
     timestamp: new Date().getTime(),
     key: error.key !== undefined ? error.key : undefined,
     value: error.value !== undefined ? error.value : undefined,
-    stack: error.stack,
+    ...(config.server.web.includeStackInErrors ? { stack: error.stack } : {}),
   };
+}
+
+function isOriginAllowed(origin: string, allowedOrigins: string): boolean {
+  if (allowedOrigins === "*") return true;
+  const allowed = allowedOrigins.split(",").map((o) => o.trim());
+  return allowed.includes(origin);
 }
 
 const EOL = "\r\n";

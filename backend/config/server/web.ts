@@ -27,4 +27,42 @@ export const configServerWeb = {
     "assets",
   ),
   staticFilesRoute: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
+  websocketMaxPayloadSize: await loadFromEnvIfSet(
+    "WS_MAX_PAYLOAD_SIZE",
+    65_536,
+  ),
+  websocketMaxMessagesPerSecond: await loadFromEnvIfSet(
+    "WS_MAX_MESSAGES_PER_SECOND",
+    20,
+  ),
+  websocketMaxSubscriptions: await loadFromEnvIfSet(
+    "WS_MAX_SUBSCRIPTIONS",
+    100,
+  ),
+  includeStackInErrors: await loadFromEnvIfSet(
+    "WEB_SERVER_INCLUDE_STACK_IN_ERRORS",
+    (Bun.env.NODE_ENV ?? "development") !== "production",
+  ),
+  securityHeaders: {
+    "Content-Security-Policy": await loadFromEnvIfSet(
+      "WEB_SECURITY_CSP",
+      "default-src 'self'",
+    ),
+    "X-Content-Type-Options": await loadFromEnvIfSet(
+      "WEB_SECURITY_CONTENT_TYPE_OPTIONS",
+      "nosniff",
+    ),
+    "X-Frame-Options": await loadFromEnvIfSet(
+      "WEB_SECURITY_FRAME_OPTIONS",
+      "DENY",
+    ),
+    "Strict-Transport-Security": await loadFromEnvIfSet(
+      "WEB_SECURITY_HSTS",
+      "max-age=31536000; includeSubDomains",
+    ),
+    "Referrer-Policy": await loadFromEnvIfSet(
+      "WEB_SECURITY_REFERRER_POLICY",
+      "strict-origin-when-cross-origin",
+    ),
+  } as Record<string, string>,
 };

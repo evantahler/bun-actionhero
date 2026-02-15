@@ -2,6 +2,7 @@ import { api, logger } from "../api";
 import type { Channel } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
+import { ErrorType, TypedError } from "../classes/TypedError";
 import { globLoader } from "../util/glob";
 
 const namespace = "channels";
@@ -43,10 +44,11 @@ export class Channels extends Initializer {
   ): Promise<void> => {
     const channel = this.findChannel(channelName);
 
-    // If no channel definition exists, allow subscription by default
-    // This maintains backwards compatibility
     if (!channel) {
-      return;
+      throw new TypedError({
+        message: `Channel not found: ${channelName}`,
+        type: ErrorType.CONNECTION_CHANNEL_AUTHORIZATION,
+      });
     }
 
     // Run all middleware runBefore hooks

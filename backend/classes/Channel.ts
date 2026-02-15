@@ -1,5 +1,7 @@
 import type { Connection } from "./Connection";
 
+export const CHANNEL_NAME_PATTERN = /^[a-zA-Z0-9:._-]{1,200}$/;
+
 export type ChannelMiddlewareResponse = void;
 
 export type ChannelMiddleware = {

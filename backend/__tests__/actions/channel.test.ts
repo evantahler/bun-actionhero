@@ -9,19 +9,20 @@ import {
 import type { ChannelMembers } from "../../actions/channel";
 import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
+import { Channel } from "../../classes/Channel";
 import {
   buildWebSocket,
   createSession,
   createUser,
   subscribeToChannel,
 } from "./../servers/websocket-helpers";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
   await api.redis.redis.flushdb();
 }, HOOK_TIMEOUT);
@@ -60,6 +61,21 @@ describe("channel:members", () => {
   beforeEach(async () => {
     // Clear any leftover presence data
     api.channels.members("messages"); // no-op, just ensures channel initializer is ready
+  });
+
+  test("rejects invalid channel name", async () => {
+    const res = await fetch(
+      url + "/api/channel/" + encodeURIComponent("bad channel!@#") + "/members",
+      {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+        },
+      },
+    );
+    expect(res.status).toBe(406);
+    const response = (await res.json()) as ActionResponse<ChannelMembers>;
+    expect(response.error).toBeDefined();
   });
 
   test("fails without a session", async () => {
@@ -111,34 +127,54 @@ describe("channel:members", () => {
   });
 
   test("member is removed after disconnect", async () => {
-    const { socket, messages } = await buildWebSocket();
+    // Register a temporary open channel for this test
+    class TestChannel extends Channel {
+      constructor() {
+        super({ name: "test-channel" });
+      }
+    }
+    const testChannel = new TestChannel();
+    api.channels.channels.push(testChannel);
 
-    await createUser(socket, messages, "Toad", "toad@example.com", "mushroom1");
-    await createSession(socket, messages, "toad@example.com", "mushroom1");
-    await subscribeToChannel(socket, messages, "test-channel");
+    try {
+      const { socket, messages } = await buildWebSocket();
 
-    // Verify member is present
-    let res = await fetch(url + "/api/channel/test-channel/members", {
-      method: "GET",
-      headers: {
-        Cookie: `${session.cookieName}=${session.id}`,
-      },
-    });
-    let response = (await res.json()) as ActionResponse<ChannelMembers>;
-    expect(response.members.length).toBe(1);
+      await createUser(
+        socket,
+        messages,
+        "Toad",
+        "toad@example.com",
+        "mushroom1",
+      );
+      await createSession(socket, messages, "toad@example.com", "mushroom1");
+      await subscribeToChannel(socket, messages, "test-channel");
 
-    // Disconnect
-    socket.close();
-    await Bun.sleep(100);
+      // Verify member is present
+      let res = await fetch(url + "/api/channel/test-channel/members", {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+        },
+      });
+      let response = (await res.json()) as ActionResponse<ChannelMembers>;
+      expect(response.members.length).toBe(1);
 
-    // Verify member is removed
-    res = await fetch(url + "/api/channel/test-channel/members", {
-      method: "GET",
-      headers: {
-        Cookie: `${session.cookieName}=${session.id}`,
-      },
-    });
-    response = (await res.json()) as ActionResponse<ChannelMembers>;
-    expect(response.members).toEqual([]);
+      // Disconnect
+      socket.close();
+      await Bun.sleep(100);
+
+      // Verify member is removed
+      res = await fetch(url + "/api/channel/test-channel/members", {
+        method: "GET",
+        headers: {
+          Cookie: `${session.cookieName}=${session.id}`,
+        },
+      });
+      response = (await res.json()) as ActionResponse<ChannelMembers>;
+      expect(response.members).toEqual([]);
+    } finally {
+      const idx = api.channels.channels.indexOf(testChannel);
+      if (idx !== -1) api.channels.channels.splice(idx, 1);
+    }
   });
 });

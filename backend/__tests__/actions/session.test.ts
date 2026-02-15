@@ -1,15 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { hashPassword } from "../../ops/UserOps";
 import { users } from "../../schema/users";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
   await api.db.db.insert(users).values({
     name: "Mario Mario",
@@ -55,7 +55,7 @@ describe("session:create", () => {
     expect(response.error?.message).toEqual("This is not a valid email");
   });
 
-  test("fails when users is not found", async () => {
+  test("fails when user is not found with generic error", async () => {
     const res = await fetch(url + "/api/session", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -66,10 +66,10 @@ describe("session:create", () => {
     });
     const response = (await res.json()) as ActionResponse<SessionCreate>;
     expect(res.status).toBe(500);
-    expect(response.error?.message).toEqual("User not found");
+    expect(response.error?.message).toEqual("Invalid email or password");
   });
 
-  test("fails when passwords do not match", async () => {
+  test("fails when passwords do not match with same generic error", async () => {
     const res = await fetch(url + "/api/session", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -80,7 +80,7 @@ describe("session:create", () => {
     });
     const response = (await res.json()) as ActionResponse<SessionCreate>;
     expect(res.status).toBe(500);
-    expect(response.error?.message).toEqual("Password does not match");
+    expect(response.error?.message).toEqual("Invalid email or password");
   });
 });
 

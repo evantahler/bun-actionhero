@@ -1,14 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
 import type { UserCreate, UserEdit, UserView } from "../../actions/user";
-import { api, logger, type ActionResponse } from "../../api";
-import { config } from "../../config";
-import { HOOK_TIMEOUT } from "./../setup";
+import { api, config, logger, type ActionResponse } from "../../api";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
 }, HOOK_TIMEOUT);
 
