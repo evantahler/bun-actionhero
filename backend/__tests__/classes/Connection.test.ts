@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Connection, api, logger, ErrorType } from "../../api";
+import { Connection, ErrorType, api, logger } from "../../api";
 import { HOOK_TIMEOUT } from "./../setup";
 
 beforeAll(async () => {

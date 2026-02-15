@@ -1,6 +1,6 @@
 import { createSchemaFactory } from "drizzle-zod";
-import { z } from "zod";
 import { zIdOrModel } from "keryx";
+import { z } from "zod";
 import { messages, type Message } from "../schema/messages";
 import { users, type User } from "../schema/users";
 

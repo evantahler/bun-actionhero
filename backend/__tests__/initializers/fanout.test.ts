@@ -385,7 +385,9 @@ describe("with workers", () => {
     expect(status.failed).toBe(0);
     expect(status.results).toHaveLength(3);
 
-    const processedIds = status.results.map((r: FanOutStatus["results"][number]) => r.result.processed).sort();
+    const processedIds = status.results
+      .map((r: FanOutStatus["results"][number]) => r.result.processed)
+      .sort();
     expect(processedIds).toEqual(["x", "y", "z"]);
   });
 
@@ -409,8 +411,12 @@ describe("with workers", () => {
     expect(status.results).toHaveLength(3);
 
     // Results from both action types should be present
-    const childResults = status.results.filter((r: FanOutStatus["results"][number]) => r.result.processed);
-    const secondResults = status.results.filter((r: FanOutStatus["results"][number]) => r.result.greeted);
+    const childResults = status.results.filter(
+      (r: FanOutStatus["results"][number]) => r.result.processed,
+    );
+    const secondResults = status.results.filter(
+      (r: FanOutStatus["results"][number]) => r.result.greeted,
+    );
     expect(childResults).toHaveLength(2);
     expect(secondResults).toHaveLength(1);
     expect(secondResults[0].result.greeted).toBe("grace");

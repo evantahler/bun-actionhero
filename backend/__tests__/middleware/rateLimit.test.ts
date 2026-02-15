@@ -8,12 +8,12 @@ import {
 } from "bun:test";
 import {
   api,
+  checkRateLimit,
+  config,
   Connection,
   ErrorType,
-  TypedError,
-  config,
-  checkRateLimit,
   RateLimitMiddleware,
+  TypedError,
 } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "../setup";
 

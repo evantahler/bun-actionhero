@@ -76,7 +76,8 @@ describe("swagger", () => {
 
     // Find actions with Zod inputs
     const actionsWithInputs = api.actions.actions.filter(
-      (action: Action) => action.web?.route && action.web?.method && action.inputs,
+      (action: Action) =>
+        action.web?.route && action.web?.method && action.inputs,
     );
 
     for (const action of actionsWithInputs) {

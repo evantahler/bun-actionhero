@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import type { Action, ActionParams, SessionData } from "keryx";
 import {
   api,
   Connection,
@@ -9,7 +9,7 @@ import {
   secret,
   TypedError,
 } from "keryx";
-import type { Action, ActionParams, SessionData } from "keryx";
+import { z } from "zod";
 import { SessionMiddleware } from "../middleware/session";
 import { checkPassword, serializeUser } from "../ops/UserOps";
 import { users } from "../schema/users";

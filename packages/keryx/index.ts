@@ -65,7 +65,7 @@ declare namespace globalThis {
 }
 
 if (!globalThis.api) {
-  // @ts-expect-error — Module-augmented properties (db, redis, actions, etc.) are populated during initialize()
+  // @ts-ignore — Module-augmented properties (db, redis, actions, etc.) are populated during initialize()
   globalThis.api = new API();
   globalThis.logger = globalThis.api.logger;
   globalThis.config = Config;

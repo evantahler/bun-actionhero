@@ -1,10 +1,10 @@
 #! /usr/bin/env bun
 
-import path from "path";
 import { Command } from "commander";
+import type { Action } from "keryx";
 import { api, globLoader } from "keryx";
 import { addActionToProgram } from "keryx/util/cli";
-import type { Action } from "keryx";
+import path from "path";
 import pkg from "./package.json";
 
 const program = new Command();

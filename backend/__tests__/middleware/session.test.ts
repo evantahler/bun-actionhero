@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { Connection, api, ErrorType, TypedError } from "../../api";
+import { api, Connection, ErrorType, TypedError } from "../../api";
 import { SessionMiddleware } from "../../middleware/session";
 import { HOOK_TIMEOUT } from "./../setup";
 

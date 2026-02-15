@@ -1,6 +1,6 @@
 import { setMaxListeners } from "events";
-import { api } from "../api";
 import type { WebServer } from "keryx/servers/web";
+import { api } from "../api";
 
 // Set max listeners to prevent warnings in CI environments
 // TODO: Github Actions needs this, but not locally. Why?
@@ -17,9 +17,9 @@ export const HOOK_TIMEOUT = 15_000;
  * Call after api.start() so the server has bound its port.
  */
 export function serverUrl(): string {
-  const web = api.servers.servers.find((s: { name: string }) => s.name === "web") as
-    | WebServer
-    | undefined;
+  const web = api.servers.servers.find(
+    (s: { name: string }) => s.name === "web",
+  ) as WebServer | undefined;
   return web?.url || "";
 }
 

@@ -1,6 +1,6 @@
-import { z } from "zod";
-import { HTTP_METHOD, RateLimitMiddleware } from "keryx";
 import type { Action, ActionParams } from "keryx";
+import { HTTP_METHOD, RateLimitMiddleware } from "keryx";
+import { z } from "zod";
 
 export class FileUpload implements Action {
   name = "fileUpload";

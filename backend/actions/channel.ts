@@ -1,11 +1,11 @@
-import { z } from "zod";
+import type { Action, ActionParams } from "keryx";
 import {
   api,
   CHANNEL_NAME_PATTERN,
   HTTP_METHOD,
   RateLimitMiddleware,
 } from "keryx";
-import type { Action, ActionParams } from "keryx";
+import { z } from "zod";
 import { SessionMiddleware } from "../middleware/session";
 
 export class ChannelMembers implements Action {

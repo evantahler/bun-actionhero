@@ -1,6 +1,6 @@
-import type { SessionImpl } from "../actions/session";
-import { Connection, ErrorType, TypedError } from "keryx";
 import type { ActionMiddleware } from "keryx";
+import { Connection, ErrorType, TypedError } from "keryx";
+import type { SessionImpl } from "../actions/session";
 
 export const SessionMiddleware: ActionMiddleware = {
   runBefore: async (_params, connection: Connection<SessionImpl>) => {
