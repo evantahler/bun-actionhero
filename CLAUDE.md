@@ -150,6 +150,8 @@ test("...", async () => {
 
 Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concurrently to avoid port conflicts.
 
+**Every code change should include tests.** When adding features, fixing bugs, or modifying behavior, always write or update tests to cover the change. If a PR has no test changes, that's a red flag.
+
 ### Auto-discovery
 Actions, initializers, and servers are auto-discovered via `globLoader` (`backend/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped.
 
