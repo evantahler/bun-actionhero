@@ -101,64 +101,16 @@ TypeScript is still the best language for web APIs. But Node.js has stalled — 
 - **frontend** — the Next.js application
 - **docs** — the [documentation site](https://keryxjs.com)
 
-## Local Development
-
-Install dependencies (macOS):
-
-```bash
-# install bun
-curl -fsSL https://bun.sh/install | bash
-
-# install postgres and redis
-brew install postgresql redis
-brew services start postgresql
-brew services start redis
-
-# create a database
-createdb bun
-```
-
-Install packages:
+## Quick Start
 
 ```bash
 bun install
-```
-
-Set environment variables:
-
-```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
-# update as needed
-```
-
-Run in development:
-
-```bash
 bun dev
 ```
 
-Both the frontend and backend hot-reload when files change.
-
-Test:
-
-```bash
-# one-time setup
-createdb bun-test
-
-# full CI — lint + test both apps
-bun run ci
-
-# single test file
-cd backend && bun test __tests__/actions/user.test.ts
-```
-
-Lint:
-
-```bash
-bun lint     # check
-bun format   # fix
-```
+Requires Bun, PostgreSQL, and Redis. See the [Getting Started guide](https://keryxjs.com/guide/) for full setup instructions.
 
 ## Production Builds
 
@@ -227,93 +179,13 @@ OAuth 2.1 with PKCE is used for authentication — MCP clients go through a brow
 
 ### Fan-Out Tasks
 
-A parent task can distribute work across many child jobs using `api.actions.fanOut()`. This is useful for tasks like "process all users" that need to fan out to individual worker jobs.
+A parent task can distribute work across many child jobs using `api.actions.fanOut()` for parallel processing. Results are collected automatically in Redis. See the [Tasks guide](https://keryxjs.com/guide/tasks) for full API and examples.
 
-**Queue Priority**: Workers drain queues left-to-right. Configure `queues: ["worker", "scheduler"]` so child jobs on `"worker"` are processed before parent jobs on `"scheduler"`.
+## Coming from ActionHero?
 
-**API**:
-- `api.actions.fanOut(actionName, inputsArray, queue?, options?)` — single-action form
-- `api.actions.fanOut(jobs[], options?)` — multi-action form, each job specifies `{ action, inputs?, queue? }`
-- `api.actions.fanOutStatus(fanOutId)` — returns `{ total, completed, failed, results, errors }`
-- Options: `batchSize` (default 100), `resultTtl` (default 600s)
+Keryx keeps the core ideas but rewrites everything with modern tooling. The biggest changes: unified controllers (actions = tasks = CLI commands = MCP tools), separate frontend/backend applications, Drizzle ORM, and MCP as a first-class transport.
 
-**Example — single action**:
-
-```ts
-export class ProcessAllUsers implements Action {
-  name = "users:processAll";
-  task = { frequency: 1000 * 60 * 60, queue: "scheduler" };
-  async run() {
-    const users = await getActiveUsers();
-    const result = await api.actions.fanOut(
-      "users:processOne",
-      users.map(u => ({ userId: u.id })),
-      "worker",
-    );
-    return { fanOut: result };
-  }
-}
-
-// Child — no special fan-out code needed
-export class ProcessOneUser implements Action {
-  name = "users:processOne";
-  task = { queue: "worker" };
-  inputs = z.object({ userId: z.string() });
-  async run(params) { /* process one user */ }
-}
-```
-
-**Example — multiple actions**:
-
-```ts
-const result = await api.actions.fanOut([
-  { action: "users:processOne", inputs: { userId: "1" } },
-  { action: "users:processOne", inputs: { userId: "2" } },
-  { action: "emails:send", inputs: { to: "a@b.com" }, queue: "priority" },
-]);
-
-const status = await api.actions.fanOutStatus(result.fanOutId);
-// → { total: 3, completed: 3, failed: 0, results: [...], errors: [...] }
-```
-
-Fan-out results are stored in Redis with a configurable TTL (default 10 minutes), refreshed on each child completion.
-
-## Marking Secret Fields
-
-Mark sensitive fields with `secret()` so they're redacted as `[[secret]]` in logs:
-
-```ts
-inputs = z.object({
-  email: z.string().email(),
-  password: secret(z.string().min(8)),
-});
-```
-
-## Intentional Changes from ActionHero
-
-**Unified Controllers** — Actions, tasks, CLI commands, and MCP tools are the same thing. One class, configured for each transport via properties.
-
-**Separate Applications** — Frontend and backend are separate Bun applications. Deploy them independently — frontend on Vercel, backend on a VPS, whatever works.
-
-**Routes on Actions** — Actions define their own routes (strings with `:params` or RegExp). No `routes.ts` file.
-
-**Real-Time Channels** — PubSub via Redis with middleware-based authorization for WebSocket clients.
-
-**Simplified Logger** — No Winston. STDOUT and STDERR only, with optional colors and timestamps.
-
-**No Pidfiles** — Process management is left to your deployment tooling.
-
-**Environment Config** — Config is static at boot, with per-`NODE_ENV` overrides via environment variables (e.g., `DATABASE_URL_TEST` is used automatically when `NODE_ENV=test`).
-
-**Middleware** — Applied to actions as an array of `ActionMiddleware` objects with `runBefore` and `runAfter` hooks. Can throw to halt, or return modified params/responses.
-
-**Testing** — No mock server. Make real HTTP requests with `fetch` — Bun includes it natively.
-
-**Drizzle ORM** — First-class database support with auto-migrations and type-safe schemas.
-
-**Sessions** — Cookie-based sessions stored in Redis, a first-class part of the API.
-
-**No Cache Layer** — The old ActionHero cache has been removed. Use Redis directly — it's already part of the stack.
+See the full [migration guide](https://keryxjs.com/guide/from-actionhero) for details.
 
 ## Production Deployment
 

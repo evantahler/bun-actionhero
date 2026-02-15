@@ -113,3 +113,37 @@ Every namespace is typed via module augmentation, so you never have to cast or g
 ## Auto-Discovery
 
 Initializers are auto-discovered. Drop a `.ts` file in `initializers/`, export a class that extends `Initializer`, and it'll get picked up on boot. Files prefixed with `.` are skipped — useful for temporarily disabling an initializer without deleting it.
+
+## Run Modes
+
+The server can boot in two modes:
+
+- **`RUN_MODE.SERVER`** (default) — starts all transports (web server, task workers, etc.)
+- **`RUN_MODE.CLI`** — skips transport-specific setup; used when running actions from the command line
+
+Each initializer declares which run modes it supports via `runModes`. Most initializers run in both modes, but transport-specific ones (like the web server) only run in `SERVER` mode. This means `./keryx.ts "status" -q` can execute the action without binding to a port.
+
+## Swagger / OpenAPI Schema Generation
+
+The `swagger` initializer (priority 150) generates JSON Schema definitions for action response types using TypeScript AST parsing via [ts-morph](https://github.com/dsherret/ts-morph). It scans all action source files, finds the `run()` method return type, and converts it to JSON Schema.
+
+Schemas are cached in `backend/.cache/swagger-schemas.json` and regenerated when action source files change (detected via content hashing). These schemas are used by the web server to serve a Swagger/OpenAPI-compatible API description.
+
+## Process Lifecycle
+
+The `api` singleton manages the full lifecycle:
+
+```ts
+await api.start();           // initialize + start all initializers
+await api.stop();            // stop all initializers in reverse priority
+await api.restart();         // stop + start (with flap prevention)
+```
+
+`api.restart()` includes flap prevention — if a restart is already in progress, the second call is a no-op. This prevents cascading restart loops.
+
+Signal handlers are registered by the `signals` initializer:
+
+- **SIGINT** (Ctrl+C) — triggers graceful shutdown via `api.stop()`
+- **SIGTERM** — same graceful shutdown
+
+The shutdown process stops initializers in `stopPriority` order (highest first), so the web server stops accepting connections before the database pool is closed.

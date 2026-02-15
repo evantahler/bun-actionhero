@@ -115,6 +115,21 @@ Each authenticated MCP connection creates its own `McpServer` instance. Sessions
 
 When a session closes, the transport and server instance are cleaned up automatically.
 
+## OAuth Templates
+
+The authorization page (login/signup form) is rendered from [Mustache](https://mustache.github.io/) templates in `backend/templates/`:
+
+| File                      | Purpose                                      |
+| ------------------------- | -------------------------------------------- |
+| `oauth-authorize.html`    | Login/signup form with tab switching          |
+| `oauth-success.html`      | Success page after authorization              |
+| `oauth-common.css`        | Shared styles for both pages                  |
+| `lion.svg`                | Decorative SVG included in the pages          |
+
+Templates receive Mustache variables for error messages, hidden OAuth state fields, and partials for shared CSS and decorative SVGs.
+
+To customize the look and feel, edit these template files. The form fields (`email`, `password`, `name`, `mode`) and hidden OAuth fields must be preserved for the flow to work — but you can change all styling and layout.
+
 ## PubSub Notifications
 
 When messages are broadcast through the PubSub system (e.g., chat messages sent via Redis PubSub), they are forwarded to all connected MCP clients as MCP logging messages. This allows AI agents to receive real-time notifications about events happening in your application.

@@ -117,6 +117,112 @@ createdb keryx-test
 
 Set `DATABASE_URL_TEST` in your environment (or `backend/.env`) to point at it.
 
+## Testing Authenticated Endpoints
+
+Most endpoints require a session. The pattern is: create a user, log in, then pass the session cookie on subsequent requests:
+
+```ts
+import { config } from "../../config";
+
+test("authenticated request", async () => {
+  // Create a user
+  await fetch(url + "/api/user", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Test User",
+      email: "test@example.com",
+      password: "password123",
+    }),
+  });
+
+  // Log in
+  const sessionRes = await fetch(url + "/api/session", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: "test@example.com",
+      password: "password123",
+    }),
+  });
+  const sessionBody = (await sessionRes.json()) as ActionResponse<SessionCreate>;
+  const sessionId = sessionBody.session.id;
+
+  // Make an authenticated request
+  const res = await fetch(url + "/api/user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Cookie: `${config.session.cookieName}=${sessionId}`,
+    },
+    body: JSON.stringify({ name: "New Name" }),
+  });
+
+  expect(res.status).toBe(200);
+});
+```
+
+The session ID comes from the login response, and you pass it as a `Cookie` header. This is the same cookie the browser would send automatically.
+
+## Testing WebSocket Connections
+
+WebSocket tests connect to the same server and send JSON messages:
+
+```ts
+test("websocket action", async () => {
+  const wsUrl = url.replace("http", "ws");
+  const ws = new WebSocket(wsUrl);
+
+  await new Promise<void>((resolve) => {
+    ws.onopen = () => resolve();
+  });
+
+  const responsePromise = new Promise<any>((resolve) => {
+    ws.onmessage = (event) => resolve(JSON.parse(event.data));
+  });
+
+  ws.send(JSON.stringify({
+    messageType: "action",
+    action: "status",
+    messageId: "test-1",
+  }));
+
+  const response = await responsePromise;
+  expect(response.messageId).toBe("test-1");
+  expect(response.name).toBe("server");
+
+  ws.close();
+});
+```
+
+For channel subscriptions, send a `subscribe` message and then listen for broadcasts:
+
+```ts
+ws.send(JSON.stringify({
+  messageType: "subscribe",
+  channel: "messages",
+}));
+```
+
+## Testing Background Tasks
+
+Use `waitFor()` to poll for side effects from background tasks:
+
+```ts
+test("cleanup task removes old messages", async () => {
+  // Insert test data...
+
+  // Enqueue the task
+  await api.actions.enqueue("messages:cleanup", { age: 1000 });
+
+  // Wait for the side effect
+  await waitFor(async () => {
+    const remaining = await api.db.db.select().from(messages);
+    return remaining.length === 0;
+  }, { interval: 100, timeout: 5000 });
+});
+```
+
 ## Gotcha: Stale Processes
 
 If you're changing code but your tests are still seeing old behavior… you probably have a stale server process running from a previous dev session. This has bitten me more than once:
