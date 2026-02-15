@@ -48,17 +48,12 @@ export class SessionCreate implements Action {
       .from(users)
       .where(eq(users.email, params.email));
 
-    if (!user) {
+    const passwordMatch = user
+      ? await checkPassword(user, params.password)
+      : false;
+    if (!user || !passwordMatch) {
       throw new TypedError({
-        message: "User not found",
-        type: ErrorType.CONNECTION_ACTION_RUN,
-      });
-    }
-
-    const passwordMatch = await checkPassword(user, params.password);
-    if (!passwordMatch) {
-      throw new TypedError({
-        message: "Password does not match",
+        message: "Invalid email or password",
         type: ErrorType.CONNECTION_ACTION_RUN,
       });
     }
