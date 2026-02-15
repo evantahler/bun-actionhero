@@ -6,6 +6,7 @@ import path from "node:path";
 import { parse } from "node:url";
 import { api, logger } from "../api";
 import { type ActionParams, type HTTP_METHOD } from "../classes/Action";
+import { CHANNEL_NAME_PATTERN } from "../classes/Channel";
 import { Connection } from "../classes/Connection";
 import { Server } from "../classes/Server";
 import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
@@ -15,8 +16,6 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-
-const CHANNEL_NAME_PATTERN = /^[a-zA-Z0-9:._-]{1,200}$/;
 
 function validateChannelName(channel: string) {
   if (!CHANNEL_NAME_PATTERN.test(channel)) {

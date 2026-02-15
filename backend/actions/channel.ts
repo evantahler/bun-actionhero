@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { api, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
+import { CHANNEL_NAME_PATTERN } from "../classes/Channel";
 import { RateLimitMiddleware } from "../middleware/rateLimit";
 import { SessionMiddleware } from "../middleware/session";
 
@@ -13,7 +14,7 @@ export class ChannelMembers implements Action {
   inputs = z.object({
     channel: z
       .string()
-      .regex(/^[a-zA-Z0-9:._-]{1,200}$/, "Invalid channel name")
+      .regex(CHANNEL_NAME_PATTERN, "Invalid channel name")
       .describe("The channel name to query"),
   });
 
