@@ -76,7 +76,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     // OAuth route interception (must come before MCP route check)
     if (config.server.mcp.enabled && api.oauth?.handleRequest) {
-      const oauthResponse = await api.oauth.handleRequest(req);
+      const oauthResponse = await api.oauth.handleRequest(req, ip);
       if (oauthResponse) return oauthResponse;
     }
 
@@ -569,6 +569,16 @@ const buildHeaders = (connection?: Connection) => {
       .filter(Boolean)
       .join("; ");
     headers["Set-Cookie"] = flags;
+
+    if (connection.rateLimitInfo) {
+      const rateLimitInfo = connection.rateLimitInfo;
+      headers["X-RateLimit-Limit"] = String(rateLimitInfo.limit);
+      headers["X-RateLimit-Remaining"] = String(rateLimitInfo.remaining);
+      headers["X-RateLimit-Reset"] = String(rateLimitInfo.resetAt);
+      if (rateLimitInfo.retryAfter !== undefined) {
+        headers["Retry-After"] = String(rateLimitInfo.retryAfter);
+      }
+    }
   }
 
   return headers;

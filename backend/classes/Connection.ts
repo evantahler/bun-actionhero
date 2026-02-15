@@ -4,6 +4,7 @@ import { api, logger } from "../api";
 import { config } from "../config";
 import type { PubSubMessage } from "../initializers/pubsub";
 import type { SessionData } from "../initializers/session";
+import type { RateLimitInfo } from "../middleware/rateLimit";
 import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
@@ -16,6 +17,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   subscriptions: Set<string>;
   sessionLoaded: boolean;
   rawConnection?: any;
+  rateLimitInfo?: RateLimitInfo;
 
   constructor(
     type: string,
