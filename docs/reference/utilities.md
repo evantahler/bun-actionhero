@@ -54,11 +54,11 @@ A generic factory that creates a Zod schema accepting either a numeric ID or a f
 
 ```ts
 function zIdOrModel<TTable, TModel>(
-  table: TTable,          // Drizzle table definition (must have `id` column)
+  table: TTable, // Drizzle table definition (must have `id` column)
   modelSchema: z.ZodType, // Zod schema for the model
   isModel: (val) => bool, // Type guard function
-  entityName: string,     // For error messages
-)
+  entityName: string, // For error messages
+);
 ```
 
 Throws a `TypedError` if the ID doesn't match any record.
@@ -111,7 +111,12 @@ function isProject(val: unknown): val is Project {
 }
 
 export function zProjectIdOrModel() {
-  return zIdOrModel(projects, zProjectSchema as z.ZodType<Project>, isProject, "Project");
+  return zIdOrModel(
+    projects,
+    zProjectSchema as z.ZodType<Project>,
+    isProject,
+    "Project",
+  );
 }
 ```
 

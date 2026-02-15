@@ -45,7 +45,10 @@ export class SessionCreate implements Action {
   mcp = { enabled: false, isLoginAction: true };
   middleware = [RateLimitMiddleware];
   inputs = z.object({
-    email: z.string().email().transform((val) => val.toLowerCase()),
+    email: z
+      .string()
+      .email()
+      .transform((val) => val.toLowerCase()),
     password: secret(z.string().min(8)),
   });
 
@@ -120,10 +123,10 @@ See the [MCP guide](/guide/mcp#oauth-21-authentication) for the full OAuth flow 
 
 ## Session Configuration
 
-| Key            | Env Var               | Default        | Description                      |
-| -------------- | --------------------- | -------------- | -------------------------------- |
-| `cookieName`   | `SESSION_COOKIE_NAME` | `"session_id"` | Cookie name for session tracking |
-| `ttl`          | `SESSION_TTL`         | `86400`        | Session TTL in seconds (1 day)   |
+| Key          | Env Var               | Default        | Description                      |
+| ------------ | --------------------- | -------------- | -------------------------------- |
+| `cookieName` | `SESSION_COOKIE_NAME` | `"session_id"` | Cookie name for session tracking |
+| `ttl`        | `SESSION_TTL`         | `86400`        | Session TTL in seconds (1 day)   |
 
 Cookie security settings (Secure, SameSite, HttpOnly) are configured in the web server config. See the [Security guide](/guide/security) for production recommendations.
 

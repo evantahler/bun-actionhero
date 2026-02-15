@@ -145,7 +145,8 @@ test("authenticated request", async () => {
       password: "password123",
     }),
   });
-  const sessionBody = (await sessionRes.json()) as ActionResponse<SessionCreate>;
+  const sessionBody =
+    (await sessionRes.json()) as ActionResponse<SessionCreate>;
   const sessionId = sessionBody.session.id;
 
   // Make an authenticated request
@@ -181,11 +182,13 @@ test("websocket action", async () => {
     ws.onmessage = (event) => resolve(JSON.parse(event.data));
   });
 
-  ws.send(JSON.stringify({
-    messageType: "action",
-    action: "status",
-    messageId: "test-1",
-  }));
+  ws.send(
+    JSON.stringify({
+      messageType: "action",
+      action: "status",
+      messageId: "test-1",
+    }),
+  );
 
   const response = await responsePromise;
   expect(response.messageId).toBe("test-1");
@@ -198,10 +201,12 @@ test("websocket action", async () => {
 For channel subscriptions, send a `subscribe` message and then listen for broadcasts:
 
 ```ts
-ws.send(JSON.stringify({
-  messageType: "subscribe",
-  channel: "messages",
-}));
+ws.send(
+  JSON.stringify({
+    messageType: "subscribe",
+    channel: "messages",
+  }),
+);
 ```
 
 ## Testing Background Tasks
@@ -216,10 +221,13 @@ test("cleanup task removes old messages", async () => {
   await api.actions.enqueue("messages:cleanup", { age: 1000 });
 
   // Wait for the side effect
-  await waitFor(async () => {
-    const remaining = await api.db.db.select().from(messages);
-    return remaining.length === 0;
-  }, { interval: 100, timeout: 5000 });
+  await waitFor(
+    async () => {
+      const remaining = await api.db.db.select().from(messages);
+      return remaining.length === 0;
+    },
+    { interval: 100, timeout: 5000 },
+  );
 });
 ```
 

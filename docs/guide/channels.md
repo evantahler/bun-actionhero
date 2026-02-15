@@ -177,11 +177,13 @@ const ws = new WebSocket("ws://localhost:8080");
 
 ws.onopen = () => {
   // Run an action over WebSocket
-  ws.send(JSON.stringify({
-    messageType: "action",
-    action: "status",
-    messageId: "req-1",  // echoed back in response for correlation
-  }));
+  ws.send(
+    JSON.stringify({
+      messageType: "action",
+      action: "status",
+      messageId: "req-1", // echoed back in response for correlation
+    }),
+  );
 };
 
 ws.onmessage = (event) => {
@@ -195,10 +197,12 @@ ws.onmessage = (event) => {
 
 ```js
 // Subscribe
-ws.send(JSON.stringify({
-  messageType: "subscribe",
-  channel: "messages",
-}));
+ws.send(
+  JSON.stringify({
+    messageType: "subscribe",
+    channel: "messages",
+  }),
+);
 
 // Listen for broadcasts
 ws.onmessage = (event) => {
@@ -209,16 +213,18 @@ ws.onmessage = (event) => {
 };
 
 // Unsubscribe
-ws.send(JSON.stringify({
-  messageType: "unsubscribe",
-  channel: "messages",
-}));
+ws.send(
+  JSON.stringify({
+    messageType: "unsubscribe",
+    channel: "messages",
+  }),
+);
 ```
 
 ### Message Types Reference
 
-| messageType     | Fields                                    | Description                |
-| --------------- | ----------------------------------------- | -------------------------- |
+| messageType     | Fields                                     | Description                |
+| --------------- | ------------------------------------------ | -------------------------- |
 | `"action"`      | `action`, `params`, `messageId` (optional) | Execute an action          |
-| `"subscribe"`   | `channel`                                 | Subscribe to a channel     |
-| `"unsubscribe"` | `channel`                                 | Unsubscribe from a channel |
+| `"subscribe"`   | `channel`                                  | Subscribe to a channel     |
+| `"unsubscribe"` | `channel`                                  | Unsubscribe from a channel |

@@ -113,6 +113,7 @@ Results and metadata are stored in Redis with a configurable TTL (default 10 min
 When you call `fanOut()`, each child job gets a `_fanOutId` injected into its inputs automatically. The child action doesn't need to know about this — the Resque worker checks for `_fanOutId` after each job completes and stores the result (or error) in Redis. This means any existing action works as a fan-out child with zero changes.
 
 Redis keys for a fan-out operation:
+
 - `fanout:{id}` — hash with metadata (total, completed, failed)
 - `fanout:{id}:results` — list of successful results
 - `fanout:{id}:errors` — list of failed results

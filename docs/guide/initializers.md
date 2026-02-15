@@ -134,9 +134,9 @@ Schemas are cached in `backend/.cache/swagger-schemas.json` and regenerated when
 The `api` singleton manages the full lifecycle:
 
 ```ts
-await api.start();           // initialize + start all initializers
-await api.stop();            // stop all initializers in reverse priority
-await api.restart();         // stop + start (with flap prevention)
+await api.start(); // initialize + start all initializers
+await api.stop(); // stop all initializers in reverse priority
+await api.restart(); // stop + start (with flap prevention)
 ```
 
 `api.restart()` includes flap prevention — if a restart is already in progress, the second call is a no-op. This prevents cascading restart loops.
