@@ -8,7 +8,7 @@ Whenever possible, use the `TypedError` class to throw errors.
 
 ## Database Migrations
 
-After any modification of the models, we need to migrate. Never create the migration file yourself. Run `./actionhero.ts migrations` in the backend directory to migrate.
+After any modification of the models, we need to migrate. Never create the migration file yourself. Run `./keryx.ts migrations` in the backend directory to migrate.
 
 ## Development Workflow
 

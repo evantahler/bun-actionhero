@@ -3,14 +3,14 @@
 Overview of the project's directory structure.
 
 ## Root Directory
-- `backend/`: ActionHero server application
+- `backend/`: Keryx server application
 - `frontend/`: Next.js frontend application
 - `.claude/`: Claude Code configuration
 - `docker-compose.yml`: Docker configuration
 
 ## Backend Structure
 - `actions/`: API endpoints and CLI commands
-- `classes/`: Core ActionHero classes
+- `classes/`: Core Keryx classes
 - `config/`: Server configuration
 - `initializers/`: Startup initialization code
 - `middleware/`: Action middleware

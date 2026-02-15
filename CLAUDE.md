@@ -139,7 +139,7 @@ Actions, initializers, and servers are auto-discovered via `globLoader` (`backen
 
 ## Documentation Site (`docs/`)
 
-VitePress site deployed to `bun.actionherojs.com` via GitHub Pages. Key commands:
+VitePress site deployed to `keryxjs.com` via GitHub Pages. Key commands:
 
 ```bash
 bun docs:dev                       # Preview docs locally
@@ -153,7 +153,7 @@ The landing page includes `README.md` via VitePress markdown includes (`<!--@inc
 
 ## Planning Mode
 
-When using Claude Code's planning mode (`/plan`), the finalized plan **must be filed as a GitHub issue** before implementation begins. Use the `Github_CreateIssue` tool (or `gh issue create`) to create the issue in this repo (`evantahler/bun-actionhero`) with:
+When using Claude Code's planning mode (`/plan`), the finalized plan **must be filed as a GitHub issue** before implementation begins. Use the `Github_CreateIssue` tool (or `gh issue create`) to create the issue in this repo (`evantahler/keryx`) with:
 - A clear title summarizing the planned work
 - The full plan as the issue body (markdown)
 - Appropriate labels if relevant (e.g., `enhancement`, `refactor`)
@@ -162,8 +162,8 @@ Do not begin implementation until the issue is created and the URL is shared wit
 
 ## Gotcha: Stale Processes
 
-If code changes aren't reflected in HTTP responses, check for stale `bun actionhero` processes:
+If code changes aren't reflected in HTTP responses, check for stale `bun keryx` processes:
 ```bash
-ps aux | grep "bun actionhero" | grep -v grep
+ps aux | grep "bun keryx" | grep -v grep
 kill -9 <PIDs>
 ```

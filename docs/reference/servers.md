@@ -78,19 +78,19 @@ All web server settings are in `config.server.web`:
 
 ## CLI "Server"
 
-The CLI isn't technically a server — it's a separate entry point (`actionhero.ts`) that uses [Commander](https://github.com/tj/commander.js) to register every action as a CLI command. But it goes through the same `Connection → act()` pipeline as HTTP and WebSocket.
+The CLI isn't technically a server — it's a separate entry point (`keryx.ts`) that uses [Commander](https://github.com/tj/commander.js) to register every action as a CLI command. But it goes through the same `Connection → act()` pipeline as HTTP and WebSocket.
 
 The server boots in `RUN_MODE.CLI`, which tells initializers to skip transport-specific setup (like binding to a port). After the action executes, the process exits with the appropriate exit code.
 
 ```bash
 # List all available actions
-./actionhero.ts actions
+./keryx.ts actions
 
 # Run an action
-./actionhero.ts "user:create" --name Evan --email evan@example.com --password secret -q | jq
+./keryx.ts "user:create" --name Evan --email evan@example.com --password secret -q | jq
 
 # Start the full server
-./actionhero.ts start
+./keryx.ts start
 ```
 
 ## MCP Server

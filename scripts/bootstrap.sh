@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Bootstrap script for bun-actionhero in Claude Code cloud environment
+# Bootstrap script for Keryx in Claude Code cloud environment
 # This script is run automatically via SessionStart hook when a session begins
 #
 
@@ -13,7 +13,7 @@ if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
     exit 0
 fi
 
-echo "=== bun-actionhero bootstrap script ==="
+echo "=== Keryx bootstrap script ==="
 echo "Running in Claude Code cloud environment"
 echo ""
 

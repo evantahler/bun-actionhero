@@ -1,6 +1,6 @@
-# bun-actionhero
+# Keryx
 
-[![Test](https://github.com/evantahler/bun-actionhero/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/bun-actionhero/actions/workflows/test.yaml)
+[![Test](https://github.com/evantahler/keryx/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/keryx/actions/workflows/test.yaml)
 
 ## What is this Project?
 
@@ -48,7 +48,7 @@ curl -X PUT http://localhost:8080/api/user \
 
 **CLI** — flags are generated from the Zod schema automatically:
 ```bash
-./actionhero.ts "user:create" --name Evan --email evan@example.com --password secret123 -q | jq
+./keryx.ts "user:create" --name Evan --email evan@example.com --password secret123 -q | jq
 ```
 
 **Background Task** — enqueued to a Resque worker via Redis:
@@ -93,7 +93,7 @@ TypeScript is still the best language for web APIs. But Node.js has stalled — 
 - **root** — a slim `package.json` wrapping the backend and frontend workspaces. `bun install` and `bun dev` work here, but you need to `cd` into each workspace for tests.
 - **backend** — the ActionHero server
 - **frontend** — the Next.js application
-- **docs** — the [documentation site](https://bun.actionherojs.com)
+- **docs** — the [documentation site](https://keryxjs.com)
 
 ## Local Development
 
@@ -192,7 +192,7 @@ Enabled by default. Clients send JSON messages with `{ messageType: "action", ac
 Enabled by default. Every action is registered as a CLI command via [Commander](https://github.com/tj/commander.js). The Zod schema generates `--flags` and `--help` text automatically:
 
 ```bash
-./actionhero.ts "user:create" --name evan --email "evantahler@gmail.com" --password password -q | jq
+./keryx.ts "user:create" --name evan --email "evantahler@gmail.com" --password password -q | jq
 ```
 
 The `-q` flag suppresses logs so you get clean JSON. Use `--help` on any action to see its params.
@@ -315,7 +315,7 @@ Each application has its own `Dockerfile`, and a `docker-compose.yml` runs them 
 
 ## Documentation
 
-Full docs at [bun.actionherojs.com](https://bun.actionherojs.com), including:
-- [Getting Started](https://bun.actionherojs.com/guide/)
-- [Actions Guide](https://bun.actionherojs.com/guide/actions)
-- [API Reference](https://bun.actionherojs.com/reference/actions)
+Full docs at [keryxjs.com](https://keryxjs.com), including:
+- [Getting Started](https://keryxjs.com/guide/)
+- [Actions Guide](https://keryxjs.com/guide/actions)
+- [API Reference](https://keryxjs.com/reference/actions)

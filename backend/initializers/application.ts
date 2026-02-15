@@ -6,7 +6,7 @@ import { hashPassword } from "../ops/UserOps";
 import { users, type User } from "../schema/users";
 const namespace = "application";
 
-const defaultUserEmail = "admin@actionherojs.com";
+const defaultUserEmail = "admin@keryxjs.com";
 
 declare module "../classes/API" {
   export interface API {

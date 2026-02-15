@@ -4,7 +4,7 @@ description: Channels define PubSub topics for real-time WebSocket messaging wit
 
 # Channels
 
-Every project I've worked on eventually needs real-time messaging — chat, live dashboards, notifications, presence indicators. Channels are how bun-actionhero handles this. They define PubSub topics that WebSocket clients can subscribe to, with middleware for controlling who gets access.
+Every project I've worked on eventually needs real-time messaging — chat, live dashboards, notifications, presence indicators. Channels are how Keryx handles this. They define PubSub topics that WebSocket clients can subscribe to, with middleware for controlling who gets access.
 
 Under the hood, channels use Redis PubSub, so messages are distributed across multiple server instances automatically. You don't need to think about sticky sessions or shared state.
 

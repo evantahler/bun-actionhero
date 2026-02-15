@@ -4,7 +4,7 @@ description: Background tasks with Resque workers and the fan-out pattern for di
 
 # Background Tasks
 
-One of the things I've always loved about ActionHero is that background tasks are a first-class citizen — not a plugin, not a separate service, just part of the framework. bun-actionhero keeps that tradition, using [node-resque](https://github.com/actionhero/node-resque) for job processing backed by Redis.
+One of the things I've always loved about ActionHero is that background tasks are a first-class citizen — not a plugin, not a separate service, just part of the framework. Keryx keeps that tradition, using [node-resque](https://github.com/actionhero/node-resque) for job processing backed by Redis.
 
 The key difference from the original ActionHero: tasks and actions are the same thing now. Any action can be scheduled as a background job by adding a `task` property. Same inputs, same validation, same `run()` method.
 
@@ -36,7 +36,7 @@ export class MessagesCleanup implements Action {
 - **`queue`** — which Resque queue to put this job on (required)
 - **`frequency`** — how often to run it, in milliseconds (optional — omit for one-shot tasks)
 
-You can also run this same action from the CLI (`./actionhero.ts "messages:cleanup" --age 3600000 -q`) or hit it via HTTP if you add a `web` property. It's all the same code.
+You can also run this same action from the CLI (`./keryx.ts "messages:cleanup" --age 3600000 -q`) or hit it via HTTP if you add a `web` property. It's all the same code.
 
 ## Queue Priority
 

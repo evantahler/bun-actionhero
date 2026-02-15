@@ -23,7 +23,7 @@ declare module "../classes/API" {
 }
 
 /**
- * Convert an ActionHero action name to a valid MCP tool name.
+ * Convert a Keryx action name to a valid MCP tool name.
  * MCP tool names only allow: A-Z, a-z, 0-9, underscore (_), dash (-), and dot (.)
  */
 function formatToolName(actionName: string): string {
@@ -31,7 +31,7 @@ function formatToolName(actionName: string): string {
 }
 
 /**
- * Convert an MCP tool name back to the original ActionHero action name.
+ * Convert an MCP tool name back to the original Keryx action name.
  */
 function parseToolName(toolName: string): string {
   // Reverse lookup against registered actions

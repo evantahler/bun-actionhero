@@ -1,10 +1,10 @@
 {
-  "name": "bun-actionhero-frontend",
+  "name": "keryx-frontend",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
-  "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

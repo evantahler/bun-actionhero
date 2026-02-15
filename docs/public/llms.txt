@@ -1,4 +1,4 @@
-# bun-actionhero
+# Keryx
 
 > The modern TypeScript API framework built on Bun.
 

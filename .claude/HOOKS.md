@@ -1,6 +1,6 @@
 # Claude Code Hooks - Best Practices Enforcement
 
-This document describes the Claude Code hooks configured for the bun-actionhero project to enforce code quality and best practices.
+This document describes the Claude Code hooks configured for the Keryx project to enforce code quality and best practices.
 
 ## Overview
 

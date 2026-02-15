@@ -12,7 +12,7 @@ keywords: [docker, docker-compose, container, deployment, production, logs]
 
 # Docker Operations
 
-Docker-related commands and configurations for the bun-actionhero project.
+Docker-related commands and configurations for the Keryx project.
 
 ## Development
 

@@ -101,7 +101,7 @@ Set `DATABASE_URL_TEST` in your environment (or `backend/.env`) to point at it.
 If you're changing code but your tests are still seeing old behavior… you probably have a stale server process running from a previous dev session. This has bitten me more than once:
 
 ```bash
-ps aux | grep "bun actionhero" | grep -v grep
+ps aux | grep "bun keryx" | grep -v grep
 kill -9 <PIDs>
 ```
 

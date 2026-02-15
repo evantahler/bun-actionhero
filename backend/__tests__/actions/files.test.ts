@@ -28,7 +28,7 @@ describe("status", () => {
       "public",
       "assets",
       "images",
-      "actionhero.png",
+      "keryx.png",
     );
 
     const f = Bun.file(filePath);
@@ -40,7 +40,7 @@ describe("status", () => {
     expect(res.status).toBe(200);
     const response = (await res.json()) as ActionResponse<FileUpload>;
     expect(response.params.stringParam).toBe("test");
-    expect(response.params.file.name).toInclude("/actionhero.png");
+    expect(response.params.file.name).toInclude("/keryx.png");
     expect(response.params.file.type).toBe("image/png");
     expect(response.params.file.size).toBe(f.size);
   });

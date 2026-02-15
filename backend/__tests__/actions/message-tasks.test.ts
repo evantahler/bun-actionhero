@@ -149,7 +149,7 @@ describe("messages:hello", () => {
     const [existingUser] = await api.db.db
       .select()
       .from(users)
-      .where(eq(users.email, "admin@actionherojs.com"))
+      .where(eq(users.email, "admin@keryxjs.com"))
       .limit(1);
 
     if (existingUser) {
@@ -162,7 +162,7 @@ describe("messages:hello", () => {
       .insert(users)
       .values({
         name: "Admin",
-        email: "admin@actionherojs.com",
+        email: "admin@keryxjs.com",
         password_hash: "hash",
       })
       .returning();

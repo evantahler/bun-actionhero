@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Claude Code Pre-Commit Hook for bun-actionhero
+# Claude Code Pre-Commit Hook for Keryx
 # Enforces code quality, formatting, and project-specific best practices
 
 set -e

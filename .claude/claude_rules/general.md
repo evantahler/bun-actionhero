@@ -1,6 +1,6 @@
 # General Rules
 
-Core principles and general rules for the bun-actionhero project.
+Core principles and general rules for the Keryx project.
 
 ## Core Principles
 

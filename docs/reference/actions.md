@@ -6,7 +6,7 @@ description: Action class definition, transport behavior across HTTP/WebSocket/C
 
 Source: `backend/classes/Action.ts`
 
-The `Action` class is the foundation of bun-actionhero. Every controller — whether it handles HTTP, WebSocket, CLI, or background tasks — is an action. You write the logic once, and the framework handles the transport plumbing.
+The `Action` class is the foundation of Keryx. Every controller — whether it handles HTTP, WebSocket, CLI, or background tasks — is an action. You write the logic once, and the framework handles the transport plumbing.
 
 ## Class Definition
 
@@ -114,7 +114,7 @@ The `messageId` is echoed back so the client can match responses to requests. We
 Every action is automatically registered as a CLI command via [Commander](https://github.com/tj/commander.js). The Zod schema's field names become `--flags`, descriptions become help text, and required vs optional fields are enforced.
 
 ```bash
-./actionhero.ts "user:create" \
+./keryx.ts "user:create" \
   --name Evan \
   --email evan@example.com \
   --password secret123 \
@@ -126,7 +126,7 @@ Every action is automatically registered as a CLI command via [Commander](https:
 The `-q` flag suppresses server logs so you get clean JSON output. Use `--help` on any action to see its params:
 
 ```bash
-./actionhero.ts "user:create" --help
+./keryx.ts "user:create" --help
 ```
 
 The server boots in `CLI` mode — initializers that don't apply (like the web server) are skipped based on their `runModes` setting.

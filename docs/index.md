@@ -2,19 +2,19 @@
 layout: home
 description: A modern TypeScript API framework built on Bun — the spiritual successor to ActionHero.
 hero:
-  name: bun-actionhero
+  name: Keryx
   text: The Modern TypeScript API Framework
   tagline: Write one action. It handles HTTP, WebSocket, CLI, background tasks, and MCP tool calls. Built on Bun, powered by Zod, backed by Redis and Postgres.
   image:
     src: /images/flying-man.svg
-    alt: ActionHero mascot
+    alt: Keryx mascot
   actions:
     - theme: brand
       text: Get Started
       link: /guide/
     - theme: alt
       text: View on GitHub
-      link: https://github.com/evantahler/bun-actionhero
+      link: https://github.com/evantahler/keryx
 features:
   - icon: "\U0001F500"
     title: One Action, Every Transport

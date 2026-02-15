@@ -6,7 +6,7 @@ import { config } from "../config";
 import { formatConnectionStringForLogging } from "../util/connectionString";
 
 const namespace = "redis";
-const testKey = `__actionhero_test_key:${config.process.name}`;
+const testKey = `__keryx_test_key:${config.process.name}`;
 
 declare module "../classes/API" {
   export interface API {
