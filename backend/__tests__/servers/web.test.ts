@@ -45,7 +45,7 @@ describe("actions", () => {
     expect(res.status).toBe(404);
     const response = (await res.json()) as ActionResponse<Status>;
     expect(response.error?.message).toContain("Action not found");
-    expect(response.error?.stack).toContain("/bun-actionhero/");
+    expect(response.error?.stack).toContain("/keryx/");
   });
 
   test("error responses omit stack when includeStackInErrors is false", async () => {
