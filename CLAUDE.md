@@ -169,15 +169,6 @@ cd docs && bun run generate        # Regenerate reference JSON from backend sour
 
 The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
 
-## Planning Mode
-
-When using Claude Code's planning mode (`/plan`), the finalized plan **must be filed as a GitHub issue** before implementation begins. Use the `Github_CreateIssue` tool (or `gh issue create`) to create the issue in this repo (`evantahler/bun-actionhero`) with:
-- A clear title summarizing the planned work
-- The full plan as the issue body (markdown)
-- Appropriate labels if relevant (e.g., `enhancement`, `refactor`)
-
-Do not begin implementation until the issue is created and the URL is shared with the user.
-
 ## Gotcha: Stale Processes
 
 If code changes aren't reflected in HTTP responses, check for stale `bun actionhero` processes:
