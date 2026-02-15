@@ -197,12 +197,11 @@ describe("channel authorization", () => {
     });
   });
 
-  describe("unprotected channels", () => {
-    test("should allow subscription to channels without middleware", async () => {
+  describe("undefined channels", () => {
+    test("should deny subscription to channels without a Channel definition", async () => {
       const { socket, messages } = await buildWebSocket();
 
       // Try to subscribe to a channel that doesn't have a Channel definition
-      // (no middleware protection)
       socket.send(
         JSON.stringify({
           messageType: "subscribe",
@@ -215,8 +214,11 @@ describe("channel authorization", () => {
 
       const response = JSON.parse(messages[0].data);
       expect(response.messageId).toBe("sub-1");
-      expect(response.error).toBeUndefined();
-      expect(response.subscribed).toEqual({ channel: "public-announcements" });
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_AUTHORIZATION");
+      expect(response.error.message).toBe(
+        "Channel not found: public-announcements",
+      );
 
       socket.close();
     });
@@ -325,7 +327,7 @@ describe("channel authorization", () => {
       socket.close();
     });
 
-    test("should allow valid channel names with colons, dots, hyphens, underscores", async () => {
+    test("should reject valid channel names that have no Channel definition", async () => {
       const { socket, messages } = await buildWebSocket();
 
       socket.send(
@@ -340,10 +342,11 @@ describe("channel authorization", () => {
 
       const response = JSON.parse(messages[0].data);
       expect(response.messageId).toBe("sub-1");
-      expect(response.error).toBeUndefined();
-      expect(response.subscribed).toEqual({
-        channel: "room:lobby.main-chat_v2",
-      });
+      expect(response.error).toBeDefined();
+      expect(response.error.type).toBe("CONNECTION_CHANNEL_AUTHORIZATION");
+      expect(response.error.message).toBe(
+        "Channel not found: room:lobby.main-chat_v2",
+      );
 
       socket.close();
     });

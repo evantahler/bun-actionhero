@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { api } from "../../api";
+import { Channel } from "../../classes/Channel";
 import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 import { buildWebSocket } from "./websocket-helpers";
@@ -148,6 +149,19 @@ test("limits max subscriptions per connection", async () => {
   const originalLimit = config.server.web.websocketMaxSubscriptions;
   (config.server.web as any).websocketMaxSubscriptions = 2;
 
+  // Register temporary test channels so they pass authorization
+  class TestChannel extends Channel {
+    constructor(name: string) {
+      super({ name });
+    }
+  }
+  const testChannels = [
+    new TestChannel("test-chan-0"),
+    new TestChannel("test-chan-1"),
+    new TestChannel("test-chan-overflow"),
+  ];
+  api.channels.channels.push(...testChannels);
+
   try {
     const { socket, messages } = await buildWebSocket();
 
@@ -192,5 +206,10 @@ test("limits max subscriptions per connection", async () => {
     socket.close();
   } finally {
     (config.server.web as any).websocketMaxSubscriptions = originalLimit;
+    // Remove temporary test channels
+    for (const tc of testChannels) {
+      const idx = api.channels.channels.indexOf(tc);
+      if (idx !== -1) api.channels.channels.splice(idx, 1);
+    }
   }
 });
