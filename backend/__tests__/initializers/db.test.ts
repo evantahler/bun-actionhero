@@ -128,7 +128,7 @@ describe("db initializer", () => {
   test("transactions work", async () => {
     await api.db.clearDatabase();
 
-    await api.db.db.transaction(async (tx) => {
+    await api.db.db.transaction(async (tx: typeof api.db.db) => {
       await tx.insert(users).values({
         name: "Transaction User",
         email: "transaction@example.com",

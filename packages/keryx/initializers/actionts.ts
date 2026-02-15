@@ -64,7 +64,7 @@ export class Actions extends Initializer {
     inputs: TaskInputs = {},
     queue?: string,
   ) => {
-    const action = api.actions.actions.find((a) => a.name === actionName);
+    const action = api.actions.actions.find((a: Action) => a.name === actionName);
     if (!action) {
       throw new TypedError({
         message: `action ${actionName} not found`,
@@ -115,7 +115,7 @@ export class Actions extends Initializer {
     // Validate all action names up front
     const actionNames = new Set<string>();
     for (const job of jobs) {
-      const action = api.actions.actions.find((a) => a.name === job.action);
+      const action = api.actions.actions.find((a: Action) => a.name === job.action);
       if (!action) {
         throw new TypedError({
           message: `action ${job.action} not found`,
@@ -126,8 +126,8 @@ export class Actions extends Initializer {
     }
 
     // Resolve queue per job: explicit job.queue > action's task.queue > DEFAULT_QUEUE
-    const resolvedJobs = jobs.map((job) => {
-      const action = api.actions.actions.find((a) => a.name === job.action)!;
+    const resolvedJobs = jobs.map((job: FanOutJob) => {
+      const action = api.actions.actions.find((a: Action) => a.name === job.action)!;
       const resolvedQueue = job.queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
       return { ...job, queue: resolvedQueue, inputs: job.inputs ?? {} };
     });
@@ -220,8 +220,8 @@ export class Actions extends Initializer {
       total: parseInt(meta.total, 10) || 0,
       completed: parseInt(meta.completed, 10) || 0,
       failed: parseInt(meta.failed, 10) || 0,
-      results: rawResults.map((r) => JSON.parse(r)),
-      errors: rawErrors.map((e) => JSON.parse(e)),
+      results: rawResults.map((r: string) => JSON.parse(r)),
+      errors: rawErrors.map((e: string) => JSON.parse(e)),
     };
   };
 
@@ -541,7 +541,7 @@ export class Actions extends Initializer {
    * Will throw an error if redis cannot be reached.
    */
   stopRecurrentAction = async (actionName: string): Promise<number> => {
-    const action = api.actions.actions.find((a) => a.name === actionName);
+    const action = api.actions.actions.find((a: Action) => a.name === actionName);
     if (!action) {
       throw new TypedError({
         message: `action ${actionName} not found`,

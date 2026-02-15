@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Swagger } from "keryx/actions/swagger";
-import { api, type ActionResponse } from "../../api";
+import { api, type Action, type ActionResponse } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
 let url: string;
@@ -46,12 +46,12 @@ describe("swagger", () => {
 
     // Count web actions (actions with both route and method)
     const webActions = api.actions.actions.filter(
-      (action) => action.web?.route && action.web?.method,
+      (action: Action) => action.web?.route && action.web?.method,
     );
 
     // Count unique routes (since multiple methods on same route are grouped)
     const uniqueRoutes = new Set(
-      webActions.map((action) =>
+      webActions.map((action: Action) =>
         convertRouteForSwagger(action.web!.route.toString()),
       ),
     );
@@ -76,7 +76,7 @@ describe("swagger", () => {
 
     // Find actions with Zod inputs
     const actionsWithInputs = api.actions.actions.filter(
-      (action) => action.web?.route && action.web?.method && action.inputs,
+      (action: Action) => action.web?.route && action.web?.method && action.inputs,
     );
 
     for (const action of actionsWithInputs) {

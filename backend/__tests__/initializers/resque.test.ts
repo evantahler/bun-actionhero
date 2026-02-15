@@ -74,7 +74,7 @@ test("actions with the different args will only be enqueued", async () => {
   expect(enqueued_A).toBe(true);
   expect(enqueued_B).toBe(true);
   expect(jobs.length).toBe(2);
-  expect(jobs.map((j) => j.args[0].val)).toEqual(["I ran", "other args"]);
+  expect(jobs.map((j: { args: Record<string, string>[] }) => j.args[0].val)).toEqual(["I ran", "other args"]);
 });
 
 test("actions can be enqueued later", async () => {

@@ -81,7 +81,7 @@ export class MessagesList implements Action {
       .leftJoin(users, eq(users.id, messages.user_id));
 
     return {
-      messages: _messages.map((m) =>
+      messages: _messages.map((m: (typeof _messages)[number]) =>
         serializeMessage(m, m.user_name ? m.user_name : undefined),
       ),
     };

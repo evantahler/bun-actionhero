@@ -54,7 +54,7 @@ async function runActionViaCLI(options: Record<string, string>, command: any) {
 
   await api.initialize();
 
-  const action = api.actions.actions.find((a) => a.name === actionName);
+  const action = api.actions.actions.find((a: Action) => a.name === actionName);
   if (!action) {
     exitWithError(`Action "${actionName}" not found`);
   }

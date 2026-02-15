@@ -1,4 +1,4 @@
-import { Action, api } from "../../api";
+import { Action, api, type FanOutStatus } from "../../api";
 import { HOOK_TIMEOUT, waitFor } from "./../setup";
 
 import {
@@ -103,7 +103,7 @@ beforeEach(async () => {
 afterEach(async () => {
   // Clean up test actions
   api.actions.actions = api.actions.actions.filter(
-    (a) =>
+    (a: Action) =>
       a.name !== "fanout:child" &&
       a.name !== "fanout:failing-child" &&
       a.name !== "fanout:second-child",
@@ -385,7 +385,7 @@ describe("with workers", () => {
     expect(status.failed).toBe(0);
     expect(status.results).toHaveLength(3);
 
-    const processedIds = status.results.map((r) => r.result.processed).sort();
+    const processedIds = status.results.map((r: FanOutStatus["results"][number]) => r.result.processed).sort();
     expect(processedIds).toEqual(["x", "y", "z"]);
   });
 
@@ -409,8 +409,8 @@ describe("with workers", () => {
     expect(status.results).toHaveLength(3);
 
     // Results from both action types should be present
-    const childResults = status.results.filter((r) => r.result.processed);
-    const secondResults = status.results.filter((r) => r.result.greeted);
+    const childResults = status.results.filter((r: FanOutStatus["results"][number]) => r.result.processed);
+    const secondResults = status.results.filter((r: FanOutStatus["results"][number]) => r.result.greeted);
     expect(childResults).toHaveLength(2);
     expect(secondResults).toHaveLength(1);
     expect(secondResults[0].result.greeted).toBe("grace");
