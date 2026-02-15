@@ -1,3 +1,4 @@
+import { join } from "path";
 import { api, logger } from "../api";
 import type { Channel } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
@@ -7,6 +8,7 @@ import { globLoader } from "../util/glob";
 
 const namespace = "channels";
 const PRESENCE_KEY_PREFIX = "presence:";
+const LUA_DIR = join(import.meta.dir, "..", "lua");
 
 declare module "../classes/API" {
   export interface API {
@@ -15,6 +17,9 @@ declare module "../classes/API" {
 }
 
 export class Channels extends Initializer {
+  private addPresenceLua = "";
+  private removePresenceLua = "";
+
   constructor() {
     super(namespace);
     this.loadPriority = 100;
@@ -97,8 +102,14 @@ export class Channels extends Initializer {
     const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
     const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    await api.redis.redis.sadd(connectionSetKey, connection.id);
-    const added = await api.redis.redis.sadd(channelKey, key);
+    const added = await api.redis.redis.eval(
+      this.addPresenceLua,
+      2,
+      connectionSetKey,
+      channelKey,
+      connection.id,
+      key,
+    );
 
     if (added === 1) {
       await api.pubsub.broadcast(
@@ -123,13 +134,16 @@ export class Channels extends Initializer {
     const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
     const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    const removed = await api.redis.redis.srem(connectionSetKey, connection.id);
-    if (removed === 0) return;
+    const shouldLeave = await api.redis.redis.eval(
+      this.removePresenceLua,
+      2,
+      connectionSetKey,
+      channelKey,
+      connection.id,
+      key,
+    );
 
-    const remaining = await api.redis.redis.scard(connectionSetKey);
-    if (remaining === 0) {
-      await api.redis.redis.del(connectionSetKey);
-      await api.redis.redis.srem(channelKey, key);
+    if (shouldLeave === 1) {
       await api.pubsub.broadcast(
         channelName,
         JSON.stringify({ event: "leave", presenceKey: key }),
@@ -168,6 +182,13 @@ export class Channels extends Initializer {
   };
 
   async initialize() {
+    this.addPresenceLua = await Bun.file(
+      join(LUA_DIR, "add-presence.lua"),
+    ).text();
+    this.removePresenceLua = await Bun.file(
+      join(LUA_DIR, "remove-presence.lua"),
+    ).text();
+
     let channels: Channel[] = [];
 
     try {

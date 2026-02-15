@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, beforeEach, expect, test } from "bun:test";
 import { api } from "../../api";
+import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 import {
   buildWebSocket,
@@ -9,11 +10,13 @@ import {
 } from "./websocket-helpers";
 
 beforeAll(async () => {
+  (config.rateLimit as any).enabled = false;
   await api.start();
   await api.db.clearDatabase();
 }, HOOK_TIMEOUT);
 
 afterAll(async () => {
+  (config.rateLimit as any).enabled = true;
   await api.stop();
 }, HOOK_TIMEOUT);
 
