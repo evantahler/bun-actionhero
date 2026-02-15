@@ -12,8 +12,7 @@ beforeAll(async () => {
 
 describe("CLI", () => {
   test("help describes the CLI and actions", async () => {
-    const { stdout, stderr, exitCode } =
-      await $`./keryx.ts --help`.quiet();
+    const { stdout, stderr, exitCode } = await $`./keryx.ts --help`.quiet();
 
     expect(exitCode).toBe(0);
     expect(stderr).toBeEmpty();
@@ -23,9 +22,7 @@ describe("CLI", () => {
   });
 
   test("no action is the same as help, but technically an error", async () => {
-    const { stdout, stderr, exitCode } = await $`./keryx.ts`
-      .quiet()
-      .nothrow();
+    const { stdout, stderr, exitCode } = await $`./keryx.ts`.quiet().nothrow();
 
     expect(exitCode).toBe(1);
     expect(stdout).toBeEmpty();
@@ -33,8 +30,7 @@ describe("CLI", () => {
   });
 
   test('the version is returned with "--version"', async () => {
-    const { stdout, stderr, exitCode } =
-      await $`./keryx.ts --version`.quiet();
+    const { stdout, stderr, exitCode } = await $`./keryx.ts --version`.quiet();
 
     expect(exitCode).toBe(0);
     expect(stderr).toBeEmpty();
