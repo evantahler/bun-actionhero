@@ -80,6 +80,26 @@ describe("security headers", () => {
   });
 });
 
+describe("cookies", () => {
+  test("session cookie uses SameSite=Strict", async () => {
+    const res = await fetch(url + "/api/status");
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("SameSite=Strict");
+  });
+
+  test("session cookie includes HttpOnly", async () => {
+    const res = await fetch(url + "/api/status");
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain("HttpOnly");
+  });
+
+  test("session cookie includes expected name", async () => {
+    const res = await fetch(url + "/api/status");
+    const setCookie = res.headers.get("set-cookie") ?? "";
+    expect(setCookie).toContain(`${config.session.cookieName}=`);
+  });
+});
+
 describe("static files", () => {
   test("serves a file from the static directory", async () => {
     const res = await fetch(url + "/test.txt");

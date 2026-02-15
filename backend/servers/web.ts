@@ -555,11 +555,20 @@ const buildHeaders = (connection?: Connection) => {
   Object.assign(headers, getSecurityHeaders());
 
   if (connection) {
-    const secure = config.server.web.applicationUrl.startsWith("https")
-      ? "; Secure"
-      : "";
-    headers["Set-Cookie"] =
-      `${config.session.cookieName}=${connection.id}; Max-Age=${config.session.ttl}; Path=/; HttpOnly; SameSite=Lax${secure}`;
+    const secure =
+      config.session.cookieSecure ||
+      config.server.web.applicationUrl.startsWith("https");
+    const flags = [
+      `${config.session.cookieName}=${connection.id}`,
+      `Max-Age=${config.session.ttl}`,
+      "Path=/",
+      config.session.cookieHttpOnly ? "HttpOnly" : "",
+      `SameSite=${config.session.cookieSameSite}`,
+      secure ? "Secure" : "",
+    ]
+      .filter(Boolean)
+      .join("; ");
+    headers["Set-Cookie"] = flags;
   }
 
   return headers;
