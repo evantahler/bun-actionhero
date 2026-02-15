@@ -85,6 +85,17 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const cookies = cookie.parse(req.headers.get("cookie") ?? "");
     const id = cookies[config.session.cookieName] || randomUUID();
 
+    // Validate Origin header before WebSocket upgrade to prevent CSWSH
+    if (req.headers.get("upgrade")?.toLowerCase() === "websocket") {
+      const origin = req.headers.get("origin");
+      if (
+        origin &&
+        !isOriginAllowed(origin, config.server.web.allowedOrigins)
+      ) {
+        return new Response("WebSocket origin not allowed", { status: 403 });
+      }
+    }
+
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
     const parsedUrl = parse(req.url!, true);
@@ -692,6 +703,12 @@ function buildErrorPayload(error: TypedError) {
     value: error.value !== undefined ? error.value : undefined,
     stack: error.stack,
   };
+}
+
+function isOriginAllowed(origin: string, allowedOrigins: string): boolean {
+  if (allowedOrigins === "*") return true;
+  const allowed = allowedOrigins.split(",").map((o) => o.trim());
+  return allowed.includes(origin);
 }
 
 const EOL = "\r\n";

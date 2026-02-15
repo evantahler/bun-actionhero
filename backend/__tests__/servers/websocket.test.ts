@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { api } from "../../api";
 import { config } from "../../config";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 import { buildWebSocket } from "./websocket-helpers";
 
 beforeAll(async () => {
@@ -192,5 +192,75 @@ test("limits max subscriptions per connection", async () => {
     socket.close();
   } finally {
     (config.server.web as any).websocketMaxSubscriptions = originalLimit;
+  }
+});
+
+test("rejects WebSocket upgrade with disallowed Origin header", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = "http://allowed.example.com";
+
+  try {
+    const res = await fetch(serverUrl(), {
+      headers: {
+        Upgrade: "websocket",
+        Connection: "Upgrade",
+        Origin: "http://evil.example.com",
+        "Sec-WebSocket-Key": btoa(crypto.randomUUID()),
+        "Sec-WebSocket-Version": "13",
+      },
+    });
+
+    expect(res.status).toBe(403);
+    expect(await res.text()).toBe("WebSocket origin not allowed");
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
+  }
+});
+
+test("allows WebSocket upgrade with matching Origin header", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = serverUrl();
+
+  try {
+    const { socket } = await buildWebSocket({
+      headers: { Origin: serverUrl() },
+    });
+
+    socket.send(
+      JSON.stringify({
+        messageType: "action",
+        action: "status",
+        messageId: 1,
+        params: {},
+      }),
+    );
+
+    socket.close();
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
+  }
+});
+
+test("allows WebSocket upgrade with wildcard allowedOrigins", async () => {
+  const originalOrigins = config.server.web.allowedOrigins;
+  (config.server.web as any).allowedOrigins = "*";
+
+  try {
+    const { socket } = await buildWebSocket({
+      headers: { Origin: "http://any-origin.example.com" },
+    });
+
+    socket.send(
+      JSON.stringify({
+        messageType: "action",
+        action: "status",
+        messageId: 1,
+        params: {},
+      }),
+    );
+
+    socket.close();
+  } finally {
+    (config.server.web as any).allowedOrigins = originalOrigins;
   }
 });

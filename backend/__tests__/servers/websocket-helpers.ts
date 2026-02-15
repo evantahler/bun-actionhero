@@ -4,8 +4,10 @@ import { serverUrl } from "../setup";
 const wsUrl = () =>
   serverUrl().replace("https://", "wss://").replace("http://", "ws://");
 
-export const buildWebSocket = async () => {
-  const socket = new WebSocket(wsUrl());
+export const buildWebSocket = async (
+  options: { headers?: Record<string, string> } = {},
+) => {
+  const socket = new WebSocket(wsUrl(), { headers: options.headers });
   const messages: MessageEvent[] = [];
   socket.addEventListener("message", (event) => {
     messages.push(event);
