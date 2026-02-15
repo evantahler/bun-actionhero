@@ -130,6 +130,10 @@ Drizzle ORM table definitions. Migrations auto-apply on server start when `confi
 ### TypedError (`backend/classes/TypedError.ts`)
 All action errors must use `TypedError` with an `ErrorType` enum. Each error type maps to an HTTP status code via `ErrorStatusCodes`.
 
+## Coding Conventions
+
+- **No `as any`** — Never use `as any` type assertions. Use `@ts-expect-error` with an explanatory comment when the type system can't express something, or add a proper type/interface.
+
 ## Testing Patterns
 
 Tests use Bun's built-in test runner. Each test file boots/stops the full server:
