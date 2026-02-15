@@ -701,7 +701,7 @@ function buildErrorPayload(error: TypedError) {
     timestamp: new Date().getTime(),
     key: error.key !== undefined ? error.key : undefined,
     value: error.value !== undefined ? error.value : undefined,
-    stack: error.stack,
+    ...(config.server.web.includeStackInErrors ? { stack: error.stack } : {}),
   };
 }
 

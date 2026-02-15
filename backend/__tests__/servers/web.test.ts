@@ -47,6 +47,20 @@ describe("actions", () => {
     expect(response.error?.message).toContain("Action not found");
     expect(response.error?.stack).toContain("/bun-actionhero/");
   });
+
+  test("error responses omit stack when includeStackInErrors is false", async () => {
+    const original = config.server.web.includeStackInErrors;
+    config.server.web.includeStackInErrors = false;
+    try {
+      const res = await fetch(url + "/api/non-existent-action");
+      expect(res.status).toBe(404);
+      const response = (await res.json()) as ActionResponse<Status>;
+      expect(response.error?.message).toContain("Action not found");
+      expect(response.error?.stack).toBeUndefined();
+    } finally {
+      config.server.web.includeStackInErrors = original;
+    }
+  });
 });
 
 describe("security headers", () => {
