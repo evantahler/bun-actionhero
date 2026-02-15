@@ -74,7 +74,7 @@ export class SessionDestroy implements Action {
   description =
     "Sign out by destroying the current authenticated session. After calling this, the session token is invalidated and subsequent requests will be unauthenticated. Requires an active session. Returns {success: true} on success.";
   web = { route: "/session", method: HTTP_METHOD.DELETE };
-  middleware = [SessionMiddleware];
+  middleware = [RateLimitMiddleware, SessionMiddleware];
 
   async run(
     _params: ActionParams<SessionDestroy>,

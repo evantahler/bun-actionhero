@@ -15,7 +15,6 @@ import type {
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
-import type { RateLimitInfo } from "../middleware/rateLimit";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   constructor() {
@@ -571,10 +570,8 @@ const buildHeaders = (connection?: Connection) => {
       .join("; ");
     headers["Set-Cookie"] = flags;
 
-    const rateLimitInfo = (connection as any).rateLimitInfo as
-      | RateLimitInfo
-      | undefined;
-    if (rateLimitInfo) {
+    if (connection.rateLimitInfo) {
+      const rateLimitInfo = connection.rateLimitInfo;
       headers["X-RateLimit-Limit"] = String(rateLimitInfo.limit);
       headers["X-RateLimit-Remaining"] = String(rateLimitInfo.remaining);
       headers["X-RateLimit-Reset"] = String(rateLimitInfo.resetAt);

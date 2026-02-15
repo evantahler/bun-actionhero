@@ -13,7 +13,6 @@ import { config } from "../../config";
 import {
   checkRateLimit,
   RateLimitMiddleware,
-  type RateLimitInfo,
 } from "../../middleware/rateLimit";
 import { HOOK_TIMEOUT } from "../setup";
 
@@ -43,7 +42,7 @@ describe("RateLimitMiddleware", () => {
       const result = await RateLimitMiddleware.runBefore!({}, connection);
       expect(result).toBeUndefined();
 
-      const info = (connection as any).rateLimitInfo as RateLimitInfo;
+      const info = connection.rateLimitInfo!;
       expect(info).toBeDefined();
       expect(info.limit).toBe(config.rateLimit.unauthenticatedLimit);
       expect(info.remaining).toBeLessThan(info.limit);
@@ -91,7 +90,7 @@ describe("RateLimitMiddleware", () => {
         const unauthConn = new Connection("test", "10.0.0.30");
         unauthConn.session = undefined;
         await RateLimitMiddleware.runBefore!({}, unauthConn);
-        const unauthInfo = (unauthConn as any).rateLimitInfo as RateLimitInfo;
+        const unauthInfo = (unauthConn as any).rateLimitInfo!;
         expect(unauthInfo.limit).toBe(5);
         unauthConn.destroy();
 
@@ -103,7 +102,7 @@ describe("RateLimitMiddleware", () => {
           data: { userId: 42 },
         };
         await RateLimitMiddleware.runBefore!({}, authConn);
-        const authInfo = (authConn as any).rateLimitInfo as RateLimitInfo;
+        const authInfo = (authConn as any).rateLimitInfo!;
         expect(authInfo.limit).toBe(50);
         expect(authInfo.limit).toBeGreaterThan(unauthInfo.limit);
         authConn.destroy();
@@ -121,7 +120,7 @@ describe("RateLimitMiddleware", () => {
         const connection = new Connection("test", "10.0.0.4");
         const result = await RateLimitMiddleware.runBefore!({}, connection);
         expect(result).toBeUndefined();
-        expect((connection as any).rateLimitInfo).toBeUndefined();
+        expect(connection.rateLimitInfo).toBeUndefined();
         connection.destroy();
       } finally {
         (config.rateLimit as any).enabled = originalEnabled;

@@ -69,7 +69,7 @@ export const RateLimitMiddleware: ActionMiddleware = {
     const info = await checkRateLimit(identifier, isAuthenticated);
 
     // Store on connection for header injection by web server
-    (connection as any).rateLimitInfo = info;
+    connection.rateLimitInfo = info;
 
     if (info.retryAfter !== undefined) {
       throw new TypedError({
