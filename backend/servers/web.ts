@@ -31,6 +31,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   port: number = 0;
   /** The actual application URL (resolved after start). */
   url: string = "";
+  /** Per-connection message rate tracking (keyed by connection id). */
+  private wsRateMap = new Map<string, { count: number; windowStart: number }>();
 
   constructor() {
     super("web");
@@ -48,6 +50,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         hostname: config.server.web.host,
         fetch: this.handleIncomingConnection.bind(this),
         websocket: {
+          maxPayloadLength: config.server.web.websocketMaxPayloadSize,
           open: this.handleWebSocketConnectionOpen.bind(this),
           message: this.handleWebSocketConnectionMessage.bind(this),
           close: this.handleWebSocketConnectionClose.bind(this),
@@ -147,6 +150,31 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       });
     }
 
+    // Per-connection message rate limiting
+    const maxMps = config.server.web.websocketMaxMessagesPerSecond;
+    if (maxMps > 0) {
+      const now = Date.now();
+      const entry = this.wsRateMap.get(connection.id);
+      if (!entry || now - entry.windowStart >= 1000) {
+        this.wsRateMap.set(connection.id, { count: 1, windowStart: now });
+      } else {
+        entry.count++;
+        if (entry.count > maxMps) {
+          ws.send(
+            JSON.stringify({
+              error: buildErrorPayload(
+                new TypedError({
+                  message: "WebSocket rate limit exceeded",
+                  type: ErrorType.CONNECTION_RATE_LIMITED,
+                }),
+              ),
+            }),
+          );
+          return;
+        }
+      }
+    }
+
     try {
       const parsedMessage = JSON.parse(message.toString());
       if (parsedMessage["messageType"] === "action") {
@@ -183,6 +211,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.id,
     );
+    this.wsRateMap.delete(connection.id);
+
     try {
       // Remove presence from all subscribed channels before destroying
       for (const channel of connection.subscriptions) {
@@ -242,6 +272,15 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   ) {
     try {
       validateChannelName(formattedMessage.channel);
+
+      // Check subscription limit
+      const maxSubs = config.server.web.websocketMaxSubscriptions;
+      if (maxSubs > 0 && connection.subscriptions.size >= maxSubs) {
+        throw new TypedError({
+          message: `Too many subscriptions (max ${maxSubs})`,
+          type: ErrorType.CONNECTION_CHANNEL_VALIDATION,
+        });
+      }
 
       // Ensure session is loaded before checking authorization
       if (!connection.sessionLoaded) {

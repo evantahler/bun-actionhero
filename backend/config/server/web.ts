@@ -27,6 +27,18 @@ export const configServerWeb = {
     "assets",
   ),
   staticFilesRoute: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
+  websocketMaxPayloadSize: await loadFromEnvIfSet(
+    "WS_MAX_PAYLOAD_SIZE",
+    65_536,
+  ),
+  websocketMaxMessagesPerSecond: await loadFromEnvIfSet(
+    "WS_MAX_MESSAGES_PER_SECOND",
+    20,
+  ),
+  websocketMaxSubscriptions: await loadFromEnvIfSet(
+    "WS_MAX_SUBSCRIPTIONS",
+    100,
+  ),
   securityHeaders: {
     "Content-Security-Policy": await loadFromEnvIfSet(
       "WEB_SECURITY_CSP",
