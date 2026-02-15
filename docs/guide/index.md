@@ -8,6 +8,8 @@ Keryx is a modern rewrite of [ActionHero](https://www.actionherojs.com), rebuilt
 
 The result is a full-stack monorepo template where you write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, and background task… all at the same time.
 
+The name **Keryx** (κῆρυξ) comes from ancient Greek, meaning "herald" or "messenger" — the person who carried proclamations between gods and mortals. It fits: your actions are the message, and Keryx delivers them across every transport.
+
 ## Prerequisites
 
 You'll need these running locally:
