@@ -13,6 +13,9 @@ hero:
       text: Get Started
       link: /guide/
     - theme: alt
+      text: API Reference
+      link: /reference/actions
+    - theme: alt
       text: View on GitHub
       link: https://github.com/evantahler/keryx
 features:

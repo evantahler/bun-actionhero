@@ -38,9 +38,19 @@ export default defineConfig({
         {
           text: "Usage",
           items: [
+            { text: "Authentication", link: "/guide/authentication" },
             { text: "Security", link: "/guide/security" },
             { text: "Testing", link: "/guide/testing" },
             { text: "Deployment", link: "/guide/deployment" },
+          ],
+        },
+        {
+          text: "Migration",
+          items: [
+            {
+              text: "Coming from ActionHero",
+              link: "/guide/from-actionhero",
+            },
           ],
         },
       ],
@@ -62,6 +72,15 @@ export default defineConfig({
             {
               text: "Servers (HTTP, WebSocket, CLI, MCP)",
               link: "/reference/servers",
+            },
+          ],
+        },
+        {
+          text: "Utilities",
+          items: [
+            {
+              text: "Zod Helpers & Mixins",
+              link: "/reference/utilities",
             },
           ],
         },
