@@ -442,19 +442,18 @@ async function handleToken(req: Request): Promise<Response> {
     scopes: [],
   };
 
-  const tokenTtl = Math.floor(config.session.ttl / 1000); // config.session.ttl is in ms
   await api.redis.redis.set(
     `oauth:token:${accessToken}`,
     JSON.stringify(tokenData),
     "EX",
-    tokenTtl,
+    config.session.ttl,
   );
 
   return new Response(
     JSON.stringify({
       access_token: accessToken,
       token_type: "Bearer",
-      expires_in: tokenTtl,
+      expires_in: config.session.ttl,
     }),
     {
       status: 200,
