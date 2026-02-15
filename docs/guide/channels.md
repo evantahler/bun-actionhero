@@ -96,3 +96,29 @@ await api.pubsub.broadcast(
 ```
 
 Messages go through Redis PubSub, so they work across server instances. If you're running three backend processes behind a load balancer, a broadcast from one reaches subscribers on all three.
+
+## WebSocket Security
+
+Channels and WebSocket connections have several built-in protections. See the [Security guide](/guide/security) for the full picture.
+
+### Channel Name Validation
+
+Channel names must match `/^[a-zA-Z0-9:._-]{1,200}$/` — alphanumeric characters plus `:`, `.`, `_`, `-`, with a max length of 200. Invalid names are rejected before any subscription logic runs.
+
+### Undefined Channels
+
+If a client tries to subscribe to a channel name that doesn't match any registered channel, the subscription is denied with a `CHANNEL_NOT_FOUND` error. You must define a channel (exact or pattern) for every topic clients can subscribe to.
+
+### Origin Validation
+
+Before upgrading an HTTP connection to WebSocket, the server checks the `Origin` header against `config.server.web.allowedOrigins`. Requests from unrecognized origins are rejected, preventing Cross-Site WebSocket Hijacking (CSWSH).
+
+### Connection Limits
+
+Each WebSocket connection is subject to:
+
+- **Message size** — messages larger than `websocketMaxPayloadSize` (default 64 KB) are rejected
+- **Message rate** — clients sending more than `websocketMaxMessagesPerSecond` (default 20/s) are disconnected
+- **Subscription count** — each connection can subscribe to at most `websocketMaxSubscriptions` (default 100) channels
+
+All of these are configurable via environment variables. See [Configuration](/guide/config) for details.

@@ -38,6 +38,7 @@ export default defineConfig({
         {
           text: "Usage",
           items: [
+            { text: "Security", link: "/guide/security" },
             { text: "Testing", link: "/guide/testing" },
             { text: "Deployment", link: "/guide/deployment" },
           ],
