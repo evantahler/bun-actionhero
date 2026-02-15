@@ -120,10 +120,12 @@ export class RoomChannel extends Channel {
 ### Presence API
 
 ```ts
-// Get all presence keys for a channel on this server
-const members = api.channels.members("room:123");
+// Get all presence keys for a channel (across all server instances)
+const members = await api.channels.members("room:123");
 // → ["user:1", "user:42", "user:7"]
 ```
+
+Presence data is stored in Redis, so `members()` returns a global view across all instances in a multi-server deployment.
 
 Presence events are broadcast automatically via PubSub when a key joins or leaves:
 
@@ -139,7 +141,7 @@ A single presence key can have multiple connections (e.g., a user with multiple 
 For test cleanup:
 
 ```ts
-api.channels.clearPresence();
+await api.channels.clearPresence();
 ```
 
 ## WebSocket Security

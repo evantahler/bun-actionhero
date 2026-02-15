@@ -19,6 +19,6 @@ export class ChannelMembers implements Action {
   });
 
   async run(params: ActionParams<ChannelMembers>) {
-    return { members: api.channels.members(params.channel) };
+    return { members: await api.channels.members(params.channel) };
   }
 }

@@ -115,7 +115,7 @@ Keryx backends can run as multiple instances behind a load balancer. Redis handl
 - **Sessions** are stored in Redis, so any instance can serve any request
 - **PubSub** broadcasts go through Redis, so channel messages reach subscribers on all instances
 - **Background tasks** use Resque with Redis, so workers on any instance can process jobs
-- **Presence tracking** is per-instance (in-memory), so `api.channels.members()` returns members for the current instance only
+- **Presence tracking** uses Redis, so `api.channels.members()` returns the global view across all instances
 
 For horizontal scaling, the main consideration is that each instance runs its own Resque workers. Configure `TASK_PROCESSORS` per instance to control how many workers each one runs. Use `["*"]` for queues unless you need dedicated worker instances for specific queues.
 

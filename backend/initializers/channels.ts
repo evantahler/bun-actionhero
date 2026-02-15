@@ -6,6 +6,7 @@ import { ErrorType, TypedError } from "../classes/TypedError";
 import { globLoader } from "../util/glob";
 
 const namespace = "channels";
+const PRESENCE_KEY_PREFIX = "presence:";
 
 declare module "../classes/API" {
   export interface API {
@@ -14,12 +15,6 @@ declare module "../classes/API" {
 }
 
 export class Channels extends Initializer {
-  /**
-   * Presence data: channelName → presenceKey → Set<connectionId>
-   * Tracks which connections map to which presence keys per channel.
-   */
-  presence = new Map<string, Map<string, Set<string>>>();
-
   constructor() {
     super(namespace);
     this.loadPriority = 100;
@@ -87,6 +82,10 @@ export class Channels extends Initializer {
   /**
    * Record a connection's presence in a channel and broadcast a join event
    * if this is the first connection for that presence key.
+   *
+   * Redis keys:
+   *   presence:{channelName} — Set of presence keys
+   *   presence:{channelName}:{presenceKey} — Set of connection IDs
    */
   addPresence = async (
     channelName: string,
@@ -95,18 +94,13 @@ export class Channels extends Initializer {
     const channel = this.findChannel(channelName);
     const key = channel ? await channel.presenceKey(connection) : connection.id;
 
-    if (!this.presence.has(channelName)) {
-      this.presence.set(channelName, new Map());
-    }
-    const channelPresence = this.presence.get(channelName)!;
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    const isNewKey = !channelPresence.has(key);
-    if (!channelPresence.has(key)) {
-      channelPresence.set(key, new Set());
-    }
-    channelPresence.get(key)!.add(connection.id);
+    await api.redis.redis.sadd(connectionSetKey, connection.id);
+    const added = await api.redis.redis.sadd(channelKey, key);
 
-    if (isNewKey) {
+    if (added === 1) {
       await api.pubsub.broadcast(
         channelName,
         JSON.stringify({ event: "join", presenceKey: key }),
@@ -123,45 +117,54 @@ export class Channels extends Initializer {
     channelName: string,
     connection: Connection,
   ): Promise<void> => {
-    const channelPresence = this.presence.get(channelName);
-    if (!channelPresence) return;
-
     const channel = this.findChannel(channelName);
     const key = channel ? await channel.presenceKey(connection) : connection.id;
 
-    const connectionIds = channelPresence.get(key);
-    if (!connectionIds) return;
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    const connectionSetKey = `${PRESENCE_KEY_PREFIX}${channelName}:${key}`;
 
-    connectionIds.delete(connection.id);
+    const removed = await api.redis.redis.srem(connectionSetKey, connection.id);
+    if (removed === 0) return;
 
-    if (connectionIds.size === 0) {
-      channelPresence.delete(key);
+    const remaining = await api.redis.redis.scard(connectionSetKey);
+    if (remaining === 0) {
+      await api.redis.redis.del(connectionSetKey);
+      await api.redis.redis.srem(channelKey, key);
       await api.pubsub.broadcast(
         channelName,
         JSON.stringify({ event: "leave", presenceKey: key }),
         "presence",
       );
     }
-
-    if (channelPresence.size === 0) {
-      this.presence.delete(channelName);
-    }
   };
 
   /**
-   * Returns the list of presence keys for members currently in the channel on this server.
+   * Returns the list of presence keys for members currently in the channel
+   * across all server instances.
    */
-  members = (channelName: string): string[] => {
-    const channelPresence = this.presence.get(channelName);
-    if (!channelPresence) return [];
-    return Array.from(channelPresence.keys());
+  members = async (channelName: string): Promise<string[]> => {
+    const channelKey = `${PRESENCE_KEY_PREFIX}${channelName}`;
+    return api.redis.redis.smembers(channelKey);
   };
 
   /**
    * Clear all presence data. Useful for test cleanup.
    */
-  clearPresence = (): void => {
-    this.presence.clear();
+  clearPresence = async (): Promise<void> => {
+    let cursor = "0";
+    do {
+      const [nextCursor, keys] = await api.redis.redis.scan(
+        cursor,
+        "MATCH",
+        `${PRESENCE_KEY_PREFIX}*`,
+        "COUNT",
+        100,
+      );
+      cursor = nextCursor;
+      if (keys.length > 0) {
+        await api.redis.redis.del(...keys);
+      }
+    } while (cursor !== "0");
   };
 
   async initialize() {
