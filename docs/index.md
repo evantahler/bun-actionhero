@@ -6,8 +6,8 @@ hero:
   text: The Modern TypeScript API Framework
   tagline: Write one action. It handles HTTP, WebSocket, CLI, background tasks, and MCP tool calls. Built on Bun, powered by Zod, backed by Redis and Postgres.
   image:
-    src: /images/flying-man.svg
-    alt: Keryx mascot
+    src: /images/hearald.svg
+    alt: Keryx herald
   actions:
     - theme: brand
       text: Get Started

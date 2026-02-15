@@ -1,5 +1,11 @@
 # Keryx
 
+<p align="center"><strong>Keryx is the messenger of the gods, and the greatest framework for building realtime AI, CLI, and web applications.</strong></p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/evantahler/keryx/main/docs/public/images/horn.svg" alt="Keryx" width="200" />
+</p>
+
 [![Test](https://github.com/evantahler/keryx/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/keryx/actions/workflows/test.yaml)
 
 ## What is this Project?
@@ -319,3 +325,7 @@ Full docs at [keryxjs.com](https://keryxjs.com), including:
 - [Getting Started](https://keryxjs.com/guide/)
 - [Actions Guide](https://keryxjs.com/guide/actions)
 - [API Reference](https://keryxjs.com/reference/actions)
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/evantahler/keryx/main/docs/public/images/lion-standing.svg" alt="Keryx lion" width="120" />
+</p>
