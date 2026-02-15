@@ -527,19 +527,21 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     const mimeType = Bun.file(filePath).type || "application/octet-stream";
     headers["Content-Type"] = mimeType;
-    Object.assign(headers, securityHeaders);
+    Object.assign(headers, getSecurityHeaders());
 
     return headers;
   }
 }
 
-const securityHeaders: Record<string, string> = {
-  "Content-Security-Policy": "default-src 'self'",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
-};
+function getSecurityHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const [key, value] of Object.entries(
+    config.server.web.securityHeaders,
+  )) {
+    if (value) headers[key] = value;
+  }
+  return headers;
+}
 
 const buildHeaders = (connection?: Connection) => {
   const headers: Record<string, string> = {};
@@ -550,7 +552,7 @@ const buildHeaders = (connection?: Connection) => {
   headers["Access-Control-Allow-Methods"] = config.server.web.allowedMethods;
   headers["Access-Control-Allow-Headers"] = config.server.web.allowedHeaders;
   headers["Access-Control-Allow-Credentials"] = "true";
-  Object.assign(headers, securityHeaders);
+  Object.assign(headers, getSecurityHeaders());
 
   if (connection) {
     const secure = config.server.web.applicationUrl.startsWith("https")
