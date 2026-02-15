@@ -4,6 +4,7 @@ import type { Channel } from "../classes/Channel";
 import type { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { config } from "../config";
 import { globLoader } from "../util/glob";
 
 const namespace = "channels";
@@ -19,10 +20,14 @@ declare module "../classes/API" {
 export class Channels extends Initializer {
   private addPresenceLua = "";
   private removePresenceLua = "";
+  private refreshPresenceLua = "";
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     super(namespace);
     this.loadPriority = 100;
+    this.startPriority = 600;
+    this.stopPriority = 50;
   }
 
   /**
@@ -109,6 +114,7 @@ export class Channels extends Initializer {
       channelKey,
       connection.id,
       key,
+      config.channels.presenceTTL,
     );
 
     if (added === 1) {
@@ -162,6 +168,37 @@ export class Channels extends Initializer {
   };
 
   /**
+   * Refresh TTLs on all presence keys owned by local connections.
+   * Called periodically by the heartbeat timer to prevent keys from
+   * expiring while the server is still alive.
+   */
+  refreshPresence = async (): Promise<void> => {
+    const keysToRefresh = new Set<string>();
+
+    for (const connection of api.connections.connections) {
+      for (const channelName of connection.subscriptions) {
+        const channel = this.findChannel(channelName);
+        const key = channel
+          ? await channel.presenceKey(connection)
+          : connection.id;
+
+        keysToRefresh.add(`${PRESENCE_KEY_PREFIX}${channelName}`);
+        keysToRefresh.add(`${PRESENCE_KEY_PREFIX}${channelName}:${key}`);
+      }
+    }
+
+    if (keysToRefresh.size === 0) return;
+
+    const keys = [...keysToRefresh];
+    await api.redis.redis.eval(
+      this.refreshPresenceLua,
+      keys.length,
+      ...keys,
+      config.channels.presenceTTL,
+    );
+  };
+
+  /**
    * Clear all presence data. Useful for test cleanup.
    */
   clearPresence = async (): Promise<void> => {
@@ -188,6 +225,9 @@ export class Channels extends Initializer {
     this.removePresenceLua = await Bun.file(
       join(LUA_DIR, "remove-presence.lua"),
     ).text();
+    this.refreshPresenceLua = await Bun.file(
+      join(LUA_DIR, "refresh-presence.lua"),
+    ).text();
 
     let channels: Channel[] = [];
 
@@ -213,8 +253,31 @@ export class Channels extends Initializer {
       handleUnsubscription: this.handleUnsubscription,
       addPresence: this.addPresence,
       removePresence: this.removePresence,
+      refreshPresence: this.refreshPresence,
       members: this.members,
       clearPresence: this.clearPresence,
     };
+  }
+
+  async start() {
+    const intervalMs = config.channels.presenceHeartbeatInterval * 1000;
+    this.heartbeatTimer = setInterval(async () => {
+      try {
+        await this.refreshPresence();
+      } catch (e) {
+        logger.error(`presence heartbeat error: ${e}`);
+      }
+    }, intervalMs);
+
+    logger.info(
+      `presence heartbeat started (interval=${config.channels.presenceHeartbeatInterval}s, ttl=${config.channels.presenceTTL}s)`,
+    );
+  }
+
+  async stop() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 }

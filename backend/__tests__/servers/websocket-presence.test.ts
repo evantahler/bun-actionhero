@@ -142,6 +142,68 @@ test("should use presenceKey from channel (user ID for messages channel)", async
   expect((await api.channels.members("messages")).length).toBe(0);
 });
 
+test("should expire orphaned presence keys after TTL", async () => {
+  // Use a very short TTL for this test
+  const originalTTL = config.channels.presenceTTL;
+  (config.channels as any).presenceTTL = 2;
+
+  const { socket, messages } = await buildWebSocket();
+
+  await createUser(socket, messages, "Marco", "marco@example.com", "abc12345");
+  await createSession(socket, messages, "marco@example.com", "abc12345");
+  await subscribeToChannel(socket, messages, "messages");
+
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  // Verify the Redis keys have a TTL set
+  const ttl = await api.redis.redis.ttl("presence:messages");
+  expect(ttl).toBeGreaterThan(0);
+  expect(ttl).toBeLessThanOrEqual(2);
+
+  // Simulate a crash by NOT calling removePresence — just splice out all
+  // connections so the heartbeat won't refresh their keys
+  const savedConnections = api.connections.connections.splice(
+    0,
+    api.connections.connections.length,
+  );
+
+  // Presence should still exist immediately
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  // Wait for TTL to expire
+  await Bun.sleep(3000);
+
+  // Now the orphaned presence should be gone
+  expect((await api.channels.members("messages")).length).toBe(0);
+
+  // Restore connections so cleanup can proceed, then close
+  api.connections.connections.push(...savedConnections);
+  (config.channels as any).presenceTTL = originalTTL;
+  socket.close();
+  await Bun.sleep(100);
+});
+
+test("should refresh presence TTL via heartbeat", async () => {
+  const { socket, messages } = await buildWebSocket();
+
+  await createUser(socket, messages, "Marco", "marco@example.com", "abc12345");
+  await createSession(socket, messages, "marco@example.com", "abc12345");
+  await subscribeToChannel(socket, messages, "messages");
+
+  // Manually trigger a heartbeat refresh
+  await api.channels.refreshPresence();
+
+  // Verify presence keys still exist with TTLs
+  const ttl = await api.redis.redis.ttl("presence:messages");
+  expect(ttl).toBeGreaterThan(0);
+  expect(ttl).toBeLessThanOrEqual(config.channels.presenceTTL);
+
+  expect((await api.channels.members("messages")).length).toBe(1);
+
+  socket.close();
+  await Bun.sleep(100);
+});
+
 test("should broadcast join/leave events to other subscribers", async () => {
   const { socket: socket1, messages: messages1 } = await buildWebSocket();
   const { socket: socket2, messages: messages2 } = await buildWebSocket();
