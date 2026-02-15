@@ -101,7 +101,16 @@ export class OAuthInitializer extends Initializer {
           path === "/oauth/authorize" ||
           path === "/oauth/token")
       ) {
-        const info = await checkRateLimit(`ip:${ip}`, false);
+        // /oauth/register gets a stricter, dedicated rate limit
+        const overrides =
+          path === "/oauth/register"
+            ? {
+                limit: config.rateLimit.oauthRegisterLimit,
+                windowMs: config.rateLimit.oauthRegisterWindowMs,
+                keyPrefix: `${config.rateLimit.keyPrefix}:oauth-register`,
+              }
+            : undefined;
+        const info = await checkRateLimit(`ip:${ip}`, false, overrides);
         if (info.retryAfter !== undefined) {
           return new Response(
             JSON.stringify({

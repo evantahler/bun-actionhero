@@ -11,18 +11,29 @@ export type RateLimitInfo = {
   retryAfter?: number; // seconds until window resets (only when limited)
 };
 
+export type RateLimitOverrides = {
+  limit?: number;
+  windowMs?: number;
+  keyPrefix?: string;
+};
+
 /**
  * Sliding window rate-limit check using Redis.
  * Exported so OAuth and other non-action handlers can reuse it.
+ * Pass `overrides` to use a custom limit/window instead of the global config.
  */
 export async function checkRateLimit(
   identifier: string,
   isAuthenticated: boolean,
+  overrides?: RateLimitOverrides,
 ): Promise<RateLimitInfo> {
-  const { windowMs, unauthenticatedLimit, authenticatedLimit, keyPrefix } =
-    config.rateLimit;
-
-  const limit = isAuthenticated ? authenticatedLimit : unauthenticatedLimit;
+  const windowMs = overrides?.windowMs ?? config.rateLimit.windowMs;
+  const keyPrefix = overrides?.keyPrefix ?? config.rateLimit.keyPrefix;
+  const limit =
+    overrides?.limit ??
+    (isAuthenticated
+      ? config.rateLimit.authenticatedLimit
+      : config.rateLimit.unauthenticatedLimit);
   const windowSizeSec = Math.ceil(windowMs / 1000);
   const now = Date.now();
   const currentWindow = Math.floor(now / windowMs);
