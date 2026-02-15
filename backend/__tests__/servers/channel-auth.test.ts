@@ -48,6 +48,23 @@ const waitForMessages = async (
   }
 };
 
+// Helper to wait for a message matching a specific messageId
+const waitForMessageId = async (
+  messages: MessageEvent[],
+  messageId: string,
+  timeout = 2000,
+) => {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    for (const m of messages) {
+      const parsed = JSON.parse(m.data);
+      if (parsed.messageId === messageId) return parsed;
+    }
+    await Bun.sleep(10);
+  }
+  throw new Error(`Timed out waiting for messageId "${messageId}"`);
+};
+
 describe("channel authorization", () => {
   beforeEach(async () => {
     await api.db.clearDatabase();
@@ -127,9 +144,7 @@ describe("channel authorization", () => {
         }),
       );
 
-      await waitForMessages(messages, 3);
-      const subscribeResponse = JSON.parse(messages[2].data);
-      expect(subscribeResponse.messageId).toBe("sub-1");
+      const subscribeResponse = await waitForMessageId(messages, "sub-1");
       expect(subscribeResponse.error).toBeUndefined();
       expect(subscribeResponse.subscribed).toEqual({ channel: "messages" });
 
@@ -175,7 +190,7 @@ describe("channel authorization", () => {
           channel: "messages",
         }),
       );
-      await waitForMessages(messages, 3);
+      await waitForMessageId(messages, "sub-1");
 
       // Unsubscribe (presence broadcasts may add extra messages)
       socket.send(
