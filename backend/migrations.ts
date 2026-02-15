@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api } from "keryx";
 
 await api.initialize();
 await api.db.generateMigrations();

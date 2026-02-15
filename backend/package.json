@@ -1,10 +1,10 @@
 {
-  "name": "keryx",
+  "name": "keryx-example",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
-  "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
+  "description": "Keryx example application",
   "bin": {
     "keryx": "keryx.ts"
   },
@@ -17,17 +17,10 @@
     "format": "tsc && prettier --write ."
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "colors": "^1.4.0",
-    "commander": "^12.1.0",
-    "cookie": "^0.6.0",
+    "keryx": "workspace:*",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
-    "ioredis": "^5.9.2",
-    "mustache": "^4.2.0",
-    "node-resque": "^9.5.0",
     "pg": "^8.18.0",
-    "ts-morph": "^27.0.2",
     "typescript": "^5.9.3",
     "zod": "^4.3.6"
   },

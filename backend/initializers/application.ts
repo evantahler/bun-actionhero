@@ -1,14 +1,13 @@
 import crypto from "crypto";
 import { eq } from "drizzle-orm";
-import { api, logger } from "../api";
-import { Initializer } from "../classes/Initializer";
+import { api, Initializer, logger } from "keryx";
 import { hashPassword } from "../ops/UserOps";
 import { users, type User } from "../schema/users";
 const namespace = "application";
 
 const defaultUserEmail = "admin@keryxjs.com";
 
-declare module "../classes/API" {
+declare module "keryx" {
   export interface API {
     [namespace]: Awaited<ReturnType<Application["initialize"]>>;
   }

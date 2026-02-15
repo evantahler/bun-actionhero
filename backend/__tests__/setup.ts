@@ -1,6 +1,6 @@
 import { setMaxListeners } from "events";
 import { api } from "../api";
-import type { WebServer } from "../servers/web";
+import type { WebServer } from "keryx/servers/web";
 
 // Set max listeners to prevent warnings in CI environments
 // TODO: Github Actions needs this, but not locally. Why?

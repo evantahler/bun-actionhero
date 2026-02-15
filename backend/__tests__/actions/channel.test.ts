@@ -8,8 +8,7 @@ import {
 } from "bun:test";
 import type { ChannelMembers } from "../../actions/channel";
 import type { SessionCreate } from "../../actions/session";
-import { api, type ActionResponse } from "../../api";
-import { Channel } from "../../classes/Channel";
+import { api, Channel, type ActionResponse } from "../../api";
 import {
   buildWebSocket,
   createSession,

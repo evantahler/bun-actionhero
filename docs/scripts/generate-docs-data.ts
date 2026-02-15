@@ -9,7 +9,8 @@ import { mkdir } from "fs/promises";
 import path from "path";
 import { Project, ts, type Type } from "ts-morph";
 
-const rootDir = path.resolve(import.meta.dir, "../../backend");
+const backendDir = path.resolve(import.meta.dir, "../../backend");
+const packageDir = path.resolve(import.meta.dir, "../../packages/keryx");
 const outDir = path.resolve(import.meta.dir, "../.vitepress/data");
 
 type JSONSchema = {
@@ -108,7 +109,7 @@ function typeToJsonSchema(
 
 // --- Main ---
 
-console.log("Generating docs data from", rootDir);
+console.log("Generating docs data from", backendDir, "and", packageDir);
 
 const project = new Project({
   skipAddingFilesFromTsConfig: true,
@@ -120,7 +121,8 @@ const project = new Project({
   },
 });
 
-project.addSourceFilesAtPaths(path.join(rootDir, "**/*.ts"));
+project.addSourceFilesAtPaths(path.join(backendDir, "**/*.ts"));
+project.addSourceFilesAtPaths(path.join(packageDir, "**/*.ts"));
 for (const sf of project.getSourceFiles()) {
   if (sf.getFilePath().includes("__tests__")) project.removeSourceFile(sf);
 }
@@ -251,7 +253,7 @@ for (const sf of project.getSourceFiles()) {
       if (returnType) responseSchema = typeToJsonSchema(returnType);
     } catch {}
 
-    const relPath = path.relative(rootDir, sf.getFilePath());
+    const relPath = path.relative(path.resolve(import.meta.dir, "../.."), sf.getFilePath());
 
     actions.push({
       name: actionName,
@@ -319,7 +321,7 @@ for (const sf of project.getSourceFiles()) {
       if (stopMatch) stopPriority = parseInt(stopMatch[1]);
     }
 
-    const relPath = path.relative(rootDir, sf.getFilePath());
+    const relPath = path.relative(path.resolve(import.meta.dir, "../.."), sf.getFilePath());
     initializers.push({
       name: classDecl.getName() || "Unknown",
       loadPriority,
@@ -346,7 +348,7 @@ for (const sf of project.getSourceFiles()) {
   if (!sf.getFilePath().includes("/config/")) continue;
   if (sf.getFilePath().endsWith("index.ts")) continue;
 
-  const relPath = path.relative(rootDir, sf.getFilePath());
+  const relPath = path.relative(path.resolve(import.meta.dir, "../.."), sf.getFilePath());
   const section = path.basename(sf.getFilePath(), ".ts");
 
   const keys: { name: string; envVar: string; defaultValue: string }[] = [];

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Status } from "../../actions/status";
+import type { Status } from "keryx/actions/status";
 import { api, config, type ActionResponse } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 

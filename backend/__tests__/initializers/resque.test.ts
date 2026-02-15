@@ -1,4 +1,4 @@
-import { Action, api } from "../../api";
+import { Action, api, DEFAULT_QUEUE } from "../../api";
 import { HOOK_TIMEOUT, waitFor } from "./../setup";
 
 import {
@@ -11,7 +11,6 @@ import {
   test,
 } from "bun:test";
 import { z } from "zod";
-import { DEFAULT_QUEUE } from "../../classes/Action";
 
 beforeAll(async () => {
   await api.initialize();

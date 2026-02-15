@@ -6,14 +6,15 @@ import {
   expect,
   test,
 } from "bun:test";
-import { api } from "../../api";
-import { Connection } from "../../classes/Connection";
-import { ErrorType, TypedError } from "../../classes/TypedError";
-import { config } from "../../config";
 import {
+  api,
+  Connection,
+  ErrorType,
+  TypedError,
+  config,
   checkRateLimit,
   RateLimitMiddleware,
-} from "../../middleware/rateLimit";
+} from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "../setup";
 
 let url: string;

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import type { Status } from "../../actions/status";
+import type { Status } from "keryx/actions/status";
 import { api, type ActionResponse } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 

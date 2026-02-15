@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import type { Swagger } from "../../actions/swagger";
+import type { Swagger } from "keryx/actions/swagger";
 import { api, type ActionResponse } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 

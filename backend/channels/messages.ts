@@ -1,6 +1,6 @@
 import type { SessionImpl } from "../actions/session";
-import { Channel } from "../api";
-import type { Connection } from "../classes/Connection";
+import { Channel } from "keryx";
+import type { Connection } from "keryx";
 import { SessionChannelMiddleware } from "../middleware/channel";
 
 /**

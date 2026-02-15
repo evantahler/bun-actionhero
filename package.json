@@ -1,11 +1,12 @@
 {
-  "name": "keryx",
+  "name": "keryx-monorepo",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
   "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
   "workspaces": [
+    "packages/keryx",
     "backend",
     "frontend",
     "docs"

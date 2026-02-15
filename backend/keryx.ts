@@ -1,10 +1,11 @@
 #! /usr/bin/env bun
 
+import path from "path";
 import { Command } from "commander";
-import { Action, api } from "./api";
+import { api, globLoader } from "keryx";
+import { addActionToProgram } from "keryx/util/cli";
+import type { Action } from "keryx";
 import pkg from "./package.json";
-import { addActionToProgram } from "./util/cli";
-import { globLoader } from "./util/glob";
 
 const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);
@@ -17,7 +18,7 @@ program
     await api.start();
   });
 
-const actions = await globLoader<Action>("actions");
+const actions = await globLoader<Action>(path.join(process.cwd(), "actions"));
 actions.forEach((action) => addActionToProgram(program, action));
 
 program

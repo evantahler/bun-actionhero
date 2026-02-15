@@ -3,8 +3,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { z } from "zod";
 import * as z4mini from "zod/v4-mini";
-import { api } from "../../api";
-import { config } from "../../config";
+import { api, config } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "../setup";
 
 const mcpUrl = () => `${serverUrl()}${config.server.mcp.route}`;

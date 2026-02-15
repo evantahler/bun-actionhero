@@ -1,7 +1,6 @@
 import type { SessionImpl } from "../actions/session";
-import type { ChannelMiddleware } from "../classes/Channel";
-import type { Connection } from "../classes/Connection";
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "keryx";
+import type { ChannelMiddleware, Connection } from "keryx";
 
 /**
  * Channel middleware that requires a valid session with a userId.

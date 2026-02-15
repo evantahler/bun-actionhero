@@ -1,0 +1,40 @@
+{
+  "name": "keryx",
+  "version": "0.1.0",
+  "description": "The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "bin": {
+    "keryx": "keryx.ts"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./classes/*": "./classes/*.ts",
+    "./config": "./config/index.ts",
+    "./util/*": "./util/*.ts",
+    "./servers/*": "./servers/*.ts",
+    "./actions/*": "./actions/*.ts",
+    "./initializers/*": "./initializers/*.ts",
+    "./middleware/*": "./middleware/*.ts"
+  },
+  "files": ["**/*.ts", "templates/**", "package.json"],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.9.2",
+    "mustache": "^4.2.0",
+    "node-resque": "^9.5.0",
+    "pg": "^8.18.0",
+    "ts-morph": "^27.0.2",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "drizzle-zod": "^0.8.3",
+    "typescript": "^5.9.3"
+  }
+}

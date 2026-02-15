@@ -17,7 +17,6 @@ describe("CLI", () => {
     expect(exitCode).toBe(0);
     expect(stderr).toBeEmpty();
     expect(stdout.toString()).toContain("Keryx");
-    expect(stdout.toString()).toContain("status");
     expect(stdout.toString()).toContain("user:create");
   });
 

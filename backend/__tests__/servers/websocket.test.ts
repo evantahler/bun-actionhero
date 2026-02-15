@@ -1,7 +1,5 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
-import { api } from "../../api";
-import { Channel } from "../../classes/Channel";
-import { config } from "../../config";
+import { api, Channel, config } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 import { buildWebSocket } from "./websocket-helpers";
 

@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { config } from "../config";
-import { loadFromEnvIfSet } from "../util/config";
+import { config, loadFromEnvIfSet } from "../api";
 import "./setup";
 
 test("config can be loaded", () => {
