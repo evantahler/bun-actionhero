@@ -125,19 +125,40 @@ export class McpInitializer extends Initializer {
     const transports = api.mcp.transports;
     const mcpServers = api.mcp.mcpServers;
 
-    const corsHeaders: Record<string, string> = {
-      "Access-Control-Allow-Origin": config.server.web.allowedOrigins,
-      "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-      "Access-Control-Allow-Headers":
-        "Content-Type, mcp-session-id, Authorization",
-      "Access-Control-Expose-Headers": "mcp-session-id",
-    };
+    function buildMcpCorsHeaders(
+      requestOrigin?: string,
+    ): Record<string, string> {
+      const headers: Record<string, string> = {
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, mcp-session-id, Authorization",
+        "Access-Control-Expose-Headers": "mcp-session-id",
+      };
+      const allowedOrigins = config.server.web.allowedOrigins;
+      if (allowedOrigins === "*" && !requestOrigin) {
+        headers["Access-Control-Allow-Origin"] = "*";
+      } else if (requestOrigin) {
+        const isAllowed =
+          allowedOrigins === "*" ||
+          allowedOrigins
+            .split(",")
+            .map((o) => o.trim())
+            .includes(requestOrigin);
+        if (isAllowed) {
+          headers["Access-Control-Allow-Origin"] = requestOrigin;
+          headers["Vary"] = "Origin";
+        }
+      }
+      return headers;
+    }
 
     api.mcp.handleRequest = async (
       req: Request,
       ip: string,
     ): Promise<Response> => {
       const method = req.method.toUpperCase();
+      const requestOrigin = req.headers.get("origin") ?? undefined;
+      const corsHeaders = buildMcpCorsHeaders(requestOrigin);
 
       // Handle OPTIONS for CORS preflight
       if (method === "OPTIONS") {

@@ -399,10 +399,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const connection = new Connection("web", ip, id);
+    const requestOrigin = req.headers.get("origin") ?? undefined;
 
     // Handle OPTIONS requests.
     // As we don't really know what action the client wants (HTTP Method is always OPTIONS), we just return a 200 response.
-    if (httpMethod === "OPTIONS") return buildResponse(connection, {});
+    if (httpMethod === "OPTIONS")
+      return buildResponse(connection, {}, 200, requestOrigin);
 
     const { actionName, pathParams } = await this.determineActionName(
       url,
@@ -487,8 +489,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
 
     return error
-      ? buildError(connection, error, errorStatusCode)
-      : buildResponse(connection, response);
+      ? buildError(connection, error, errorStatusCode, requestOrigin)
+      : buildResponse(connection, response, 200, requestOrigin);
   }
 
   async determineActionName(
@@ -632,15 +634,23 @@ function getSecurityHeaders(): Record<string, string> {
   return headers;
 }
 
-const buildHeaders = (connection?: Connection) => {
+const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
   const headers: Record<string, string> = {};
 
   headers["Content-Type"] = "application/json";
   headers["X-SERVER-NAME"] = config.process.name;
-  headers["Access-Control-Allow-Origin"] = config.server.web.allowedOrigins;
   headers["Access-Control-Allow-Methods"] = config.server.web.allowedMethods;
   headers["Access-Control-Allow-Headers"] = config.server.web.allowedHeaders;
-  headers["Access-Control-Allow-Credentials"] = "true";
+
+  const allowedOrigins = config.server.web.allowedOrigins;
+  if (allowedOrigins === "*" && !requestOrigin) {
+    headers["Access-Control-Allow-Origin"] = "*";
+  } else if (requestOrigin && isOriginAllowed(requestOrigin, allowedOrigins)) {
+    headers["Access-Control-Allow-Origin"] = requestOrigin;
+    headers["Access-Control-Allow-Credentials"] = "true";
+    headers["Vary"] = "Origin";
+  }
+
   Object.assign(headers, getSecurityHeaders());
 
   if (connection) {
@@ -673,10 +683,15 @@ const buildHeaders = (connection?: Connection) => {
   return headers;
 };
 
-function buildResponse(connection: Connection, response: Object, status = 200) {
+function buildResponse(
+  connection: Connection,
+  response: Object,
+  status = 200,
+  requestOrigin?: string,
+) {
   return new Response(JSON.stringify(response, null, 2) + EOL, {
     status,
-    headers: buildHeaders(connection),
+    headers: buildHeaders(connection, requestOrigin),
   });
 }
 
@@ -684,12 +699,13 @@ function buildError(
   connection: Connection | undefined,
   error: TypedError,
   status = 500,
+  requestOrigin?: string,
 ) {
   return new Response(
     JSON.stringify({ error: buildErrorPayload(error) }, null, 2) + EOL,
     {
       status,
-      headers: buildHeaders(connection),
+      headers: buildHeaders(connection, requestOrigin),
     },
   );
 }

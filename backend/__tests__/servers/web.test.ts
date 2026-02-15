@@ -95,6 +95,83 @@ describe("security headers", () => {
   });
 });
 
+describe("CORS headers", () => {
+  test("wildcard allowedOrigins without Origin header returns * and no credentials", async () => {
+    const original = config.server.web.allowedOrigins;
+    (config.server.web as any).allowedOrigins = "*";
+    try {
+      const res = await fetch(url + "/api/status");
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("*");
+      expect(res.headers.get("Access-Control-Allow-Credentials")).toBeNull();
+    } finally {
+      (config.server.web as any).allowedOrigins = original;
+    }
+  });
+
+  test("wildcard allowedOrigins with Origin header reflects origin and sets credentials", async () => {
+    const original = config.server.web.allowedOrigins;
+    (config.server.web as any).allowedOrigins = "*";
+    try {
+      const res = await fetch(url + "/api/status", {
+        headers: { Origin: "http://example.com" },
+      });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+        "http://example.com",
+      );
+      expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+      expect(res.headers.get("Vary")).toContain("Origin");
+    } finally {
+      (config.server.web as any).allowedOrigins = original;
+    }
+  });
+
+  test("specific allowedOrigins with matching Origin reflects origin and sets credentials", async () => {
+    const original = config.server.web.allowedOrigins;
+    (config.server.web as any).allowedOrigins = "http://allowed.example.com";
+    try {
+      const res = await fetch(url + "/api/status", {
+        headers: { Origin: "http://allowed.example.com" },
+      });
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+        "http://allowed.example.com",
+      );
+      expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+      expect(res.headers.get("Vary")).toContain("Origin");
+    } finally {
+      (config.server.web as any).allowedOrigins = original;
+    }
+  });
+
+  test("specific allowedOrigins with non-matching Origin omits credentials", async () => {
+    const original = config.server.web.allowedOrigins;
+    (config.server.web as any).allowedOrigins = "http://allowed.example.com";
+    try {
+      const res = await fetch(url + "/api/status", {
+        headers: { Origin: "http://evil.example.com" },
+      });
+      expect(res.headers.get("Access-Control-Allow-Credentials")).toBeNull();
+    } finally {
+      (config.server.web as any).allowedOrigins = original;
+    }
+  });
+
+  test("OPTIONS preflight with Origin reflects origin", async () => {
+    const original = config.server.web.allowedOrigins;
+    (config.server.web as any).allowedOrigins = url;
+    try {
+      const res = await fetch(url + "/api/status", {
+        method: "OPTIONS",
+        headers: { Origin: url },
+      });
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(url);
+      expect(res.headers.get("Access-Control-Allow-Credentials")).toBe("true");
+    } finally {
+      (config.server.web as any).allowedOrigins = original;
+    }
+  });
+});
+
 describe("cookies", () => {
   test("session cookie uses SameSite=Strict", async () => {
     const res = await fetch(url + "/api/status");
