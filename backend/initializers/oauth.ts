@@ -6,6 +6,12 @@ import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 import { checkRateLimit } from "../middleware/rateLimit";
+import {
+  base64UrlEncode,
+  escapeHtml,
+  redirectUrisMatch,
+  validateRedirectUri,
+} from "../util/oauth";
 
 const templatesDir = import.meta.dir + "/../templates";
 let authTemplate: string;
@@ -204,6 +210,28 @@ async function handleRegister(req: Request): Promise<Response> {
     );
   }
 
+  for (const uri of body.redirect_uris) {
+    if (typeof uri !== "string") {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: "Each redirect_uri must be a string",
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    const validation = validateRedirectUri(uri);
+    if (!validation.valid) {
+      return new Response(
+        JSON.stringify({
+          error: "invalid_request",
+          error_description: validation.error,
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  }
+
   const clientId = randomUUID();
   const client: OAuthClient = {
     client_id: clientId,
@@ -295,7 +323,10 @@ async function handleAuthorizePost(req: Request): Promise<Response> {
   }
   const client = JSON.parse(clientRaw) as OAuthClient;
 
-  if (!client.redirect_uris.includes(redirectUri)) {
+  const uriMatch = client.redirect_uris.some((registered) =>
+    redirectUrisMatch(registered, redirectUri),
+  );
+  if (!uriMatch) {
     oauthParams.error = "Invalid redirect URI";
     return renderAuthPage(oauthParams);
   }
@@ -495,17 +526,6 @@ async function handleToken(req: Request): Promise<Response> {
   );
 }
 
-function base64UrlEncode(buffer: Uint8Array): string {
-  let binary = "";
-  for (const byte of buffer) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
 type AuthPageParams = {
   clientId: string;
   redirectUri: string;
@@ -553,13 +573,4 @@ function renderSuccessPage(redirectUrl: string): Response {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" },
   });
-}
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
 }

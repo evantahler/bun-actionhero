@@ -105,6 +105,7 @@ describe("mcp initializer (enabled)", () => {
 
   beforeAll(async () => {
     config.server.mcp.enabled = true;
+    config.rateLimit.enabled = false;
     await api.start();
     accessToken = await getAccessToken();
   }, HOOK_TIMEOUT);
@@ -112,6 +113,7 @@ describe("mcp initializer (enabled)", () => {
   afterAll(async () => {
     await api.stop();
     config.server.mcp.enabled = false;
+    config.rateLimit.enabled = true;
   }, HOOK_TIMEOUT);
 
   test("MCP server boots when enabled", () => {
@@ -329,6 +331,137 @@ describe("mcp initializer (enabled)", () => {
       expect(body.client_id).toBeTruthy();
       expect(body.redirect_uris).toEqual(["http://localhost:3000/callback"]);
       expect(body.client_name).toBe("Test Client");
+    });
+
+    test("OAuth registration rejects malformed redirect_uris", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["not-a-url"],
+          client_name: "Bad Client",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as {
+        error: string;
+        error_description: string;
+      };
+      expect(body.error).toBe("invalid_request");
+      expect(body.error_description).toContain("Invalid URI");
+    });
+
+    test("OAuth registration rejects redirect_uris with fragments", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["http://localhost:3000/callback#fragment"],
+          client_name: "Bad Client",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as {
+        error: string;
+        error_description: string;
+      };
+      expect(body.error).toBe("invalid_request");
+      expect(body.error_description).toContain("fragment");
+    });
+
+    test("OAuth registration rejects redirect_uris with userinfo", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["https://evil.com@trusted.com/callback"],
+          client_name: "Bad Client",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as {
+        error: string;
+        error_description: string;
+      };
+      expect(body.error).toBe("invalid_request");
+      expect(body.error_description).toContain("userinfo");
+    });
+
+    test("OAuth registration rejects HTTP for non-localhost URIs", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["http://example.com/callback"],
+          client_name: "Bad Client",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = (await res.json()) as {
+        error: string;
+        error_description: string;
+      };
+      expect(body.error).toBe("invalid_request");
+      expect(body.error_description).toContain("HTTPS");
+    });
+
+    test("OAuth registration accepts HTTPS for non-localhost URIs", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["https://example.com/callback"],
+          client_name: "HTTPS Client",
+        }),
+      });
+      expect(res.status).toBe(201);
+    });
+
+    test("OAuth registration accepts HTTP for 127.0.0.1", async () => {
+      const res = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["http://127.0.0.1:3000/callback"],
+          client_name: "Loopback Client",
+        }),
+      });
+      expect(res.status).toBe(201);
+    });
+
+    test("OAuth authorize rejects non-matching redirect URI", async () => {
+      const regRes = await fetch(`${baseUrl()}/oauth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          redirect_uris: ["http://localhost:9999/callback"],
+          client_name: "Mismatch Test",
+        }),
+      });
+      const { client_id: clientId } = (await regRes.json()) as {
+        client_id: string;
+      };
+
+      const authRes = await fetch(`${baseUrl()}/oauth/authorize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          mode: "signup",
+          name: "Test",
+          email: `mismatch-${Date.now()}@example.com`,
+          password: "password123!",
+          client_id: clientId,
+          redirect_uri: "http://localhost:9999/evil-path",
+          code_challenge: "abc",
+          code_challenge_method: "S256",
+          response_type: "code",
+          state: "test",
+        }).toString(),
+        redirect: "manual",
+      });
+      expect(authRes.status).toBe(200);
+      const html = await authRes.text();
+      expect(html).toContain("Invalid redirect URI");
     });
 
     test("OAuth client registration requires redirect_uris", async () => {
