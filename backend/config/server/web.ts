@@ -39,6 +39,10 @@ export const configServerWeb = {
     "WS_MAX_SUBSCRIPTIONS",
     100,
   ),
+  includeStackInErrors: await loadFromEnvIfSet(
+    "WEB_SERVER_INCLUDE_STACK_IN_ERRORS",
+    (Bun.env.NODE_ENV ?? "development") !== "production",
+  ),
   securityHeaders: {
     "Content-Security-Policy": await loadFromEnvIfSet(
       "WEB_SECURITY_CSP",
