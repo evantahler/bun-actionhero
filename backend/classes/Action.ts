@@ -57,6 +57,9 @@ export type ActionConstructorInputs = {
     /** Queue name to enqueue jobs onto (defaults to `"default"`) */
     queue: string;
   };
+
+  /** Set to false to disable rate limiting for this action (default: true) */
+  rateLimit?: boolean;
 };
 
 export type ActionMiddlewareResponse = {
@@ -89,6 +92,7 @@ export abstract class Action {
     frequency?: number;
     queue: string;
   };
+  rateLimit?: boolean;
 
   constructor(args: ActionConstructorInputs) {
     this.name = args.name;
@@ -104,6 +108,7 @@ export abstract class Action {
       frequency: args.task?.frequency,
       queue: args.task?.queue ?? DEFAULT_QUEUE,
     };
+    this.rateLimit = args.rateLimit;
   }
 
   /**
