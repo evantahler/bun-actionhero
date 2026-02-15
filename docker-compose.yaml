@@ -1,12 +1,12 @@
 x-common-env: &commonEnv
-  POSTGRES_USER: bun
-  POSTGRES_PASSWORD: bun
-  POSTGRES_DB: bun
+  POSTGRES_USER: keryx
+  POSTGRES_PASSWORD: keryx
+  POSTGRES_DB: keryx
   # backend-specific
   WEB_SERVER_PORT: 8080
   WEB_SERVER_HOST: 0.0.0.0
   WEB_SERVER_ALLOWED_ORIGINS: "http://localhost:3000"
-  DATABASE_URL: postgresql://bun:bun@db:5432/bun
+  DATABASE_URL: postgresql://keryx:keryx@db:5432/keryx
   REDIS_URL: redis://redis:6379
   # frontend-specific
   NEXT_PUBLIC_API_URL: http://localhost:8080
@@ -22,12 +22,12 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "bun", "-d", "bun"]
+      test: ["CMD", "pg_isready", "-U", "keryx", "-d", "keryx"]
       interval: 1s
       timeout: 5s
       retries: 10
     networks:
-      - bun_internal
+      - keryx_internal
 
   redis:
     image: redis:6
@@ -44,7 +44,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - bun_internal
+      - keryx_internal
 
   backend:
     build:
@@ -62,8 +62,8 @@ services:
       redis:
         condition: service_healthy
     networks:
-      - bun_internal
-      - bun_external
+      - keryx_internal
+      - keryx_external
 
   frontend:
     build:
@@ -76,13 +76,13 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - bun_internal
-      - bun_external
+      - keryx_internal
+      - keryx_external
 
 volumes:
   db_data:
   redis_data:
 
 networks:
-  bun_internal:
-  bun_external:
+  keryx_internal:
+  keryx_external:

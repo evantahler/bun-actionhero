@@ -24,7 +24,7 @@ cp frontend/.env.example frontend/.env
 
 ## Common Commands
 
-All commands from root unless noted. Backend tests require PostgreSQL (`bun` and `bun-test` databases) and Redis running locally.
+All commands from root unless noted. Backend tests require PostgreSQL (`keryx` and `keryx-test` databases) and Redis running locally.
 
 ```bash
 bun install                        # Install all dependencies
