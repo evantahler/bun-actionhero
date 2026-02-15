@@ -1,18 +1,18 @@
 {
-  "name": "actionhero",
+  "name": "keryx",
   "version": "0.0.1",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
-  "description": "Bun Actionhero - the greatest framework for building web applications, and other applications too!",
+  "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
   "bin": {
-    "actionhero": "actionhero.ts"
+    "keryx": "keryx.ts"
   },
   "scripts": {
-    "start": "bun actionhero.ts start",
-    "dev": "bun --watch actionhero.ts start",
+    "start": "bun keryx.ts start",
+    "dev": "bun --watch keryx.ts start",
     "migrations": "bun run migrations.ts",
-    "compile": "bun build actionhero.ts --compile --outfile actionhero",
+    "compile": "bun build keryx.ts --compile --outfile keryx",
     "lint": "tsc && prettier --check .",
     "format": "tsc && prettier --write ."
   },

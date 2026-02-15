@@ -24,7 +24,7 @@ cp frontend/.env.example frontend/.env
 
 ## Common Commands
 
-All commands from root unless noted. Backend tests require PostgreSQL (`bun` and `bun-test` databases) and Redis running locally.
+All commands from root unless noted. Backend tests require PostgreSQL (`keryx` and `keryx-test` databases) and Redis running locally.
 
 ```bash
 bun install                        # Install all dependencies
@@ -161,7 +161,7 @@ Actions, initializers, and servers are auto-discovered via `globLoader` (`backen
 
 ## Documentation Site (`docs/`)
 
-VitePress site deployed to `bun.actionherojs.com` via GitHub Pages. Key commands:
+VitePress site deployed to `keryxjs.com` via GitHub Pages. Key commands:
 
 ```bash
 bun docs:dev                       # Preview docs locally
@@ -175,8 +175,8 @@ The landing page includes `README.md` via VitePress markdown includes (`<!--@inc
 
 ## Gotcha: Stale Processes
 
-If code changes aren't reflected in HTTP responses, check for stale `bun actionhero` processes:
+If code changes aren't reflected in HTTP responses, check for stale `bun keryx` processes:
 ```bash
-ps aux | grep "bun actionhero" | grep -v grep
+ps aux | grep "bun keryx" | grep -v grep
 kill -9 <PIDs>
 ```

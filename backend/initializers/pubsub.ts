@@ -4,7 +4,7 @@ import { config } from "../config";
 import pkg from "../package.json";
 
 const namespace = "pubsub";
-const redisPubSubChannel = `actionhero:pubsub:${pkg.name}`;
+const redisPubSubChannel = `keryx:pubsub:${pkg.name}`;
 
 export type PubSubMessage = {
   channel: string;

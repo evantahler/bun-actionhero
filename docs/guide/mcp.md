@@ -4,7 +4,7 @@ description: Expose your actions as MCP tools for AI agents, with built-in OAuth
 
 # MCP Server
 
-[MCP (Model Context Protocol)](https://modelcontextprotocol.io) is an open standard for connecting AI agents to external tools and data sources. In bun-actionhero, MCP is a natural extension of the transport-agnostic action model — just like an action can serve HTTP, WebSocket, CLI, and background tasks, it can also be exposed as an MCP tool for AI agents.
+[MCP (Model Context Protocol)](https://modelcontextprotocol.io) is an open standard for connecting AI agents to external tools and data sources. In Keryx, MCP is a natural extension of the transport-agnostic action model — just like an action can serve HTTP, WebSocket, CLI, and background tasks, it can also be exposed as an MCP tool for AI agents.
 
 ## Enabling the MCP Server
 

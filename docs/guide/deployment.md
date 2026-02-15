@@ -1,10 +1,10 @@
 ---
-description: Deploying bun-actionhero — Docker, production builds, and running frontend and backend independently.
+description: Deploying Keryx — Docker, production builds, and running frontend and backend independently.
 ---
 
 # Deployment
 
-bun-actionhero runs as two separate applications — a backend API server and a frontend Next.js app. This is intentional. You can deploy them together on the same box, or put the frontend on Vercel and the backend on a VPS, or containerize everything with Docker. Each app is independent.
+Keryx runs as two separate applications — a backend API server and a frontend Next.js app. This is intentional. You can deploy them together on the same box, or put the frontend on Vercel and the backend on a VPS, or containerize everything with Docker. Each app is independent.
 
 ## Production Build
 

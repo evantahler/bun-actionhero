@@ -1,10 +1,10 @@
 ---
-description: Get up and running with bun-actionhero — prerequisites, installation, and your first dev server.
+description: Get up and running with Keryx — prerequisites, installation, and your first dev server.
 ---
 
 # Getting Started
 
-bun-actionhero is a modern rewrite of [ActionHero](https://www.actionherojs.com), rebuilt from scratch on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — transport-agnostic actions, built-in background tasks, strong typing between frontend and backend — but the original framework was showing its age. This project takes those ideas and pairs them with modern tooling: Bun for the runtime, Zod for validation, Drizzle for the ORM, and Next.js for the frontend.
+Keryx is a modern rewrite of [ActionHero](https://www.actionherojs.com), rebuilt from scratch on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — transport-agnostic actions, built-in background tasks, strong typing between frontend and backend — but the original framework was showing its age. This project takes those ideas and pairs them with modern tooling: Bun for the runtime, Zod for validation, Drizzle for the ORM, and Next.js for the frontend.
 
 The result is a full-stack monorepo template where you write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, and background task… all at the same time.
 
@@ -34,8 +34,8 @@ createdb bun
 ## Clone and Install
 
 ```bash
-git clone https://github.com/evantahler/bun-actionhero.git
-cd bun-actionhero
+git clone https://github.com/evantahler/keryx.git
+cd keryx
 bun install
 ```
 
@@ -60,8 +60,8 @@ That's it. Both the frontend and backend will start with hot reload — edit a f
 The repo is a monorepo with two workspaces:
 
 ```
-bun-actionhero/
-├── backend/            # The ActionHero API server
+keryx/
+├── backend/            # The Keryx API server
 │   ├── actions/        # Transport-agnostic controllers
 │   ├── initializers/   # Lifecycle components (DB, Redis, etc.)
 │   ├── config/         # Modular configuration

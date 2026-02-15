@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
 export default defineConfig({
-  title: "bun-actionhero",
+  title: "Keryx",
   description:
     "The modern TypeScript API framework — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
   head: [["link", { rel: "icon", href: "/images/logo.svg" }]],
@@ -14,7 +14,7 @@ export default defineConfig({
       { text: "Reference", link: "/reference/actions" },
       {
         text: "GitHub",
-        link: "https://github.com/evantahler/bun-actionhero",
+        link: "https://github.com/evantahler/keryx",
       },
     ],
     sidebar: {
@@ -73,7 +73,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/evantahler/bun-actionhero",
+        link: "https://github.com/evantahler/keryx",
       },
     ],
     search: { provider: "local" },
@@ -83,7 +83,7 @@ export default defineConfig({
     },
   },
 
-  sitemap: { hostname: "https://bun.actionherojs.com" },
+  sitemap: { hostname: "https://keryxjs.com" },
 
   vite: {
     plugins: [llmstxt()],

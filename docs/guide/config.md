@@ -4,7 +4,7 @@ description: Modular configuration with per-environment overrides via environmen
 
 # Configuration
 
-Config in bun-actionhero is statically defined at boot — there's no dynamic config reloading. That said, every config value supports per-environment overrides via environment variables, so you can set things differently in test, development, and production without touching code.
+Config in Keryx is statically defined at boot — there's no dynamic config reloading. That said, every config value supports per-environment overrides via environment variables, so you can set things differently in test, development, and production without touching code.
 
 ## Structure
 

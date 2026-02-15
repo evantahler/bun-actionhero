@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Bootstrap script for bun-actionhero in Claude Code cloud environment
+# Bootstrap script for Keryx in Claude Code cloud environment
 # This script is run automatically via SessionStart hook when a session begins
 #
 
@@ -13,7 +13,7 @@ if [ "$CLAUDE_CODE_REMOTE" != "true" ]; then
     exit 0
 fi
 
-echo "=== bun-actionhero bootstrap script ==="
+echo "=== Keryx bootstrap script ==="
 echo "Running in Claude Code cloud environment"
 echo ""
 
@@ -160,15 +160,15 @@ echo "[6/6] Configuring session environment..."
 if [ -n "$CLAUDE_ENV_FILE" ]; then
     # Use connection strings matching .env.example format (with password)
     cat >> "$CLAUDE_ENV_FILE" << 'ENVEOF'
-export DATABASE_URL="postgres://postgres:postgres@localhost:5432/bun"
-export DATABASE_URL_TEST="postgres://postgres:postgres@localhost:5432/bun-test"
+export DATABASE_URL="postgres://postgres:postgres@localhost:5432/keryx"
+export DATABASE_URL_TEST="postgres://postgres:postgres@localhost:5432/keryx-test"
 export REDIS_URL="redis://localhost:6379/0"
 export REDIS_URL_TEST="redis://localhost:6379/1"
 export NODE_ENV="development"
 ENVEOF
     echo "  Session environment variables configured"
-    echo "  DATABASE_URL=postgres://postgres:postgres@localhost:5432/bun"
-    echo "  DATABASE_URL_TEST=postgres://postgres:postgres@localhost:5432/bun-test"
+    echo "  DATABASE_URL=postgres://postgres:postgres@localhost:5432/keryx"
+    echo "  DATABASE_URL_TEST=postgres://postgres:postgres@localhost:5432/keryx-test"
 else
     echo "  CLAUDE_ENV_FILE not set (running outside Claude Code?)"
 fi

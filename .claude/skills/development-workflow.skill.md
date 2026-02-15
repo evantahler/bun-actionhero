@@ -12,7 +12,7 @@ keywords: [development, workflow, getting-started, dev-server, debugging, hot-re
 
 # Development Workflow
 
-Common development tasks and workflows for the bun-actionhero project.
+Common development tasks and workflows for the Keryx project.
 
 ## Starting Development
 

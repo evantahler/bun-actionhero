@@ -22,7 +22,7 @@ describe("swagger", () => {
 
     // OpenAPI 3.0 structure
     expect(response.openapi).toBe("3.0.0");
-    expect(response.info.title).toBe("actionhero");
+    expect(response.info.title).toBe("keryx");
     expect(response.info.version).toBeDefined();
     expect(response.info.license).toBeDefined();
     expect(response.info.description).toBeDefined();

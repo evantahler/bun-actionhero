@@ -4,7 +4,7 @@ description: Actions are the universal controller — one class handles HTTP, We
 
 # Actions
 
-If there's one idea that defines bun-actionhero, it's this: **actions are the universal controller**. In the original ActionHero, we had actions, tasks, and CLI commands as separate concepts. That always felt like unnecessary duplication — you'd write the same validation logic three times for three different entry points. So in this version, we've collapsed them all into one thing.
+If there's one idea that defines Keryx, it's this: **actions are the universal controller**. In the original ActionHero, we had actions, tasks, and CLI commands as separate concepts. That always felt like unnecessary duplication — you'd write the same validation logic three times for three different entry points. So in this version, we've collapsed them all into one thing.
 
 An action is a class with a `name`, a Zod schema for `inputs`, and a `run()` method that returns data. You add a `web` property to make it an HTTP endpoint. You add a `task` property to make it a background job. CLI support comes for free. MCP tool exposure comes for free. Same validation, same error handling, same response shape — everywhere.
 
@@ -30,7 +30,7 @@ export class Status implements Action {
 }
 ```
 
-That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hit `GET /api/status` from a browser, run `./actionhero.ts status -q | jq` from the terminal, or send `{ action: "status" }` over a WebSocket — same action, same response.
+That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hit `GET /api/status` from a browser, run `./keryx.ts status -q | jq` from the terminal, or send `{ action: "status" }` over a WebSocket — same action, same response.
 
 ## Properties
 
@@ -103,7 +103,7 @@ Available methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`.
 Every action is automatically available as a CLI command. No extra configuration needed:
 
 ```bash
-./actionhero.ts "user:create" --name evan --email "evan@example.com" --password secret -q | jq
+./keryx.ts "user:create" --name evan --email "evan@example.com" --password secret -q | jq
 ```
 
 The `-q` flag suppresses server logs so you can pipe the JSON output cleanly. Use `--help` on any action to see its parameters.

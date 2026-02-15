@@ -1,32 +1,32 @@
 ---
 name: run-action
-description: Execute ActionHero actions from the command line
+description: Execute Keryx actions from the command line
 when_to_use: |
-  - User wants to test or run an ActionHero action directly
+  - User wants to test or run a Keryx action directly
   - User asks how to run actions from CLI
   - User needs to check server status or debug an action
   - User mentions running actions outside of HTTP/WebSocket
-keywords: [actionhero, cli, action, status, command-line]
+keywords: [keryx, cli, action, status, command-line]
 ---
 
-# Run ActionHero Action
+# Run Keryx Action
 
-Execute ActionHero actions from the command line interface.
+Execute Keryx actions from the command line interface.
 
 ## Basic Usage
 
-Actions can be run from the CLI using the `actionhero.ts` script in the backend directory:
+Actions can be run from the CLI using the `keryx.ts` script in the backend directory:
 
 ```bash
 cd backend
-./actionhero.ts "actionName" [options] -q | jq
+./keryx.ts "actionName" [options] -q | jq
 ```
 
 ## Examples
 
 ### Check Server Status
 ```bash
-./actionhero.ts "status" -q | jq
+./keryx.ts "status" -q | jq
 ```
 
 This will return server information including:

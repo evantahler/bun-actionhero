@@ -12,7 +12,7 @@ program.name(pkg.name).description(pkg.description).version(pkg.version);
 program
   .command("start")
   .summary("Run the server")
-  .description("Start the actionhero server")
+  .description("Start the Keryx server")
   .action(async () => {
     await api.start();
   });

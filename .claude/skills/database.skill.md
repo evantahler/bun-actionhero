@@ -12,7 +12,7 @@ keywords: [database, postgres, migration, drizzle, backup, restore, schema]
 
 # Database Management
 
-Database operations and management for the bun-actionhero project.
+Database operations and management for the Keryx project.
 
 ## Setup
 
