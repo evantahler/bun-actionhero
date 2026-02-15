@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { api, type Action, type ActionParams } from "../api";
 import { HTTP_METHOD } from "../classes/Action";
+import { CHANNEL_NAME_PATTERN } from "../classes/Channel";
 import { RateLimitMiddleware } from "../middleware/rateLimit";
 import { SessionMiddleware } from "../middleware/session";
 
@@ -11,7 +12,10 @@ export class ChannelMembers implements Action {
   middleware = [RateLimitMiddleware, SessionMiddleware];
   web = { route: "/channel/:channel/members", method: HTTP_METHOD.GET };
   inputs = z.object({
-    channel: z.string().describe("The channel name to query"),
+    channel: z
+      .string()
+      .regex(CHANNEL_NAME_PATTERN, "Invalid channel name")
+      .describe("The channel name to query"),
   });
 
   async run(params: ActionParams<ChannelMembers>) {
