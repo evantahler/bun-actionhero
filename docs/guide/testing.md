@@ -8,21 +8,22 @@ We don't mock the server. That's a deliberate choice — if you're testing an AP
 
 ## Test Structure
 
-Each test file boots and stops the full server in `beforeAll`/`afterAll`:
+Each test file boots and stops the full server in `beforeAll`/`afterAll`. Tests use dynamic port binding (`WEB_SERVER_PORT=0`) so each file gets a random available port — no conflicts when running multiple test files:
 
 ```ts
 import { api } from "../../api";
-import { config } from "../../config";
+import { serverUrl, HOOK_TIMEOUT } from "../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
-});
+  url = serverUrl();
+}, HOOK_TIMEOUT);
 
 afterAll(async () => {
   await api.stop();
-});
+}, HOOK_TIMEOUT);
 
 test("status endpoint returns server info", async () => {
   const res = await fetch(url + "/api/status");
@@ -35,6 +36,26 @@ test("status endpoint returns server info", async () => {
 ```
 
 Yes, this means each test file starts the entire server — database connections, Redis, the works. It's slower than unit testing with mocks, but you're testing what actually happens when a client hits your API. I'll take that tradeoff every time.
+
+## Test Helpers
+
+The `backend/__tests__/setup.ts` file provides helpers used across the test suite:
+
+- **`serverUrl()`** — Returns the actual URL the web server bound to (with resolved port). Call after `api.start()`.
+- **`HOOK_TIMEOUT`** — A generous timeout (15s) for `beforeAll`/`afterAll` hooks, since they connect to Redis, Postgres, run migrations, etc. Pass as the second argument to `beforeAll`/`afterAll`.
+- **`waitFor(condition, { interval, timeout })`** — Polls a condition function until it returns `true`, or throws after a timeout. Use this instead of fixed `Bun.sleep()` calls when waiting for async side effects like background tasks:
+
+```ts
+await waitFor(
+  async () => {
+    const result = await db.query(
+      "SELECT count(*) FROM jobs WHERE status = 'done'",
+    );
+    return result.count > 0;
+  },
+  { interval: 100, timeout: 5000 },
+);
+```
 
 ## Running Tests
 
@@ -91,7 +112,7 @@ beforeAll(async () => {
 You'll need a separate test database:
 
 ```bash
-createdb bun-test
+createdb keryx-test
 ```
 
 Set `DATABASE_URL_TEST` in your environment (or `backend/.env`) to point at it.

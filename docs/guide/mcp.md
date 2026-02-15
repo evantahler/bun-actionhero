@@ -101,6 +101,14 @@ MCP clients authenticate using OAuth 2.1 with PKCE (Proof Key for Code Exchange)
 | `/oauth/authorize`                        | POST   | Process login/signup form submission   |
 | `/oauth/token`                            | POST   | Exchange authorization code for token  |
 
+### Security
+
+The OAuth implementation includes several hardening measures:
+
+- **Redirect URI validation** — URIs registered via `/oauth/register` must not contain fragments or userinfo, and must use HTTPS for non-localhost addresses. When exchanging authorization codes, the redirect URI must match the registered URI exactly (origin + pathname).
+- **Registration rate limiting** — `POST /oauth/register` has a separate, stricter rate limit (default: 5 requests per hour per IP) to prevent abuse. See `RATE_LIMIT_OAUTH_REGISTER_LIMIT` and `RATE_LIMIT_OAUTH_REGISTER_WINDOW_MS` in [Configuration](/guide/config).
+- **CORS** — OAuth and MCP endpoints respect the `allowedOrigins` configuration. When `allowedOrigins` is `"*"`, credentials headers are not sent, per the browser spec. Set a specific origin in production for credentialed requests to work.
+
 ## Session Management
 
 Each authenticated MCP connection creates its own `McpServer` instance. Sessions are tracked via the `mcp-session-id` header — the MCP SDK generates a UUID per session and includes it in all subsequent requests.

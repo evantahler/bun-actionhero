@@ -104,6 +104,24 @@ export const NormalizeMiddleware: ActionMiddleware = {
 
 That said, you can also handle this in the Zod schema with `.transform()` — so use whichever approach makes more sense for your case.
 
+### Rate Limiting
+
+The built-in `RateLimitMiddleware` uses a Redis-backed sliding window to limit request rates per client. It identifies users by user ID (authenticated) or IP address (unauthenticated):
+
+```ts
+import { RateLimitMiddleware } from "../middleware/rateLimit";
+
+export class ApiEndpoint implements Action {
+  name = "api:endpoint";
+  middleware = [SessionMiddleware, RateLimitMiddleware];
+  // ...
+}
+```
+
+When a client exceeds the limit, the middleware throws a `CONNECTION_RATE_LIMITED` error (HTTP 429). Rate limit info is attached to the connection and included in response headers automatically.
+
+See the [Security guide](/guide/security) for configuration options and custom limit overrides.
+
 ### Response Enrichment
 
 `runAfter` can add data to the response. This runs after the action's `run()` method completes:

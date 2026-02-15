@@ -48,6 +48,33 @@ APPLICATION_URL=https://api.example.com
 WEB_SERVER_PORT=8080
 ```
 
+## Production Security
+
+Keryx ships with secure defaults, but a few settings need adjustment for production. See the [Security guide](/guide/security) for full details.
+
+```bash
+# Cookies — require HTTPS transport
+SESSION_COOKIE_SECURE=true
+
+# CORS — restrict to your domain (wildcard blocks credentials)
+WEB_SERVER_ALLOWED_ORIGINS=https://yourapp.com
+
+# Rate limiting — enabled by default, tune thresholds as needed
+RATE_LIMIT_UNAUTH_LIMIT=20
+RATE_LIMIT_AUTH_LIMIT=200
+
+# Error stack traces — auto-disabled when NODE_ENV=production
+NODE_ENV=production
+
+# Security headers — defaults are production-ready
+# Customize CSP if your backend serves HTML with external resources:
+# WEB_SECURITY_CSP="default-src 'self'; script-src 'self' https://cdn.example.com"
+
+# WebSocket limits — adjust for your expected traffic
+# WS_MAX_PAYLOAD_SIZE=65536
+# WS_MAX_MESSAGES_PER_SECOND=20
+```
+
 ## Database Migrations
 
 Migrations auto-apply on server start when `DATABASE_AUTO_MIGRATE=true` (the default). If you'd rather run them explicitly before deploying:
