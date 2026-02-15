@@ -5,11 +5,10 @@ import { z } from "zod";
 import * as z4mini from "zod/v4-mini";
 import { api } from "../../api";
 import { config } from "../../config";
-import { HOOK_TIMEOUT } from "../setup";
+import { HOOK_TIMEOUT, serverUrl } from "../setup";
 
-const mcpUrl = () =>
-  `${config.server.web.applicationUrl}${config.server.mcp.route}`;
-const baseUrl = () => config.server.web.applicationUrl;
+const mcpUrl = () => `${serverUrl()}${config.server.mcp.route}`;
+const baseUrl = () => serverUrl();
 
 /**
  * Helper: run the full OAuth flow and return a Bearer access token.

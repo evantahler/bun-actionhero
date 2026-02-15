@@ -3,12 +3,13 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import type { Status } from "../../actions/status";
 import { api, config, type ActionResponse } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
 }, HOOK_TIMEOUT);
 
 const staticDir = config.server.web.staticFilesDirectory;
@@ -27,7 +28,7 @@ afterAll(async () => {
 
 describe("booting", () => {
   test("the web server will boot on a test port", async () => {
-    expect(url).toContain(":80"); // the port will be dynamic
+    expect(url).toMatch(/^http:\/\/localhost:\d+$/);
   });
 });
 

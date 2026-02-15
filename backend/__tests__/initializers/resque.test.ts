@@ -1,5 +1,5 @@
 import { Action, api } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, waitFor } from "./../setup";
 
 import {
   afterAll,
@@ -102,7 +102,7 @@ describe("with workers and scheduler", () => {
     await api.actions.enqueue("test_action", { val: "I ran" });
     await api.resque.startWorkers();
     expect(ran).toBeNull();
-    await Bun.sleep(500);
+    await waitFor(() => ran !== null);
     expect(ran).toBe("I ran");
   });
 
@@ -111,7 +111,7 @@ describe("with workers and scheduler", () => {
     await api.resque.startWorkers();
     await api.resque.startScheduler();
     expect(ran).toBeNull();
-    await Bun.sleep(500);
+    await waitFor(() => ran !== null);
     expect(ran).toBe("I ran");
   });
 
@@ -131,7 +131,7 @@ describe("with workers and scheduler", () => {
 
     await api.resque.startWorkers();
     await api.resque.startScheduler();
-    await Bun.sleep(500);
+    await waitFor(() => runs.length > 1);
     expect(runs.length).toBeGreaterThan(1);
   });
 });

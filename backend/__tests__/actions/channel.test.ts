@@ -9,19 +9,19 @@ import {
 import type { ChannelMembers } from "../../actions/channel";
 import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import {
   buildWebSocket,
   createSession,
   createUser,
   subscribeToChannel,
 } from "./../servers/websocket-helpers";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
   await api.redis.redis.flushdb();
 }, HOOK_TIMEOUT);

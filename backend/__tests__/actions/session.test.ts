@@ -1,15 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { SessionCreate } from "../../actions/session";
 import { api, type ActionResponse } from "../../api";
-import { config } from "../../config";
 import { hashPassword } from "../../ops/UserOps";
 import { users } from "../../schema/users";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const url = config.server.web.applicationUrl;
+let url: string;
 
 beforeAll(async () => {
   await api.start();
+  url = serverUrl();
   await api.db.clearDatabase();
   await api.db.db.insert(users).values({
     name: "Mario Mario",

@@ -17,6 +17,11 @@ import type {
 } from "../initializers/pubsub";
 
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
+  /** The actual port the server bound to (resolved after start, e.g. when config port is 0). */
+  port: number = 0;
+  /** The actual application URL (resolved after start). */
+  url: string = "";
+
   constructor() {
     super("web");
   }
@@ -28,7 +33,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     let startupAttempts = 0;
     try {
-      this.server = Bun.serve({
+      const server = Bun.serve({
         port: config.server.web.port,
         hostname: config.server.web.host,
         fetch: this.handleIncomingConnection.bind(this),
@@ -38,7 +43,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
           close: this.handleWebSocketConnectionClose.bind(this),
         },
       });
-      const startMessage = `started server @ http://${config.server.web.host}:${config.server.web.port}`;
+      this.server = server;
+      this.port = server.port ?? config.server.web.port;
+      this.url = `http://${config.server.web.host}:${this.port}`;
+      const startMessage = `started server @ ${this.url}`;
       logger.info(logger.colorize ? colors.bgBlue(startMessage) : startMessage);
     } catch (e) {
       await Bun.sleep(1000);
