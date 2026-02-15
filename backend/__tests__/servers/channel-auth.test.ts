@@ -6,15 +6,14 @@ import {
   expect,
   test,
 } from "bun:test";
-import { api, config } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { api } from "../../api";
+import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
-const wsUrl = config.server.web.applicationUrl
-  .replace("https://", "wss://")
-  .replace("http://", "ws://");
+let wsUrl: string;
 
 beforeAll(async () => {
   await api.start();
+  wsUrl = serverUrl().replace("https://", "wss://").replace("http://", "ws://");
   await api.db.clearDatabase();
 }, HOOK_TIMEOUT);
 

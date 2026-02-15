@@ -37,6 +37,10 @@ jobs:
 
   test-backend:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
 
     services:
       redis:
@@ -61,7 +65,13 @@ jobs:
       - uses: oven-sh/setup-bun@v1
       - run: bun install
       - run: cp backend/.env.example backend/.env
-      - run: bun test-backend
+      - name: Run test shard ${{ matrix.shard }}/3
+        run: |
+          cd backend
+          files=$(find __tests__ -name '*.test.ts' | sort)
+          shard_files=$(echo "$files" | awk "NR % 3 == (${{ matrix.shard }} - 1)")
+          echo "Running: $shard_files"
+          bun test $shard_files
         env:
           DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/bun-test
 

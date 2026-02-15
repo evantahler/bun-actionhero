@@ -78,13 +78,13 @@ export class OAuthInitializer extends Initializer {
         path.startsWith("/.well-known/oauth-protected-resource") &&
         method === "GET"
       ) {
-        return handleProtectedResourceMetadata();
+        return handleProtectedResourceMetadata(url.origin);
       }
       if (
         path === "/.well-known/oauth-authorization-server" &&
         method === "GET"
       ) {
-        return handleMetadata();
+        return handleMetadata(url.origin);
       }
 
       // Rate-limit mutable OAuth endpoints by IP
@@ -143,12 +143,11 @@ export class OAuthInitializer extends Initializer {
  * RFC 9728 — Protected Resource Metadata.
  * MCP clients fetch this first to discover the authorization server.
  */
-function handleProtectedResourceMetadata(): Response {
-  const resource = config.server.web.applicationUrl;
+function handleProtectedResourceMetadata(origin: string): Response {
   return new Response(
     JSON.stringify({
-      resource,
-      authorization_servers: [`${resource}`],
+      resource: origin,
+      authorization_servers: [origin],
     }),
     {
       status: 200,
@@ -157,8 +156,8 @@ function handleProtectedResourceMetadata(): Response {
   );
 }
 
-function handleMetadata(): Response {
-  const issuer = config.server.web.applicationUrl;
+function handleMetadata(origin: string): Response {
+  const issuer = origin;
   return new Response(
     JSON.stringify({
       issuer,

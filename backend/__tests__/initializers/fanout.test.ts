@@ -1,5 +1,5 @@
 import { Action, api } from "../../api";
-import { HOOK_TIMEOUT } from "./../setup";
+import { HOOK_TIMEOUT, waitFor } from "./../setup";
 
 import {
   afterAll,
@@ -374,8 +374,10 @@ describe("with workers", () => {
     const result = await api.actions.fanOut("fanout:child", inputs);
 
     await api.resque.startWorkers();
-    // Wait for workers to process jobs
-    await Bun.sleep(2000);
+    await waitFor(async () => {
+      const s = await api.actions.fanOutStatus(result.fanOutId);
+      return s.completed + s.failed >= 3;
+    });
 
     const status = await api.actions.fanOutStatus(result.fanOutId);
     expect(status.total).toBe(3);
@@ -395,7 +397,10 @@ describe("with workers", () => {
     ]);
 
     await api.resque.startWorkers();
-    await Bun.sleep(2000);
+    await waitFor(async () => {
+      const s = await api.actions.fanOutStatus(result.fanOutId);
+      return s.completed + s.failed >= 3;
+    });
 
     const status = await api.actions.fanOutStatus(result.fanOutId);
     expect(status.total).toBe(3);
@@ -416,7 +421,10 @@ describe("with workers", () => {
     const result = await api.actions.fanOut("fanout:failing-child", inputs);
 
     await api.resque.startWorkers();
-    await Bun.sleep(2000);
+    await waitFor(async () => {
+      const s = await api.actions.fanOutStatus(result.fanOutId);
+      return s.completed + s.failed >= 2;
+    });
 
     const status = await api.actions.fanOutStatus(result.fanOutId);
     expect(status.total).toBe(2);
