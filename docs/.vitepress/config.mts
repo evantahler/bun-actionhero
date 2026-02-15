@@ -5,10 +5,10 @@ export default defineConfig({
   title: "Keryx",
   description:
     "The modern TypeScript API framework — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
-  head: [["link", { rel: "icon", href: "/images/logo.svg" }]],
+  head: [["link", { rel: "icon", href: "/images/horn.svg" }]],
 
   themeConfig: {
-    logo: "/images/logo.svg",
+    logo: "/images/horn.svg",
     nav: [
       { text: "Guide", link: "/guide/" },
       { text: "Reference", link: "/reference/actions" },

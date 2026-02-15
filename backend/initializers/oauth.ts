@@ -17,7 +17,7 @@ const templatesDir = import.meta.dir + "/../templates";
 let authTemplate: string;
 let successTemplate: string;
 let commonCss: string;
-let dogSvg: string;
+let lionSvg: string;
 
 const namespace = "oauth";
 
@@ -64,7 +64,7 @@ export class OAuthInitializer extends Initializer {
       `${templatesDir}/oauth-success.html`,
     ).text();
     commonCss = await Bun.file(`${templatesDir}/oauth-common.css`).text();
-    dogSvg = await Bun.file(`${templatesDir}/dog.svg`).text();
+    lionSvg = await Bun.file(`${templatesDir}/lion.svg`).text();
 
     async function verifyAccessToken(token: string): Promise<TokenData | null> {
       const raw = await api.redis.redis.get(`oauth:token:${token}`);
@@ -562,7 +562,7 @@ function renderAuthPage(params: AuthPageParams): Response {
   const html = Mustache.render(
     authTemplate,
     { errorHtml, hiddenFields },
-    { commonCss, dogSvg },
+    { commonCss, lionSvg },
   );
 
   return new Response(html, {
@@ -575,7 +575,7 @@ function renderSuccessPage(redirectUrl: string): Response {
   const html = Mustache.render(
     successTemplate,
     { redirectUrl },
-    { commonCss, dogSvg },
+    { commonCss, lionSvg },
   );
 
   return new Response(html, {
