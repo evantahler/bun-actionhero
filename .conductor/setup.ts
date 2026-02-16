@@ -117,8 +117,9 @@ WEB_SERVER_ENABLED=true
 WEB_SERVER_PORT=${backendPort}
 WEB_SERVER_PORT_TEST=0
 WEB_SERVER_HOST=localhost
+APPLICATION_URL="http://localhost:${backendPort}"
 WEB_SERVER_API_ROUTE="/api"
-WEB_SERVER_ALLOWED_ORIGINS="http://localhost:${frontendPort}"
+WEB_SERVER_ALLOWED_ORIGINS="http://localhost:${frontendPort},http://localhost:3000"
 WEB_SERVER_ALLOWED_METHODS="GET, POST, PUT, DELETE, OPTIONS"
 
 MCP_SERVER_ENABLED=true
