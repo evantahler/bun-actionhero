@@ -10,6 +10,7 @@
 import { $ } from "bun";
 import { writeFile } from "fs/promises";
 import { join } from "path";
+import { getWorkspaceOffset } from "./lib";
 
 const rootDir = join(import.meta.dirname, "..");
 const conductorPort = Bun.env.CONDUCTOR_PORT
@@ -36,8 +37,7 @@ if (!conductorPort) {
 } else {
   console.log(`CONDUCTOR_PORT=${conductorPort}`);
 
-  // Workspace offset from CONDUCTOR_PORT range
-  const offset = Math.floor((conductorPort - 55000) / 10);
+  const offset = getWorkspaceOffset(conductorPort);
 
   // Backend: 8080+N, Frontend: 3000+N
   backendPort = 8080 + offset;

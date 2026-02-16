@@ -7,6 +7,7 @@
  */
 
 import { $ } from "bun";
+import { getWorkspaceOffset } from "./lib";
 
 const conductorPort = Bun.env.CONDUCTOR_PORT
   ? parseInt(Bun.env.CONDUCTOR_PORT)
@@ -17,7 +18,7 @@ if (!conductorPort) {
   process.exit(0);
 }
 
-const offset = Math.floor((conductorPort - 55000) / 10);
+const offset = getWorkspaceOffset(conductorPort);
 const dbName = `keryx_${offset}`;
 const dbNameTest = `keryx_${offset}_test`;
 const redisDb = (offset * 2) % 16;
