@@ -94,8 +94,7 @@ export class OAuthInitializer extends Initializer {
       // Handle CORS preflight for OAuth endpoints
       if (
         method === "OPTIONS" &&
-        (path.startsWith("/.well-known/oauth") ||
-          path.startsWith("/oauth/"))
+        (path.startsWith("/.well-known/oauth") || path.startsWith("/oauth/"))
       ) {
         return new Response(null, { status: 204, headers: corsHeaders });
       }

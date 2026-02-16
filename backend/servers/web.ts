@@ -11,12 +11,12 @@ import { Connection } from "../classes/Connection";
 import { Server } from "../classes/Server";
 import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
-import { buildCorsHeaders, isOriginAllowed } from "../util/http";
 import type {
   ClientSubscribeMessage,
   ClientUnsubscribeMessage,
   PubSubMessage,
 } from "../initializers/pubsub";
+import { buildCorsHeaders, isOriginAllowed } from "../util/http";
 
 function validateChannelName(channel: string) {
   if (!CHANNEL_NAME_PATTERN.test(channel)) {
@@ -89,10 +89,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     // Validate Origin header before WebSocket upgrade to prevent CSWSH
     if (req.headers.get("upgrade")?.toLowerCase() === "websocket") {
       const origin = req.headers.get("origin");
-      if (
-        origin &&
-        !isOriginAllowed(origin)
-      ) {
+      if (origin && !isOriginAllowed(origin)) {
         return new Response("WebSocket origin not allowed", { status: 403 });
       }
     }
