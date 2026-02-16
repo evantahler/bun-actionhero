@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "setup": "bun install && bun conductor-setup.ts",
+    "run": "bun dev",
+    "archive": "dropdb --if-exists keryx_${CONDUCTOR_PORT} && dropdb --if-exists keryx_${CONDUCTOR_PORT}_test"
+  },
+  "runScriptMode": "nonconcurrent"
+}
