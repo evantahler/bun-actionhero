@@ -28,3 +28,8 @@
   --vp-button-brand-hover-bg: #cf8128;
   --vp-button-brand-active-bg: #9a5e18;
 }
+
+.VPHero .actions .VPButton.sponsor {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+}
