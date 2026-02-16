@@ -36,13 +36,12 @@ if (!conductorPort) {
 } else {
   console.log(`CONDUCTOR_PORT=${conductorPort}`);
 
-  // Backend gets CONDUCTOR_PORT, frontend gets CONDUCTOR_PORT+1
-  backendPort = conductorPort;
-  frontendPort = conductorPort + 1;
-
-  // Redis DBs: derive from CONDUCTOR_PORT. Redis supports 0-15 by default.
-  // Use pairs: (offset*2, offset*2+1) where offset = (port - 55000) / 10
+  // Workspace offset from CONDUCTOR_PORT range
   const offset = Math.floor((conductorPort - 55000) / 10);
+
+  // Backend: 8080+N, Frontend: 3000+N
+  backendPort = 8080 + offset;
+  frontendPort = 3000 + offset;
   redisDb = (offset * 2) % 16;
   redisDbTest = (offset * 2 + 1) % 16;
 
