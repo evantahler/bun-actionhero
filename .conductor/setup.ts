@@ -4,14 +4,14 @@
  * Generates .env files with unique ports, Redis DBs, and Postgres DBs
  * based on CONDUCTOR_PORT to allow parallel worktree development.
  *
- * Usage: bun conductor-setup.ts
+ * Usage: bun .conductor/setup.ts
  */
 
 import { $ } from "bun";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 
-const rootDir = import.meta.dirname;
+const rootDir = join(import.meta.dirname, "..");
 const conductorPort = Bun.env.CONDUCTOR_PORT
   ? parseInt(Bun.env.CONDUCTOR_PORT)
   : undefined;

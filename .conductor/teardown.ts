@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
 /**
  * Conductor workspace teardown script.
- * Drops Postgres databases and flushes Redis DBs created by conductor-setup.ts.
+ * Drops Postgres databases and flushes Redis DBs created by setup.ts.
  *
- * Usage: bun conductor-teardown.ts
+ * Usage: bun .conductor/teardown.ts
  */
 
 import { $ } from "bun";
