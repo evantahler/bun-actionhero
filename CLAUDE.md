@@ -22,7 +22,7 @@ Similarly for frontend:
 cp frontend/.env.example frontend/.env
 ```
 
-**Important**: When adding, removing, or changing environment variables, also update the `.env` template in `.conductor/setup.ts`. That script generates `.env` files for parallel Conductor workspaces and must stay in sync with `.env.example`.
+**Note**: `.conductor/setup.ts` reads from `.env.example` and only overrides workspace-specific variables (ports, database names, Redis DBs). New environment variables added to `.env.example` will automatically flow through to Conductor workspaces.
 
 ## Common Commands
 

@@ -1,14 +1,15 @@
 #!/usr/bin/env bun
 /**
  * Conductor workspace setup script.
- * Generates .env files with unique ports, Redis DBs, and Postgres DBs
- * based on CONDUCTOR_PORT to allow parallel worktree development.
+ * Reads .env.example files and overrides only the variables that need
+ * workspace-specific values (ports, Redis DBs, Postgres DBs) based on
+ * CONDUCTOR_PORT to allow parallel worktree development.
  *
  * Usage: bun .conductor/setup.ts
  */
 
 import { $ } from "bun";
-import { writeFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
 import { getWorkspaceOffset } from "./lib";
 
@@ -102,58 +103,74 @@ for (const db of [dbName, dbNameTest]) {
   }
 }
 
-// Write backend/.env
+/**
+ * Read a .env.example file, apply overrides, and write to .env.
+ * - Lines with overridden keys get their values replaced
+ * - Commented-out lines (# KEY=val) for overridden keys get uncommented and replaced
+ * - Any override keys not found in the example are appended at the end
+ */
+function applyEnvOverrides(
+  exampleContent: string,
+  overrides: Record<string, string>,
+): string {
+  const remaining = new Set(Object.keys(overrides));
+  const lines = exampleContent.split("\n").map((line) => {
+    // Match "KEY=value" or "# KEY=value" (commented-out)
+    const match = line.match(/^(#\s*)?([A-Z_][A-Z0-9_]*)=/);
+    if (match) {
+      const key = match[2];
+      if (key in overrides) {
+        remaining.delete(key);
+        return `${key}=${overrides[key]}`;
+      }
+    }
+    return line;
+  });
+
+  // Append any overrides that weren't found in the example
+  for (const key of remaining) {
+    lines.push(`${key}=${overrides[key]}`);
+  }
+
+  return lines.join("\n");
+}
+
+// Build backend overrides — only the vars that differ from .env.example defaults
 const user = Bun.env.USER ?? "postgres";
-const backendEnv = `PROCESS_NAME=actionhero-server
-PROCESS_NAME_TEST=test-server
-PROCESS_SHUTDOWN_TIMEOUT=30000
+const backendOverrides: Record<string, string> = {
+  WEB_SERVER_PORT: String(backendPort),
+  APPLICATION_URL: `"http://localhost:${backendPort}"`,
+  WEB_SERVER_ALLOWED_ORIGINS: `"http://localhost:${frontendPort},http://localhost:3000"`,
+  DATABASE_URL: `"postgres://${user}@localhost:5432/${dbName}"`,
+  DATABASE_URL_TEST: `"postgres://${user}@localhost:5432/${dbNameTest}"`,
+  REDIS_URL: `"redis://localhost:6379/${redisDb}"`,
+  REDIS_URL_TEST: `"redis://localhost:6379/${redisDbTest}"`,
+};
 
-LOG_LEVEL=info
-LOG_LEVEL_TEST=fatal
-LOG_INCLUDE_TIMESTAMPS=false
-LOG_COLORIZE=true
-
-WEB_SERVER_ENABLED=true
-WEB_SERVER_PORT=${backendPort}
-WEB_SERVER_PORT_TEST=0
-WEB_SERVER_HOST=localhost
-APPLICATION_URL="http://localhost:${backendPort}"
-WEB_SERVER_API_ROUTE="/api"
-WEB_SERVER_ALLOWED_ORIGINS="http://localhost:${frontendPort},http://localhost:3000"
-WEB_SERVER_ALLOWED_METHODS="GET, POST, PUT, DELETE, OPTIONS"
-
-MCP_SERVER_ENABLED=true
-
-SESSION_TTL=86400000
-SESSION_COOKIE_NAME="__session"
-
-DATABASE_URL="postgres://${user}@localhost:5432/${dbName}"
-DATABASE_URL_TEST="postgres://${user}@localhost:5432/${dbNameTest}"
-DATABASE_AUTO_MIGRATE=true
-
-REDIS_URL="redis://localhost:6379/${redisDb}"
-REDIS_URL_TEST="redis://localhost:6379/${redisDbTest}"
-
-RATE_LIMIT_ENABLED=true
-RATE_LIMIT_WINDOW_MS=60000
-RATE_LIMIT_UNAUTH_LIMIT=20
-RATE_LIMIT_AUTH_LIMIT=200
-
-TASKS_ENABLED=true
-TASK_PROCESSORS=1
-TASK_TIMEOUT=5000
-TASK_TIMEOUT_TEST=100
-`;
-
-await writeFile(join(rootDir, "backend", ".env"), backendEnv);
+const backendExample = await readFile(
+  join(rootDir, "backend", ".env.example"),
+  "utf-8",
+);
+await writeFile(
+  join(rootDir, "backend", ".env"),
+  applyEnvOverrides(backendExample, backendOverrides),
+);
 console.log("Wrote backend/.env");
 
-// Write frontend/.env
-const frontendEnv = `NEXT_PUBLIC_API_URL=http://localhost:${backendPort}
-PORT=${frontendPort}
-`;
+// Build frontend overrides
+const frontendOverrides: Record<string, string> = {
+  NEXT_PUBLIC_API_URL: `http://localhost:${backendPort}`,
+  PORT: String(frontendPort),
+};
 
-await writeFile(join(rootDir, "frontend", ".env"), frontendEnv);
+const frontendExample = await readFile(
+  join(rootDir, "frontend", ".env.example"),
+  "utf-8",
+);
+await writeFile(
+  join(rootDir, "frontend", ".env"),
+  applyEnvOverrides(frontendExample, frontendOverrides),
+);
 console.log("Wrote frontend/.env");
 
 console.log("\nSetup complete! Run 'bun dev' to start both servers.");
