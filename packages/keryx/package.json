@@ -1,0 +1,59 @@
+{
+  "name": "keryx",
+  "version": "0.0.1",
+  "module": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
+  "bin": {
+    "keryx": "keryx.ts"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./classes/*": "./classes/*",
+    "./initializers/*": "./initializers/*",
+    "./actions/*": "./actions/*",
+    "./middleware/*": "./middleware/*",
+    "./util/*": "./util/*",
+    "./config": "./config/index.ts",
+    "./config/*": "./config/*",
+    "./servers/*": "./servers/*"
+  },
+  "scripts": {
+    "start": "bun keryx.ts start",
+    "dev": "bun --watch keryx.ts start",
+    "migrations": "bun run migrations.ts",
+    "compile": "bun build keryx.ts --compile --outfile keryx",
+    "lint": "tsc && prettier --check .",
+    "format": "tsc && prettier --write ."
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.26.0",
+    "colors": "^1.4.0",
+    "commander": "^12.1.0",
+    "cookie": "^0.6.0",
+    "drizzle-orm": "^0.45.1",
+    "ioredis": "^5.9.2",
+    "mustache": "^4.2.0",
+    "node-resque": "^9.5.0",
+    "pg": "^8.18.0",
+    "ts-morph": "^27.0.2",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "drizzle-zod": "^0.8.3"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@types/bun": "latest",
+    "@types/cookie": "^0.6.0",
+    "@types/formidable": "^3.4.6",
+    "@types/mustache": "^4.2.6",
+    "@types/pg": "^8.16.0",
+    "drizzle-kit": "^0.20.18",
+    "drizzle-zod": "^0.8.3",
+    "prettier": "^3.8.1",
+    "prettier-plugin-organize-imports": "^4.3.0"
+  }
+}

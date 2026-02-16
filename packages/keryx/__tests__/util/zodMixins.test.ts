@@ -1,0 +1,70 @@
+import { describe, expect, test } from "bun:test";
+import { z } from "zod";
+import { isSecret, secret, zBooleanFromString } from "../../util/zodMixins";
+
+describe("secret", () => {
+  test("marks a schema as secret via meta", () => {
+    const schema = secret(z.string());
+    expect(isSecret(schema)).toBe(true);
+  });
+
+  test("unmarked schema is not secret", () => {
+    const schema = z.string();
+    expect(isSecret(schema)).toBe(false);
+  });
+
+  test("works with different schema types", () => {
+    expect(isSecret(secret(z.number()))).toBe(true);
+    expect(isSecret(secret(z.boolean()))).toBe(true);
+    expect(isSecret(secret(z.object({ a: z.string() })))).toBe(true);
+  });
+});
+
+describe("isSecret", () => {
+  test("returns true for secret schema", () => {
+    const schema = secret(z.string());
+    expect(isSecret(schema)).toBe(true);
+  });
+
+  test("returns false for non-secret schema", () => {
+    const schema = z.string();
+    expect(isSecret(schema)).toBe(false);
+  });
+});
+
+describe("zBooleanFromString", () => {
+  test("passes through boolean true", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse(true)).toBe(true);
+  });
+
+  test("passes through boolean false", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse(false)).toBe(false);
+  });
+
+  test("parses string 'true' to boolean true", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse("true")).toBe(true);
+  });
+
+  test("parses string 'false' to boolean false", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse("false")).toBe(false);
+  });
+
+  test("parses case-insensitive 'TRUE' to boolean true", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse("TRUE")).toBe(true);
+  });
+
+  test("parses case-insensitive 'False' to boolean false", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse("False")).toBe(false);
+  });
+
+  test("returns false for unrecognized string", () => {
+    const schema = zBooleanFromString();
+    expect(schema.parse("yes")).toBe(false);
+  });
+});
