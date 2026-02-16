@@ -1,0 +1,34 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+    paths: [packages/keryx/package.json]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+
+      - name: Check if version changed
+        id: version
+        run: |
+          LOCAL=$(node -p "require('./packages/keryx/package.json').version")
+          REMOTE=$(npm view keryx version 2>/dev/null || echo "0.0.0")
+          echo "local=$LOCAL" >> "$GITHUB_OUTPUT"
+          echo "remote=$REMOTE" >> "$GITHUB_OUTPUT"
+          if [ "$LOCAL" != "$REMOTE" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.version.outputs.changed == 'true'
+        run: npm publish --access public
+        working-directory: packages/keryx
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

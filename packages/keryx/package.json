@@ -5,6 +5,44 @@
   "type": "module",
   "license": "MIT",
   "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
+  "author": "Evan Tahler <evan@evantahler.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evantahler/keryx.git",
+    "directory": "packages/keryx"
+  },
+  "homepage": "https://keryxjs.com",
+  "bugs": {
+    "url": "https://github.com/evantahler/keryx/issues"
+  },
+  "keywords": [
+    "api",
+    "framework",
+    "bun",
+    "typescript",
+    "websocket",
+    "realtime",
+    "mcp",
+    "cli",
+    "actionhero"
+  ],
+  "files": [
+    "actions/",
+    "classes/",
+    "config/",
+    "initializers/",
+    "lua/",
+    "middleware/",
+    "servers/",
+    "templates/",
+    "util/",
+    "api.ts",
+    "index.ts",
+    "keryx.ts",
+    "migrations.ts",
+    "tsconfig.json",
+    "LICENSE"
+  ],
   "bin": {
     "keryx": "keryx.ts"
   },
