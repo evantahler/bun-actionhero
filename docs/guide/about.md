@@ -18,29 +18,29 @@ Read more on [Britannica](https://www.britannica.com/topic/keryx) or [Wikipedia 
 
 All images are SVGs and can be used at any size.
 
-| Asset | Preview | Download |
-|-------|---------|----------|
-| Herald (full logo) | <img src="/images/hearald.svg" width="80" /> | [hearald.svg](/images/hearald.svg) |
-| Horn (icon) | <img src="/images/horn.svg" width="80" /> | [horn.svg](/images/horn.svg) |
-| Lion standing | <img src="/images/lion-standing.svg" width="80" /> | [lion-standing.svg](/images/lion-standing.svg) |
-| Lion sitting | <img src="/images/lion-sitting.svg" width="80" /> | [lion-sitting.svg](/images/lion-sitting.svg) |
+| Asset              | Preview                                            | Download                                       |
+| ------------------ | -------------------------------------------------- | ---------------------------------------------- |
+| Herald (full logo) | <img src="/images/hearald.svg" width="80" />       | [hearald.svg](/images/hearald.svg)             |
+| Horn (icon)        | <img src="/images/horn.svg" width="80" />          | [horn.svg](/images/horn.svg)                   |
+| Lion standing      | <img src="/images/lion-standing.svg" width="80" /> | [lion-standing.svg](/images/lion-standing.svg) |
+| Lion sitting       | <img src="/images/lion-sitting.svg" width="80" />  | [lion-sitting.svg](/images/lion-sitting.svg)   |
 
 ### Color Palette
 
 ```css
 /* Brand colors */
---keryx-gold:        #b8701e;
---keryx-gold-light:  #cf8128;
---keryx-gold-dark:   #9a5e18;
---keryx-rust:        #bb5533;
+--keryx-gold: #b8701e;
+--keryx-gold-light: #cf8128;
+--keryx-gold-dark: #9a5e18;
+--keryx-rust: #bb5533;
 
 /* Dark mode variants */
---keryx-gold-dm:       #e0a04a;
+--keryx-gold-dm: #e0a04a;
 --keryx-gold-light-dm: #eab56e;
---keryx-rust-dm:       #d4795e;
+--keryx-rust-dm: #d4795e;
 
 /* Soft / background accent */
---keryx-gold-soft:    rgba(207, 129, 40, 0.14);
+--keryx-gold-soft: rgba(207, 129, 40, 0.14);
 --keryx-gold-soft-dm: rgba(224, 160, 74, 0.14);
 ```
 
