@@ -22,6 +22,8 @@ Similarly for frontend:
 cp frontend/.env.example frontend/.env
 ```
 
+**Important**: When adding, removing, or changing environment variables, also update the `.env` template in `.conductor/setup.ts`. That script generates `.env` files for parallel Conductor workspaces and must stay in sync with `.env.example`.
+
 ## Common Commands
 
 All commands from root unless noted. Backend tests require PostgreSQL (`keryx` and `keryx-test` databases) and Redis running locally.
