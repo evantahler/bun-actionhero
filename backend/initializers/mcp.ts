@@ -10,6 +10,11 @@ import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import pkg from "../package.json";
+import {
+  appendHeaders,
+  buildCorsHeaders,
+  getExternalOrigin,
+} from "../util/http";
 import type { PubSubMessage } from "./pubsub";
 
 type McpHandleRequest = (req: Request, ip: string) => Promise<Response>;
@@ -125,40 +130,38 @@ export class McpInitializer extends Initializer {
     const transports = api.mcp.transports;
     const mcpServers = api.mcp.mcpServers;
 
-    function buildMcpCorsHeaders(
-      requestOrigin?: string,
-    ): Record<string, string> {
-      const headers: Record<string, string> = {
-        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-        "Access-Control-Allow-Headers":
-          "Content-Type, mcp-session-id, Authorization",
-        "Access-Control-Expose-Headers": "mcp-session-id",
-      };
-      const allowedOrigins = config.server.web.allowedOrigins;
-      if (allowedOrigins === "*" && !requestOrigin) {
-        headers["Access-Control-Allow-Origin"] = "*";
-      } else if (requestOrigin) {
-        const isAllowed =
-          allowedOrigins === "*" ||
-          allowedOrigins
-            .split(",")
-            .map((o) => o.trim())
-            .includes(requestOrigin);
-        if (isAllowed) {
-          headers["Access-Control-Allow-Origin"] = requestOrigin;
-          headers["Vary"] = "Origin";
-        }
-      }
-      return headers;
-    }
-
     api.mcp.handleRequest = async (
       req: Request,
       ip: string,
     ): Promise<Response> => {
       const method = req.method.toUpperCase();
       const requestOrigin = req.headers.get("origin") ?? undefined;
-      const corsHeaders = buildMcpCorsHeaders(requestOrigin);
+      const corsHeaders = buildCorsHeaders(requestOrigin, {
+        "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers":
+          "Content-Type, mcp-session-id, Authorization",
+        "Access-Control-Expose-Headers": "mcp-session-id",
+      });
+
+      // Reject requests from unrecognized origins when APPLICATION_URL is set
+      if (requestOrigin) {
+        const appUrl = config.server.web.applicationUrl;
+        if (appUrl && !appUrl.startsWith("http://localhost")) {
+          const allowedOrigin = new URL(appUrl).origin;
+          if (requestOrigin !== allowedOrigin) {
+            return new Response(
+              JSON.stringify({ error: "Origin not allowed" }),
+              {
+                status: 403,
+                headers: {
+                  "Content-Type": "application/json",
+                  ...corsHeaders,
+                },
+              },
+            );
+          }
+        }
+      }
 
       // Handle OPTIONS for CORS preflight
       if (method === "OPTIONS") {
@@ -197,13 +200,15 @@ export class McpInitializer extends Initializer {
 
       // Require authentication — return 401 so MCP clients initiate the OAuth flow
       if (!authInfo) {
+        const origin = getExternalOrigin(req, new URL(req.url));
+        const resourceMetadataUrl = `${origin}/.well-known/oauth-protected-resource${config.server.mcp.route}`;
         return new Response(
           JSON.stringify({ error: "Authentication required" }),
           {
             status: 401,
             headers: {
               "Content-Type": "application/json",
-              "WWW-Authenticate": "Bearer",
+              "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`,
               ...corsHeaders,
             },
           },
@@ -219,6 +224,7 @@ export class McpInitializer extends Initializer {
 
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
+          enableJsonResponse: true,
           onsessioninitialized: (sid) => {
             transports.set(sid, transport);
           },
@@ -242,7 +248,7 @@ export class McpInitializer extends Initializer {
 
         try {
           const response = await transport.handleRequest(req, { authInfo });
-          return appendCorsHeaders(response, corsHeaders);
+          return appendHeaders(response, corsHeaders);
         } catch (e) {
           logger.error(`MCP transport error: ${e}`);
           return new Response(
@@ -276,7 +282,7 @@ export class McpInitializer extends Initializer {
 
         try {
           const response = await transport.handleRequest(req, { authInfo });
-          return appendCorsHeaders(response, corsHeaders);
+          return appendHeaders(response, corsHeaders);
         } catch (e) {
           logger.error(`MCP transport error: ${e}`);
           return new Response(
@@ -436,23 +442,6 @@ function createMcpServer(): McpServer {
   }
 
   return mcpServer;
-}
-
-function appendCorsHeaders(
-  response: Response,
-  corsHeaders: Record<string, string>,
-): Response {
-  const newHeaders = new Headers(response.headers);
-  for (const [key, value] of Object.entries(corsHeaders)) {
-    if (!newHeaders.has(key)) {
-      newHeaders.set(key, value);
-    }
-  }
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: newHeaders,
-  });
 }
 
 /**
