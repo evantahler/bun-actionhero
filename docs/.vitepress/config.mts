@@ -21,7 +21,10 @@ export default defineConfig({
       "/guide/": [
         {
           text: "Introduction",
-          items: [{ text: "Getting Started", link: "/guide/" }],
+          items: [
+            { text: "Getting Started", link: "/guide/" },
+            { text: "About Keryx", link: "/guide/about" },
+          ],
         },
         {
           text: "Core Concepts",

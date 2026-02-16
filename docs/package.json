@@ -9,7 +9,7 @@
     "generate": "bun run scripts/generate-docs-data.ts",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "test": "bun run build"
+    "test": "bun run build && bun test"
   },
   "dependencies": {
     "vitepress": "^1.6.3",
