@@ -44,6 +44,10 @@ All images are SVGs and can be used at any size.
 --keryx-gold-soft-dm: rgba(224, 160, 74, 0.14);
 ```
 
+## Author
+
+Keryx is a project by **Evan Tahler** ([@evantahler](https://twitter.com/evantahler) on Twitter, [@evantahler](https://github.com/evantahler) on GitHub).
+
 ## Community
 
 Keryx is the spiritual successor to [ActionHero](https://www.actionherojs.com), and we share the same community. Join us on Slack to ask questions, share what you're building, or just say hello.
