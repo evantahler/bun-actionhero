@@ -56,6 +56,30 @@ console.log(`Frontend port:   ${frontendPort}`);
 console.log(`Redis DB:        ${redisDb} (test: ${redisDbTest})`);
 console.log(`Postgres DB:     ${dbName} (test: ${dbNameTest})`);
 
+// Ensure Postgres is running via Homebrew
+try {
+  await $`pg_isready -q`.quiet();
+  console.log("Postgres is running.");
+} catch {
+  console.log("Postgres is not running. Starting via Homebrew...");
+  try {
+    await $`brew services start postgresql@17`.quiet();
+    // Wait for Postgres to be ready
+    for (let i = 0; i < 10; i++) {
+      try {
+        await $`pg_isready -q`.quiet();
+        break;
+      } catch {
+        await Bun.sleep(500);
+      }
+    }
+    console.log("Postgres started.");
+  } catch {
+    console.log("WARNING: Could not start Postgres. Start it manually:");
+    console.log("  brew services start postgresql@17");
+  }
+}
+
 // Create Postgres databases if they don't exist
 for (const db of [dbName, dbNameTest]) {
   try {
