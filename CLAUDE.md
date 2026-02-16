@@ -251,6 +251,10 @@ cd docs && bun run generate        # Regenerate reference JSON from backend sour
 
 The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
 
+## Pull Requests
+
+- **Never enable auto-merge** — Do not use `gh pr merge --auto` or enable auto-merge on PRs. PRs should always be merged manually after review.
+
 ## Gotcha: Stale Processes
 
 If code changes aren't reflected in HTTP responses, check for stale `bun keryx` processes:

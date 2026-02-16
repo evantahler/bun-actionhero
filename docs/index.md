@@ -18,6 +18,9 @@ hero:
     - theme: alt
       text: View on GitHub
       link: https://github.com/evantahler/keryx
+    - theme: sponsor
+      text: LLMs.txt
+      link: /llms.txt
 features:
   - icon: "\U0001F500"
     title: One Action, Every Transport
@@ -41,10 +44,5 @@ features:
     title: Drizzle ORM
     details: First-class database support with auto-migrations and type-safe schemas. No separate ORM plugin needed — it's part of the stack.
 ---
-
-<div class="tip custom-block" style="margin: 2rem auto; max-width: 688px;">
-  <p class="custom-block-title">llms.txt available for coding agents</p>
-  <p>This site provides <a href="/llms.txt">llms.txt</a> and <a href="/llms-full.txt">llms-full.txt</a> so AI coding agents can read the full documentation.</p>
-</div>
 
 <!--@include: ../README.md-->

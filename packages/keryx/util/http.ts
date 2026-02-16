@@ -1,0 +1,86 @@
+import { config } from "../config";
+
+/**
+ * Check whether a request origin is permitted by the configured allowed-origins list.
+ */
+export function isOriginAllowed(origin: string): boolean {
+  const allowedOrigins = config.server.web.allowedOrigins;
+  if (allowedOrigins === "*") return true;
+  const allowed = allowedOrigins.split(",").map((o) => o.trim());
+  return allowed.includes(origin);
+}
+
+/**
+ * Build CORS headers for a response.
+ *
+ * @param requestOrigin - The `Origin` header from the incoming request (if any).
+ * @param extra - Additional CORS headers to merge (e.g. `Access-Control-Allow-Methods`).
+ *                Any key not already set will be added.
+ */
+export function buildCorsHeaders(
+  requestOrigin: string | undefined,
+  extra?: Record<string, string>,
+): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  const allowedOrigins = config.server.web.allowedOrigins;
+
+  if (allowedOrigins === "*" && !requestOrigin) {
+    headers["Access-Control-Allow-Origin"] = "*";
+  } else if (requestOrigin && isOriginAllowed(requestOrigin)) {
+    headers["Access-Control-Allow-Origin"] = requestOrigin;
+    headers["Vary"] = "Origin";
+  }
+
+  return headers;
+}
+
+/**
+ * Derive the external-facing origin for a request.
+ * Respects reverse-proxy headers (`X-Forwarded-Proto` / `X-Forwarded-Host`)
+ * so that URLs are correct when behind ngrok, a load balancer, etc.
+ * Falls back to the parsed request-URL origin.
+ */
+export function getExternalOrigin(req: Request, url: URL): string {
+  // Prefer explicitly configured APPLICATION_URL (for proxy/tunnel scenarios
+  // where X-Forwarded-* headers may not be present)
+  const appUrl = config.server.web.applicationUrl;
+  if (appUrl && !appUrl.startsWith("http://localhost")) {
+    return new URL(appUrl).origin;
+  }
+
+  // Fall back to reverse-proxy headers
+  const forwardedProto = req.headers.get("x-forwarded-proto");
+  const forwardedHost =
+    req.headers.get("x-forwarded-host") || req.headers.get("host");
+
+  if (forwardedProto && forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  if (forwardedHost) {
+    return `${url.protocol}//${forwardedHost}`;
+  }
+
+  return url.origin;
+}
+
+/**
+ * Return a new `Response` with extra headers merged in.
+ * Existing headers on the response are preserved (not overwritten).
+ */
+export function appendHeaders(
+  response: Response,
+  headers: Record<string, string>,
+): Response {
+  const newHeaders = new Headers(response.headers);
+  for (const [key, value] of Object.entries(headers)) {
+    if (!newHeaders.has(key)) {
+      newHeaders.set(key, value);
+    }
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders,
+  });
+}

@@ -7,6 +7,11 @@ import { Initializer } from "../classes/Initializer";
 import { config } from "../config";
 import { checkRateLimit } from "../middleware/rateLimit";
 import {
+  appendHeaders,
+  buildCorsHeaders,
+  getExternalOrigin,
+} from "../util/http";
+import {
   base64UrlEncode,
   escapeHtml,
   redirectUrisMatch,
@@ -79,18 +84,34 @@ export class OAuthInitializer extends Initializer {
       const url = new URL(req.url);
       const path = url.pathname;
       const method = req.method.toUpperCase();
+      const origin = getExternalOrigin(req, url);
+      const requestOrigin = req.headers.get("origin") ?? undefined;
+      const corsHeaders = buildCorsHeaders(requestOrigin, {
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      });
 
+      // Handle CORS preflight for OAuth endpoints
       if (
-        path.startsWith("/.well-known/oauth-protected-resource") &&
-        method === "GET"
+        method === "OPTIONS" &&
+        (path.startsWith("/.well-known/oauth") || path.startsWith("/oauth/"))
       ) {
-        return handleProtectedResourceMetadata(url.origin);
+        return new Response(null, { status: 204, headers: corsHeaders });
+      }
+
+      const prmPrefix = "/.well-known/oauth-protected-resource";
+      if (path.startsWith(prmPrefix) && method === "GET") {
+        const resourcePath = path.slice(prmPrefix.length) || "";
+        return appendHeaders(
+          handleProtectedResourceMetadata(origin, resourcePath),
+          corsHeaders,
+        );
       }
       if (
         path === "/.well-known/oauth-authorization-server" &&
         method === "GET"
       ) {
-        return handleMetadata(url.origin);
+        return appendHeaders(handleMetadata(origin), corsHeaders);
       }
 
       // Rate-limit mutable OAuth endpoints by IP
@@ -132,7 +153,7 @@ export class OAuthInitializer extends Initializer {
       }
 
       if (path === "/oauth/register" && method === "POST") {
-        return handleRegister(req);
+        return appendHeaders(await handleRegister(req), corsHeaders);
       }
       if (path === "/oauth/authorize" && method === "GET") {
         return handleAuthorizeGet(url);
@@ -141,7 +162,7 @@ export class OAuthInitializer extends Initializer {
         return handleAuthorizePost(req);
       }
       if (path === "/oauth/token" && method === "POST") {
-        return handleToken(req);
+        return appendHeaders(await handleToken(req), corsHeaders);
       }
 
       return null;
@@ -158,10 +179,14 @@ export class OAuthInitializer extends Initializer {
  * RFC 9728 — Protected Resource Metadata.
  * MCP clients fetch this first to discover the authorization server.
  */
-function handleProtectedResourceMetadata(origin: string): Response {
+function handleProtectedResourceMetadata(
+  origin: string,
+  resourcePath: string,
+): Response {
+  const resource = resourcePath ? `${origin}${resourcePath}` : origin;
   return new Response(
     JSON.stringify({
-      resource: origin,
+      resource,
       authorization_servers: [origin],
     }),
     {
