@@ -17,9 +17,9 @@ if (!conductorPort) {
   process.exit(0);
 }
 
-const dbName = `keryx_${conductorPort}`;
-const dbNameTest = `keryx_${conductorPort}_test`;
 const offset = Math.floor((conductorPort - 55000) / 10);
+const dbName = `keryx_${offset}`;
+const dbNameTest = `keryx_${offset}_test`;
 const redisDb = (offset * 2) % 16;
 const redisDbTest = (offset * 2 + 1) % 16;
 

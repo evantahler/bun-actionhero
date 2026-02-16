@@ -45,9 +45,9 @@ if (!conductorPort) {
   redisDb = (offset * 2) % 16;
   redisDbTest = (offset * 2 + 1) % 16;
 
-  // Postgres DBs: append CONDUCTOR_PORT to base name
-  dbName = `keryx_${conductorPort}`;
-  dbNameTest = `keryx_${conductorPort}_test`;
+  // Postgres DBs: keryx_N and keryx_N_test
+  dbName = `keryx_${offset}`;
+  dbNameTest = `keryx_${offset}_test`;
 }
 
 console.log(`Backend port:    ${backendPort}`);
