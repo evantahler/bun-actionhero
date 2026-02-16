@@ -140,7 +140,10 @@ describe("mcp initializer (enabled)", () => {
       }),
     });
     expect(res.status).toBe(401);
-    expect(res.headers.get("www-authenticate")).toBe("Bearer");
+    const wwwAuth = res.headers.get("www-authenticate") ?? "";
+    expect(wwwAuth).toStartWith("Bearer");
+    expect(wwwAuth).toContain("resource_metadata=");
+    expect(wwwAuth).toContain("/.well-known/oauth-protected-resource/mcp");
   });
 
   test("POST initialize with auth returns 200 with session ID", async () => {

@@ -11,6 +11,7 @@ import { Connection } from "../classes/Connection";
 import { Server } from "../classes/Server";
 import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
+import { buildCorsHeaders, isOriginAllowed } from "../util/http";
 import type {
   ClientSubscribeMessage,
   ClientUnsubscribeMessage,
@@ -90,7 +91,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       const origin = req.headers.get("origin");
       if (
         origin &&
-        !isOriginAllowed(origin, config.server.web.allowedOrigins)
+        !isOriginAllowed(origin)
       ) {
         return new Response("WebSocket origin not allowed", { status: 403 });
       }
@@ -639,17 +640,16 @@ const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
 
   headers["Content-Type"] = "application/json";
   headers["X-SERVER-NAME"] = config.process.name;
-  headers["Access-Control-Allow-Methods"] = config.server.web.allowedMethods;
-  headers["Access-Control-Allow-Headers"] = config.server.web.allowedHeaders;
 
-  const allowedOrigins = config.server.web.allowedOrigins;
-  if (allowedOrigins === "*" && !requestOrigin) {
-    headers["Access-Control-Allow-Origin"] = "*";
-  } else if (requestOrigin && isOriginAllowed(requestOrigin, allowedOrigins)) {
-    headers["Access-Control-Allow-Origin"] = requestOrigin;
-    headers["Access-Control-Allow-Credentials"] = "true";
-    headers["Vary"] = "Origin";
+  const cors = buildCorsHeaders(requestOrigin, {
+    "Access-Control-Allow-Methods": config.server.web.allowedMethods,
+    "Access-Control-Allow-Headers": config.server.web.allowedHeaders,
+  });
+  if (cors["Access-Control-Allow-Origin"] && cors["Vary"]) {
+    // Specific origin match (not wildcard) — allow credentials
+    cors["Access-Control-Allow-Credentials"] = "true";
   }
+  Object.assign(headers, cors);
 
   Object.assign(headers, getSecurityHeaders());
 
@@ -719,12 +719,6 @@ function buildErrorPayload(error: TypedError) {
     value: error.value !== undefined ? error.value : undefined,
     ...(config.server.web.includeStackInErrors ? { stack: error.stack } : {}),
   };
-}
-
-function isOriginAllowed(origin: string, allowedOrigins: string): boolean {
-  if (allowedOrigins === "*") return true;
-  const allowed = allowedOrigins.split(",").map((o) => o.trim());
-  return allowed.includes(origin);
 }
 
 const EOL = "\r\n";
