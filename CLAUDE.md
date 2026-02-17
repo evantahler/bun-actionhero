@@ -57,6 +57,8 @@ Similarly for frontend:
 cp example/frontend/.env.example example/frontend/.env
 ```
 
+**Note**: `.conductor/setup.ts` reads from `.env.example` and only overrides workspace-specific variables (ports, database names, Redis DBs). New environment variables added to `.env.example` will automatically flow through to Conductor workspaces.
+
 ## Common Commands
 
 All commands from root unless noted. Backend tests require PostgreSQL (`keryx` and `keryx-test` databases) and Redis running locally.
