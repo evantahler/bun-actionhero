@@ -32,8 +32,11 @@ describe("scaffoldProject", () => {
     expect(files).toContain(".env.example");
     expect(files).toContain(".gitignore");
     expect(files).toContain("initializers/.gitkeep");
+    expect(files).toContain("middleware/.gitkeep");
+    expect(files).toContain("channels/.gitkeep");
     expect(files).toContain("migrations.ts");
     expect(files).toContain("schema/.gitkeep");
+    expect(files).toContain("drizzle/.gitkeep");
     expect(files).toContain("actions/hello.ts");
 
     // Verify files actually exist on disk
@@ -68,6 +71,7 @@ describe("scaffoldProject", () => {
 
     expect(files).not.toContain("migrations.ts");
     expect(files).not.toContain("schema/.gitkeep");
+    expect(files).not.toContain("drizzle/.gitkeep");
     expect(files).toContain("actions/hello.ts");
 
     const pkg = JSON.parse(

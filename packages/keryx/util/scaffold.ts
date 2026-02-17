@@ -155,12 +155,15 @@ export async function scaffoldProject(
 
   // Create empty directories with .gitkeep
   await write("initializers/.gitkeep", "");
+  await write("middleware/.gitkeep", "");
+  await write("channels/.gitkeep", "");
 
   // --- Database setup ---
 
   if (options.includeDb) {
     await writeTemplate("migrations.ts", "migrations.ts.mustache");
     await write("schema/.gitkeep", "");
+    await write("drizzle/.gitkeep", "");
   }
 
   // --- Example action ---

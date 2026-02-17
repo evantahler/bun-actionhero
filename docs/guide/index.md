@@ -63,7 +63,10 @@ A new Keryx project looks like this:
 ```
 my-app/
 ├── actions/        # Transport-agnostic controllers
+├── channels/       # WebSocket PubSub channels
+├── drizzle/        # Generated migration SQL
 ├── initializers/   # Lifecycle components (DB, Redis, etc.)
+├── middleware/     # Action and channel middleware
 ├── schema/         # Drizzle ORM table definitions
 ├── index.ts        # Sets api.rootDir, re-exports framework types
 ├── keryx.ts        # CLI entry point
