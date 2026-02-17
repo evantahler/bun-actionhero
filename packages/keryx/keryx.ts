@@ -6,9 +6,55 @@ import { Action, api } from "./api";
 import pkg from "./package.json";
 import { addActionToProgram } from "./util/cli";
 import { globLoader } from "./util/glob";
+import {
+  interactiveScaffold,
+  scaffoldProject,
+  type ScaffoldOptions,
+} from "./util/scaffold";
 
 const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);
+
+program
+  .command("new [project-name]")
+  .summary("Create a new Keryx project")
+  .description("Scaffold a new Keryx application with project boilerplate")
+  .option("--no-interactive", "Skip prompts and use defaults")
+  .option("--no-db", "Skip database setup files")
+  .option("--no-example", "Skip example action")
+  .action(async (projectName: string | undefined, opts) => {
+    let options: ScaffoldOptions;
+
+    if (opts.interactive === false) {
+      // --no-interactive: use defaults
+      projectName = projectName || "my-keryx-app";
+      options = {
+        includeDb: opts.db !== false,
+        includeExample: opts.example !== false,
+      };
+    } else {
+      const result = await interactiveScaffold(projectName);
+      projectName = result.projectName;
+      options = result.options;
+    }
+
+    const targetDir = path.resolve(process.cwd(), projectName);
+
+    console.log(`\nCreating new Keryx project: ${projectName}\n`);
+
+    const files = await scaffoldProject(projectName, targetDir, options);
+    files.forEach((f) => console.log(`  ${f}`));
+
+    console.log(`
+Done! To get started:
+
+  cd ${projectName}
+  cp .env.example .env
+  bun install
+  bun dev
+`);
+    process.exit(0);
+  });
 
 program
   .command("start")

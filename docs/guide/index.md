@@ -33,20 +33,19 @@ brew services start redis
 createdb bun
 ```
 
-## Clone and Install
+## Create a New Project
 
 ```bash
-git clone https://github.com/evantahler/keryx.git
-cd keryx
+bunx keryx new my-app
+cd my-app
+cp .env.example .env
 bun install
 ```
 
-## Environment Variables
+The `keryx new` command will prompt you for a project name and optional features (database setup, example action). You can also skip prompts with `--no-interactive`:
 
 ```bash
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-# update as needed
+bunx keryx new my-app --no-interactive
 ```
 
 ## Run the Dev Server
@@ -55,29 +54,24 @@ cp frontend/.env.example frontend/.env
 bun dev
 ```
 
-That's it. Both the frontend and backend will start with hot reload — edit a file, save it, and see the change immediately.
+That's it. The backend will start with hot reload — edit a file, save it, and see the change immediately.
 
 ## Project Structure
 
-The repo is a monorepo with two workspaces:
+A new Keryx project looks like this:
 
 ```
-keryx/
-├── backend/            # The Keryx API server
-│   ├── actions/        # Transport-agnostic controllers
-│   ├── initializers/   # Lifecycle components (DB, Redis, etc.)
-│   ├── config/         # Modular configuration
-│   ├── classes/        # Core framework classes
-│   ├── middleware/      # Action middleware (auth, etc.)
-│   ├── ops/            # Business logic layer
-│   ├── schema/         # Drizzle ORM table definitions
-│   ├── servers/        # HTTP + WebSocket server
-│   └── channels/       # PubSub channel definitions
-├── frontend/           # Next.js application
-└── docs/               # This documentation site
+my-app/
+├── actions/        # Transport-agnostic controllers
+├── initializers/   # Lifecycle components (DB, Redis, etc.)
+├── schema/         # Drizzle ORM table definitions
+├── index.ts        # Sets api.rootDir, re-exports framework types
+├── keryx.ts        # CLI entry point
+├── .env.example    # Environment variable template
+└── package.json
 ```
 
-The `backend/` and `frontend/` are separate Bun applications. This is an intentional change from the original ActionHero — rather than bundling the frontend into the backend, each app does what it does best. You could host the frontend on Vercel and the backend on a VPS if you wanted to.
+Actions, initializers, and channels are auto-discovered from their directories — just drop in a `.ts` file and the framework picks it up.
 
 ## What's Next
 
