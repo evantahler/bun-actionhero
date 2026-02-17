@@ -104,14 +104,30 @@ TypeScript is still the best language for web APIs. But Node.js has stalled — 
 
 ## Quick Start
 
+Create a new project:
+
 ```bash
+bunx keryx new my-app
+cd my-app
+cp .env.example .env
+bun install
+bun dev
+```
+
+Requires Bun, PostgreSQL, and Redis. See the [Getting Started guide](https://keryxjs.com/guide/) for full setup instructions.
+
+### Developing the framework itself
+
+If you're contributing to Keryx, clone the monorepo instead:
+
+```bash
+git clone https://github.com/evantahler/keryx.git
+cd keryx
 bun install
 cp example/backend/.env.example example/backend/.env
 cp example/frontend/.env.example example/frontend/.env
 bun dev
 ```
-
-Requires Bun, PostgreSQL, and Redis. See the [Getting Started guide](https://keryxjs.com/guide/) for full setup instructions.
 
 ## Production Builds
 
