@@ -4,8 +4,9 @@ node_modules
 *.bun-build
 actionhero
 next.sock
-backend/.env
-frontend/.env
+packages/keryx/.env
+example/backend/.env
+example/frontend/.env
 types
 dump.rdb
 .cache

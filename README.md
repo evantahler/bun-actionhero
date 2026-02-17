@@ -96,17 +96,18 @@ TypeScript is still the best language for web APIs. But Node.js has stalled — 
 
 ## Project Structure
 
-- **root** — a slim `package.json` wrapping the backend and frontend workspaces. `bun install` and `bun dev` work here, but you need to `cd` into each workspace for tests.
-- **backend** — the ActionHero server
-- **frontend** — the Next.js application
+- **root** — a slim `package.json` wrapping the workspaces. `bun install` and `bun dev` work here, but you need to `cd` into each workspace for tests.
+- **packages/keryx** — the framework package (publishable)
+- **example/backend** — the example backend application
+- **example/frontend** — the example Next.js frontend
 - **docs** — the [documentation site](https://keryxjs.com)
 
 ## Quick Start
 
 ```bash
 bun install
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
+cp example/backend/.env.example example/backend/.env
+cp example/frontend/.env.example example/frontend/.env
 bun dev
 ```
 
@@ -125,7 +126,7 @@ bun start
 We use [Drizzle](https://orm.drizzle.team) as the ORM. Migrations are derived from schemas — edit your schema files in `schema/*.ts`, then generate and apply:
 
 ```bash
-cd backend && bun run migrations
+cd example/backend && bun run migrations
 # restart the server — pending migrations auto-apply
 ```
 

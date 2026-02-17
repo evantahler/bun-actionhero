@@ -15,17 +15,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - name: copy backend env
         run: cp .env.example .env
-        working-directory: backend
+        working-directory: example/backend
       - name: copy frontend env
         run: cp .env.example .env
-        working-directory: frontend
+        working-directory: example/frontend
       - run: bun install
-      - name: compile backend
-        run: bun compile
-        working-directory: backend
       - name: compile frontend
         run: bun run build
-        working-directory: frontend
+        working-directory: example/frontend
 
   lint:
     runs-on: ubuntu-latest
@@ -35,12 +32,12 @@ jobs:
       - run: bun install
       - run: bun lint
 
-  test-backend:
+  test-package:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3]
+        shard: [1, 2]
 
     services:
       redis:
@@ -64,25 +61,65 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: bun install
-      - run: cp backend/.env.example backend/.env
-      - name: Run test shard ${{ matrix.shard }}/3
+      - run: cp packages/keryx/.env.example packages/keryx/.env
+      - name: Run test shard ${{ matrix.shard }}/2
         run: |
-          cd backend
+          cd packages/keryx
           files=$(find __tests__ -name '*.test.ts' | sort)
-          shard_files=$(echo "$files" | awk "NR % 3 == (${{ matrix.shard }} - 1)")
+          shard_files=$(echo "$files" | awk "NR % 2 == (${{ matrix.shard }} - 1)")
           echo "Running: $shard_files"
           bun test $shard_files
         env:
           DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/keryx-test
 
-  test-frontend:
+  test-example-backend:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
+
+    services:
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: keryx-test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+      - run: bun install
+      - run: cp example/backend/.env.example example/backend/.env
+      - name: Run test shard ${{ matrix.shard }}/2
+        run: |
+          cd example/backend
+          files=$(find __tests__ -name '*.test.ts' | sort)
+          shard_files=$(echo "$files" | awk "NR % 2 == (${{ matrix.shard }} - 1)")
+          echo "Running: $shard_files"
+          bun test $shard_files
+        env:
+          DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/keryx-test
+
+  test-example-frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: bun install
-      - run: cp backend/.env.example backend/.env
-      - run: bun test-frontend
+      - run: cp example/backend/.env.example example/backend/.env
+      - run: bun test-example-frontend
 
   test-docs:
     runs-on: ubuntu-latest
@@ -94,6 +131,6 @@ jobs:
 
   complete:
     runs-on: ubuntu-latest
-    needs: [compile, lint, test-backend, test-frontend, test-docs]
+    needs: [compile, lint, test-package, test-example-backend, test-example-frontend, test-docs]
     steps:
       - run: echo "Done!"
