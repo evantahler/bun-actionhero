@@ -135,7 +135,7 @@ function applyEnvOverrides(
   return lines.join("\n");
 }
 
-// Build backend overrides — only the vars that differ from .env.example defaults
+// Shared backend overrides for both packages/keryx and example/backend
 const user = Bun.env.USER ?? "postgres";
 const backendOverrides: Record<string, string> = {
   WEB_SERVER_PORT: String(backendPort),
@@ -147,30 +147,42 @@ const backendOverrides: Record<string, string> = {
   REDIS_URL_TEST: `"redis://localhost:6379/${redisDbTest}"`,
 };
 
-const backendExample = await readFile(
-  join(rootDir, "backend", ".env.example"),
+// Write packages/keryx/.env (framework package)
+const packageExample = await readFile(
+  join(rootDir, "packages", "keryx", ".env.example"),
   "utf-8",
 );
 await writeFile(
-  join(rootDir, "backend", ".env"),
-  applyEnvOverrides(backendExample, backendOverrides),
+  join(rootDir, "packages", "keryx", ".env"),
+  applyEnvOverrides(packageExample, backendOverrides),
 );
-console.log("Wrote backend/.env");
+console.log("Wrote packages/keryx/.env");
 
-// Build frontend overrides
+// Write example/backend/.env
+const exampleBackendExample = await readFile(
+  join(rootDir, "example", "backend", ".env.example"),
+  "utf-8",
+);
+await writeFile(
+  join(rootDir, "example", "backend", ".env"),
+  applyEnvOverrides(exampleBackendExample, backendOverrides),
+);
+console.log("Wrote example/backend/.env");
+
+// Write example/frontend/.env
 const frontendOverrides: Record<string, string> = {
   NEXT_PUBLIC_API_URL: `http://localhost:${backendPort}`,
   PORT: String(frontendPort),
 };
 
 const frontendExample = await readFile(
-  join(rootDir, "frontend", ".env.example"),
+  join(rootDir, "example", "frontend", ".env.example"),
   "utf-8",
 );
 await writeFile(
-  join(rootDir, "frontend", ".env"),
+  join(rootDir, "example", "frontend", ".env"),
   applyEnvOverrides(frontendExample, frontendOverrides),
 );
-console.log("Wrote frontend/.env");
+console.log("Wrote example/frontend/.env");
 
 console.log("\nSetup complete! Run 'bun dev' to start both servers.");
