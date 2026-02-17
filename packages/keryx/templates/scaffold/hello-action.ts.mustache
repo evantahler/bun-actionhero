@@ -1,0 +1,16 @@
+import { z } from "zod";
+import { Action, type ActionParams } from "keryx";
+import { HTTP_METHOD } from "keryx/classes/Action.ts";
+
+export class Hello implements Action {
+  name = "hello";
+  description = "Say hello";
+  inputs = z.object({
+    name: z.string().default("World"),
+  });
+  web = { route: "/hello", method: HTTP_METHOD.GET };
+
+  async run(params: ActionParams<Hello>) {
+    return { message: `Hello, ${params.name}!` };
+  }
+}

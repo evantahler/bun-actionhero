@@ -1,0 +1,62 @@
+#! /usr/bin/env bun
+
+// Set rootDir before any framework code loads actions
+import { api } from "./index";
+
+import { Command } from "commander";
+import { Action, globLoader } from "keryx";
+import { addActionToProgram } from "keryx/util/cli.ts";
+import path from "path";
+import pkg from "./package.json";
+
+const program = new Command();
+program.name(pkg.name).description(pkg.description).version(pkg.version);
+
+program
+  .command("start")
+  .summary("Run the server")
+  .description("Start the Keryx server")
+  .action(async () => {
+    await api.start();
+  });
+
+// Load framework actions from the package directory
+const frameworkActions = await globLoader<Action>(
+  path.join(api.packageDir, "actions"),
+);
+
+// Load user project actions
+let userActions: Action[] = [];
+try {
+  userActions = await globLoader<Action>(path.join(api.rootDir, "actions"));
+} catch {
+  // user project may not have actions, that's fine
+}
+
+const actions = [...frameworkActions, ...userActions];
+actions.forEach((action) => addActionToProgram(program, action));
+
+program
+  .command("actions")
+  .summary("List all actions")
+  .action(async () => {
+    const actionSpacing =
+      actions.map((a) => a.name.length).reduce((a, b) => Math.max(a, b), 0) +
+      2;
+    const routeSpacing =
+      actions
+        .map((a) =>
+          a.web ? a.web.route.toString().length + a.web.method.length : 0,
+        )
+        .reduce((a, b) => Math.max(a, b), 0) + 2;
+
+    actions
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((action) => {
+        console.log(
+          `${action.name}${" ".repeat(actionSpacing - action.name.length)} ${action.web ? `[${action.web.method}] ${action.web.route}` : " "}${" ".repeat(routeSpacing - (action.web ? action.web.method.length + action.web.route.toString().length + 2 : 0))} ${action.description ?? ""}`,
+        );
+      });
+  });
+
+program.parse();
