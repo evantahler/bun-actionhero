@@ -70,6 +70,11 @@ export async function checkRateLimit(
 
 export const RateLimitMiddleware: ActionMiddleware = {
   runBefore: async (_params, connection: Connection) => {
+    if (Bun.env.NODE_ENV === "test") {
+      console.log(
+        `[DEBUG rateLimit] enabled=${config.rateLimit.enabled} NODE_ENV=${Bun.env.NODE_ENV} RATE_LIMIT_ENABLED=${Bun.env.RATE_LIMIT_ENABLED}`,
+      );
+    }
     if (!config.rateLimit.enabled) return;
 
     const isAuthenticated = !!connection.session?.data?.userId;
