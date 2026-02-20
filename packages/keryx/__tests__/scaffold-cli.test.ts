@@ -100,32 +100,27 @@ describe("keryx new (CLI integration)", () => {
       path.join(os.tmpdir(), "keryx-cli-scaffold-y-"),
     );
     try {
-      const proc = Bun.spawn(
-        ["bun", keryxTs, "new", "y-flag-app", "-y"],
-        {
-          cwd: yTmpDir,
-          stdout: "pipe",
-          stderr: "pipe",
-        },
-      );
+      const proc = Bun.spawn(["bun", keryxTs, "new", "y-flag-app", "-y"], {
+        cwd: yTmpDir,
+        stdout: "pipe",
+        stderr: "pipe",
+      });
 
       const exitCode = await proc.exited;
       if (exitCode !== 0) {
         const stderr = await new Response(proc.stderr).text();
-        throw new Error(`keryx new -y failed with exit code ${exitCode}: ${stderr}`);
+        throw new Error(
+          `keryx new -y failed with exit code ${exitCode}: ${stderr}`,
+        );
       }
 
       const yProjectDir = path.join(yTmpDir, "y-flag-app");
       expect(fs.existsSync(yProjectDir)).toBe(true);
-      expect(
-        fs.existsSync(path.join(yProjectDir, "package.json")),
-      ).toBe(true);
-      expect(
-        fs.existsSync(path.join(yProjectDir, "migrations.ts")),
-      ).toBe(true);
-      expect(
-        fs.existsSync(path.join(yProjectDir, "actions/hello.ts")),
-      ).toBe(true);
+      expect(fs.existsSync(path.join(yProjectDir, "package.json"))).toBe(true);
+      expect(fs.existsSync(path.join(yProjectDir, "migrations.ts"))).toBe(true);
+      expect(fs.existsSync(path.join(yProjectDir, "actions/hello.ts"))).toBe(
+        true,
+      );
     } finally {
       fs.rmSync(yTmpDir, { recursive: true, force: true });
     }
@@ -148,17 +143,19 @@ describe("keryx new (CLI integration)", () => {
       const exitCode = await proc.exited;
       if (exitCode !== 0) {
         const stderr = await new Response(proc.stderr).text();
-        throw new Error(`keryx new -y failed with exit code ${exitCode}: ${stderr}`);
+        throw new Error(
+          `keryx new -y failed with exit code ${exitCode}: ${stderr}`,
+        );
       }
 
       const yProjectDir = path.join(yTmpDir, "y-opts-app");
       expect(fs.existsSync(yProjectDir)).toBe(true);
-      expect(
-        fs.existsSync(path.join(yProjectDir, "migrations.ts")),
-      ).toBe(false);
-      expect(
-        fs.existsSync(path.join(yProjectDir, "actions/hello.ts")),
-      ).toBe(false);
+      expect(fs.existsSync(path.join(yProjectDir, "migrations.ts"))).toBe(
+        false,
+      );
+      expect(fs.existsSync(path.join(yProjectDir, "actions/hello.ts"))).toBe(
+        false,
+      );
     } finally {
       fs.rmSync(yTmpDir, { recursive: true, force: true });
     }

@@ -51,6 +51,120 @@ export async function interactiveScaffold(
   return { projectName, options: { includeDb, includeExample } };
 }
 
+/**
+ * Generate config file contents from the framework config directory,
+ * with imports rewritten for user projects.
+ * Returns a Map of relativePath → content (e.g., "config/index.ts" → "...").
+ */
+export async function generateConfigFileContents(): Promise<
+  Map<string, string>
+> {
+  const result = new Map<string, string>();
+  const configDir = path.join(import.meta.dir, "..", "config");
+  const glob = new Glob("**/*.ts");
+
+  for await (const file of glob.scan(configDir)) {
+    let content = await Bun.file(path.join(configDir, file)).text();
+
+    // Rewrite relative imports to package imports
+    content = content.replace(
+      /from ["']\.\.\/\.\.\/util\/config["']/g,
+      'from "keryx"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/util\/config["']/g,
+      'from "keryx"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/classes\/Logger["']/g,
+      'from "keryx/classes/Logger.ts"',
+    );
+
+    // In index.ts, change `export const config` to `export default`
+    // and remove the KeryxConfig type export (it comes from the package)
+    if (file === "index.ts") {
+      content = content.replace("export const config =", "export default");
+      content = content.replace(
+        /\nexport type KeryxConfig = typeof config;\n/,
+        "\n",
+      );
+    }
+
+    result.set(`config/${file}`, content);
+  }
+
+  return result;
+}
+
+/**
+ * Generate built-in action file contents (status.ts, swagger.ts)
+ * with imports rewritten for user projects.
+ * Returns a Map of relativePath → content (e.g., "actions/status.ts" → "...").
+ */
+export async function generateBuiltinActionContents(): Promise<
+  Map<string, string>
+> {
+  const result = new Map<string, string>();
+  const builtinActions = ["status.ts", "swagger.ts"];
+  const actionsDir = path.join(import.meta.dir, "..", "actions");
+
+  for (const file of builtinActions) {
+    let content = await Bun.file(path.join(actionsDir, file)).text();
+
+    // Rewrite relative imports to package imports
+    content = content.replace(/from ["']\.\.\/api["']/g, 'from "keryx"');
+    content = content.replace(
+      /from ["']\.\.\/classes\/Action["']/g,
+      'from "keryx/classes/Action.ts"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/package\.json["']/g,
+      'from "../package.json"',
+    );
+
+    result.set(`actions/${file}`, content);
+  }
+
+  return result;
+}
+
+/**
+ * Generate the tsconfig.json content for scaffolded projects.
+ */
+export function generateTsconfigContents(): string {
+  return (
+    JSON.stringify(
+      {
+        compilerOptions: {
+          lib: ["ESNext"],
+          target: "ESNext",
+          module: "ESNext",
+          moduleResolution: "bundler",
+          types: ["bun-types"],
+          strict: true,
+          skipLibCheck: true,
+          noEmit: true,
+          esModuleInterop: true,
+          resolveJsonModule: true,
+          isolatedModules: true,
+          verbatimModuleSyntax: true,
+          noImplicitAny: true,
+          noImplicitReturns: true,
+          noUnusedLocals: true,
+          noUnusedParameters: true,
+          noFallthroughCasesInSwitch: true,
+          forceConsistentCasingInFileNames: true,
+          allowImportingTsExtensions: true,
+        },
+        include: ["**/*.ts"],
+        exclude: ["node_modules", "drizzle"],
+      },
+      null,
+      2,
+    ) + "\n"
+  );
+}
+
 export async function scaffoldProject(
   projectName: string,
   targetDir: string,
@@ -115,75 +229,17 @@ export async function scaffoldProject(
     ) + "\n",
   );
 
-  // tsconfig.json is static JSON (no interpolation needed)
-  await write(
-    "tsconfig.json",
-    JSON.stringify(
-      {
-        compilerOptions: {
-          lib: ["ESNext"],
-          target: "ESNext",
-          module: "ESNext",
-          moduleResolution: "bundler",
-          types: ["bun-types"],
-          strict: true,
-          skipLibCheck: true,
-          noEmit: true,
-          esModuleInterop: true,
-          resolveJsonModule: true,
-          isolatedModules: true,
-          verbatimModuleSyntax: true,
-          noImplicitAny: true,
-          noImplicitReturns: true,
-          noUnusedLocals: true,
-          noUnusedParameters: true,
-          noFallthroughCasesInSwitch: true,
-          forceConsistentCasingInFileNames: true,
-          allowImportingTsExtensions: true,
-        },
-        include: ["**/*.ts"],
-        exclude: ["node_modules", "drizzle"],
-      },
-      null,
-      2,
-    ) + "\n",
-  );
+  await write("tsconfig.json", generateTsconfigContents());
 
   await writeTemplate("index.ts", "index.ts.mustache");
   await writeTemplate("keryx.ts", "keryx.ts.mustache");
   await writeTemplate(".env.example", "env.example.mustache");
   await writeTemplate(".gitignore", "gitignore.mustache");
+
   // Copy config files from the framework, adjusting imports for user projects
-  const configDir = path.join(import.meta.dir, "..", "config");
-  const glob = new Glob("**/*.ts");
-  for await (const file of glob.scan(configDir)) {
-    let content = await Bun.file(path.join(configDir, file)).text();
-
-    // Rewrite relative imports to package imports
-    content = content.replace(
-      /from ["']\.\.\/\.\.\/util\/config["']/g,
-      'from "keryx"',
-    );
-    content = content.replace(
-      /from ["']\.\.\/util\/config["']/g,
-      'from "keryx"',
-    );
-    content = content.replace(
-      /from ["']\.\.\/classes\/Logger["']/g,
-      'from "keryx/classes/Logger.ts"',
-    );
-
-    // In index.ts, change `export const config` to `export default`
-    // and remove the KeryxConfig type export (it comes from the package)
-    if (file === "index.ts") {
-      content = content.replace("export const config =", "export default");
-      content = content.replace(
-        /\nexport type KeryxConfig = typeof config;\n/,
-        "\n",
-      );
-    }
-
-    await write(`config/${file}`, content);
+  const configFiles = await generateConfigFileContents();
+  for (const [filePath, content] of configFiles) {
+    await write(filePath, content);
   }
 
   // Create empty directories with .gitkeep
@@ -200,24 +256,9 @@ export async function scaffoldProject(
   }
 
   // --- Built-in actions (always included) ---
-  // Copy status and swagger actions from the framework, adjusting imports
-  const builtinActions = ["status.ts", "swagger.ts"];
-  const actionsDir = path.join(import.meta.dir, "..", "actions");
-  for (const file of builtinActions) {
-    let content = await Bun.file(path.join(actionsDir, file)).text();
-
-    // Rewrite relative imports to package imports
-    content = content.replace(/from ["']\.\.\/api["']/g, 'from "keryx"');
-    content = content.replace(
-      /from ["']\.\.\/classes\/Action["']/g,
-      'from "keryx/classes/Action.ts"',
-    );
-    content = content.replace(
-      /from ["']\.\.\/package\.json["']/g,
-      'from "../package.json"',
-    );
-
-    await write(`actions/${file}`, content);
+  const actionFiles = await generateBuiltinActionContents();
+  for (const [filePath, content] of actionFiles) {
+    await write(filePath, content);
   }
 
   // --- Example action ---

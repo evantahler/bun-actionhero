@@ -1,0 +1,197 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import fs from "fs";
+import os from "os";
+import path from "path";
+
+const keryxTs = path.join(import.meta.dir, "..", "keryx.ts");
+let tmpDir: string;
+let projectDir: string;
+
+async function runKeryx(
+  args: string[],
+  cwd: string,
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const proc = Bun.spawn(["bun", keryxTs, ...args], {
+    cwd,
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  const [exitCode, stdout, stderr] = await Promise.all([
+    proc.exited,
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
+  return { exitCode, stdout, stderr };
+}
+
+beforeAll(async () => {
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "keryx-cli-upgrade-"));
+
+  const { exitCode, stderr } = await runKeryx(
+    ["new", "upgrade-test-app", "-y"],
+    tmpDir,
+  );
+  if (exitCode !== 0) {
+    throw new Error(`keryx new failed: ${stderr}`);
+  }
+
+  projectDir = path.join(tmpDir, "upgrade-test-app");
+});
+
+afterAll(() => {
+  if (tmpDir) {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  }
+});
+
+describe("keryx upgrade (CLI integration)", () => {
+  test("reports all files up to date on fresh scaffold", async () => {
+    const { exitCode, stdout } = await runKeryx(
+      ["upgrade", "--force"],
+      projectDir,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("already up to date");
+    expect(stdout).not.toContain("⚡ updated");
+    expect(stdout).not.toContain("+ created");
+  });
+
+  test("detects and updates a modified config file with --force", async () => {
+    const configPath = path.join(projectDir, "config/process.ts");
+    const original = fs.readFileSync(configPath, "utf-8");
+    fs.writeFileSync(configPath, "// user modification\n");
+
+    const { exitCode, stdout } = await runKeryx(
+      ["upgrade", "--force"],
+      projectDir,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("⚡ updated");
+    expect(stdout).toContain("config/process.ts");
+
+    // File should be restored
+    const restored = fs.readFileSync(configPath, "utf-8");
+    expect(restored).toBe(original);
+  });
+
+  test("detects and updates a modified action with -y", async () => {
+    const statusPath = path.join(projectDir, "actions/status.ts");
+    fs.writeFileSync(statusPath, "// modified\n");
+
+    const { exitCode, stdout } = await runKeryx(["upgrade", "-y"], projectDir);
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("⚡ updated");
+    expect(stdout).toContain("actions/status.ts");
+
+    const restored = fs.readFileSync(statusPath, "utf-8");
+    expect(restored).toContain('from "keryx"');
+  });
+
+  test("--dry-run shows changes without writing", async () => {
+    const configPath = path.join(projectDir, "config/redis.ts");
+    const original = fs.readFileSync(configPath, "utf-8");
+    const modified = "// dry run test\n";
+    fs.writeFileSync(configPath, modified);
+
+    const { exitCode, stdout } = await runKeryx(
+      ["upgrade", "--dry-run"],
+      projectDir,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("would update");
+    expect(stdout).toContain("config/redis.ts");
+
+    // File should NOT have changed
+    expect(fs.readFileSync(configPath, "utf-8")).toBe(modified);
+
+    // Restore for subsequent tests
+    fs.writeFileSync(configPath, original);
+  });
+
+  test("recreates deleted framework files", async () => {
+    const swaggerPath = path.join(projectDir, "actions/swagger.ts");
+    fs.unlinkSync(swaggerPath);
+    expect(fs.existsSync(swaggerPath)).toBe(false);
+
+    const { exitCode, stdout } = await runKeryx(
+      ["upgrade", "--force"],
+      projectDir,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("+ created");
+    expect(stdout).toContain("actions/swagger.ts");
+    expect(fs.existsSync(swaggerPath)).toBe(true);
+  });
+
+  test("does not touch user-owned files", async () => {
+    const helloPath = path.join(projectDir, "actions/hello.ts");
+    const indexPath = path.join(projectDir, "index.ts");
+    const keryxPath = path.join(projectDir, "keryx.ts");
+    const envPath = path.join(projectDir, ".env.example");
+
+    const helloBefore = fs.readFileSync(helloPath, "utf-8");
+    const indexBefore = fs.readFileSync(indexPath, "utf-8");
+    const keryxBefore = fs.readFileSync(keryxPath, "utf-8");
+    const envBefore = fs.readFileSync(envPath, "utf-8");
+
+    await runKeryx(["upgrade", "--force"], projectDir);
+
+    expect(fs.readFileSync(helloPath, "utf-8")).toBe(helloBefore);
+    expect(fs.readFileSync(indexPath, "utf-8")).toBe(indexBefore);
+    expect(fs.readFileSync(keryxPath, "utf-8")).toBe(keryxBefore);
+    expect(fs.readFileSync(envPath, "utf-8")).toBe(envBefore);
+  });
+
+  test("fails in a directory without package.json", async () => {
+    const emptyDir = path.join(tmpDir, "empty");
+    fs.mkdirSync(emptyDir);
+
+    const { exitCode, stderr } = await runKeryx(
+      ["upgrade", "--force"],
+      emptyDir,
+    );
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("No package.json found");
+  });
+
+  test("fails in a directory without keryx dependency", async () => {
+    const noKeryxDir = path.join(tmpDir, "no-keryx");
+    fs.mkdirSync(noKeryxDir);
+    fs.writeFileSync(
+      path.join(noKeryxDir, "package.json"),
+      JSON.stringify({ name: "not-keryx", dependencies: {} }),
+    );
+
+    const { exitCode, stderr } = await runKeryx(
+      ["upgrade", "--force"],
+      noKeryxDir,
+    );
+
+    expect(exitCode).not.toBe(0);
+    expect(stderr).toContain("does not have");
+  });
+
+  test("prints summary with correct counts", async () => {
+    // Modify two files, delete one
+    fs.writeFileSync(
+      path.join(projectDir, "config/session.ts"),
+      "// changed\n",
+    );
+    fs.writeFileSync(path.join(projectDir, "config/tasks.ts"), "// changed\n");
+
+    const { exitCode, stdout } = await runKeryx(
+      ["upgrade", "--force"],
+      projectDir,
+    );
+
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain("Updated 2 file(s)");
+    expect(stdout).toContain("13 already up to date");
+  });
+});

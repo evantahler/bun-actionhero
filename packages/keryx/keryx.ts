@@ -11,6 +11,7 @@ import {
   scaffoldProject,
   type ScaffoldOptions,
 } from "./util/scaffold";
+import { upgradeProject } from "./util/upgrade";
 
 const program = new Command();
 program.name(pkg.name).description(pkg.description).version(pkg.version);
@@ -55,6 +56,25 @@ Done! To get started:
   bun dev
 `);
     process.exit(0);
+  });
+
+program
+  .command("upgrade")
+  .summary("Update framework-owned files to match the installed keryx version")
+  .option("--dry-run", "Show what would change without writing files")
+  .option("--force", "Overwrite all framework files without confirmation")
+  .option("-y, --yes", "Overwrite all framework files without confirmation")
+  .action(async (opts) => {
+    try {
+      await upgradeProject(process.cwd(), {
+        dryRun: opts.dryRun || false,
+        force: opts.force || opts.yes || false,
+      });
+      process.exit(0);
+    } catch (e) {
+      console.error((e as Error).message);
+      process.exit(1);
+    }
   });
 
 program
