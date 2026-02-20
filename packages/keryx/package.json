@@ -1,6 +1,6 @@
 {
   "name": "keryx",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
@@ -61,6 +61,7 @@
     "start": "bun keryx.ts start",
     "dev": "bun --watch keryx.ts start",
     "migrations": "bun run migrations.ts",
+    "test": "tsc && bun test",
     "compile": "bun build keryx.ts --compile --outfile keryx",
     "lint": "tsc && prettier --check .",
     "format": "tsc && prettier --write ."

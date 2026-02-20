@@ -48,6 +48,7 @@ describe("keryx new (CLI integration)", () => {
     ".env.example",
     ".gitignore",
     "migrations.ts",
+    "config/index.ts",
     "actions/hello.ts",
   ];
 

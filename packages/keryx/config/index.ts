@@ -21,3 +21,5 @@ export const config = {
   server: { cli: configServerCli, web: configServerWeb, mcp: configServerMcp },
   tasks: configTasks,
 };
+
+export type KeryxConfig = typeof config;
