@@ -110,9 +110,7 @@ jobs:
           echo "Running: $shard_files"
           bun test $shard_files
         env:
-          NODE_ENV: test
           DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/keryx-test
-          RATE_LIMIT_ENABLED: "false"
 
   test-example-frontend:
     runs-on: ubuntu-latest
