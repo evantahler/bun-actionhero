@@ -1,3 +1,4 @@
+import { Glob } from "bun";
 import fs from "fs";
 import Mustache from "mustache";
 import path from "path";
@@ -152,6 +153,38 @@ export async function scaffoldProject(
   await writeTemplate("keryx.ts", "keryx.ts.mustache");
   await writeTemplate(".env.example", "env.example.mustache");
   await writeTemplate(".gitignore", "gitignore.mustache");
+  // Copy config files from the framework, adjusting imports for user projects
+  const configDir = path.join(import.meta.dir, "..", "config");
+  const glob = new Glob("**/*.ts");
+  for await (const file of glob.scan(configDir)) {
+    let content = await Bun.file(path.join(configDir, file)).text();
+
+    // Rewrite relative imports to package imports
+    content = content.replace(
+      /from ["']\.\.\/\.\.\/util\/config["']/g,
+      'from "keryx"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/util\/config["']/g,
+      'from "keryx"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/classes\/Logger["']/g,
+      'from "keryx/classes/Logger.ts"',
+    );
+
+    // In index.ts, change `export const config` to `export default`
+    // and remove the KeryxConfig type export (it comes from the package)
+    if (file === "index.ts") {
+      content = content.replace("export const config =", "export default");
+      content = content.replace(
+        /\nexport type KeryxConfig = typeof config;\n/,
+        "\n",
+      );
+    }
+
+    await write(`config/${file}`, content);
+  }
 
   // Create empty directories with .gitkeep
   await write("initializers/.gitkeep", "");

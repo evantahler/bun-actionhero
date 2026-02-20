@@ -19,7 +19,8 @@ import "./initializers/swagger";
 export * from "./api";
 export type { ActionMiddleware } from "./classes/Action";
 export { ErrorStatusCodes, ErrorType, TypedError } from "./classes/TypedError";
-export { loadFromEnvIfSet } from "./util/config";
+export type { KeryxConfig } from "./config";
+export { deepMerge, loadFromEnvIfSet } from "./util/config";
 export { globLoader } from "./util/glob";
 export {
   isSecret,

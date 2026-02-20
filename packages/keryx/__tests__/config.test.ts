@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { config } from "../config";
-import { loadFromEnvIfSet } from "../util/config";
+import { deepMerge, loadFromEnvIfSet } from "../util/config";
 import "./setup";
 
 test("config can be loaded", () => {
@@ -15,6 +15,39 @@ test("config can have sub-parts", () => {
 test("config maintains types", () => {
   expect(typeof config.server.web.port).toBe("number");
   expect(typeof config.server.web.host).toBe("string");
+});
+
+describe("deepMerge", () => {
+  test("merges nested objects", () => {
+    const target = { a: { b: 1, c: 2 }, d: 3 };
+    deepMerge(target, { a: { b: 10 } });
+    expect(target).toEqual({ a: { b: 10, c: 2 }, d: 3 });
+  });
+
+  test("overwrites primitives", () => {
+    const target = { a: 1, b: "hello" };
+    deepMerge(target, { a: 2, b: "world" });
+    expect(target).toEqual({ a: 2, b: "world" });
+  });
+
+  test("overwrites arrays instead of merging them", () => {
+    const target = { a: [1, 2, 3] };
+    deepMerge(target, { a: [4, 5] });
+    expect(target).toEqual({ a: [4, 5] });
+  });
+
+  test("adds new keys", () => {
+    const target = { a: 1 } as Record<string, any>;
+    deepMerge(target, { b: 2 });
+    expect(target).toEqual({ a: 1, b: 2 });
+  });
+
+  test("handles deeply nested merges", () => {
+    const target = { server: { web: { port: 8080, host: "localhost" } } };
+    deepMerge(target, { server: { web: { port: 3000 } } });
+    expect(target.server.web.port).toBe(3000);
+    expect(target.server.web.host).toBe("localhost");
+  });
 });
 
 describe("updating config", () => {

@@ -1,5 +1,8 @@
+import { Glob } from "bun";
+import fs from "fs";
 import path from "path";
 import { config } from "../config";
+import { deepMerge } from "../util/config";
 import { globLoader } from "../util/glob";
 import type { Initializer, InitializerSortKeys } from "./Initializer";
 import { Logger } from "./Logger";
@@ -43,6 +46,7 @@ export class API {
     this.logger.warn("--- 🔄  Initializing process ---");
     this.initialized = false;
 
+    await this.loadLocalConfig();
     await this.findInitializers();
     this.sortInitializers("loadPriority");
 
@@ -136,6 +140,26 @@ export class API {
     await this.stop();
     await this.start();
     flapPreventer = false;
+  }
+
+  private async loadLocalConfig() {
+    if (this.rootDir === this.packageDir) return;
+
+    const configDir = path.join(this.rootDir, "config");
+    if (!fs.existsSync(configDir)) return;
+
+    const glob = new Glob("**/*.ts");
+    for await (const file of glob.scan(configDir)) {
+      if (file.startsWith(".")) continue;
+
+      const fullPath = path.join(configDir, file);
+      const mod = await import(fullPath);
+      const overrides = mod.default ?? mod;
+      if (overrides && typeof overrides === "object") {
+        deepMerge(config, overrides);
+        this.logger.debug(`Loaded user config from config/${file}`);
+      }
+    }
   }
 
   private async findInitializers() {

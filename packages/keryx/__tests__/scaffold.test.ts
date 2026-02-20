@@ -31,6 +31,18 @@ describe("scaffoldProject", () => {
     expect(files).toContain("tsconfig.json");
     expect(files).toContain(".env.example");
     expect(files).toContain(".gitignore");
+    expect(files).toContain("config/index.ts");
+    expect(files).toContain("config/channels.ts");
+    expect(files).toContain("config/database.ts");
+    expect(files).toContain("config/logger.ts");
+    expect(files).toContain("config/process.ts");
+    expect(files).toContain("config/rateLimit.ts");
+    expect(files).toContain("config/redis.ts");
+    expect(files).toContain("config/session.ts");
+    expect(files).toContain("config/tasks.ts");
+    expect(files).toContain("config/server/cli.ts");
+    expect(files).toContain("config/server/mcp.ts");
+    expect(files).toContain("config/server/web.ts");
     expect(files).toContain("initializers/.gitkeep");
     expect(files).toContain("middleware/.gitkeep");
     expect(files).toContain("channels/.gitkeep");
@@ -117,6 +129,34 @@ describe("scaffoldProject", () => {
     );
     expect(content).toContain("PROCESS_NAME=cool-api");
     expect(content).toContain("cool-api");
+  });
+
+  test("config files use keryx package imports", async () => {
+    await scaffoldProject("check-config", targetDir("check-config"), {
+      includeDb: false,
+      includeExample: false,
+    });
+
+    const process = fs.readFileSync(
+      path.join(targetDir("check-config"), "config/process.ts"),
+      "utf-8",
+    );
+    expect(process).toContain('from "keryx"');
+    expect(process).not.toContain("../util/config");
+
+    const web = fs.readFileSync(
+      path.join(targetDir("check-config"), "config/server/web.ts"),
+      "utf-8",
+    );
+    expect(web).toContain('from "keryx"');
+    expect(web).not.toContain("../../util/config");
+
+    const index = fs.readFileSync(
+      path.join(targetDir("check-config"), "config/index.ts"),
+      "utf-8",
+    );
+    expect(index).toContain("export default");
+    expect(index).not.toContain("export const config");
   });
 
   test("throws if directory already exists", async () => {
