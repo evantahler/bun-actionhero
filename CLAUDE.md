@@ -212,6 +212,7 @@ import { SessionMiddleware } from "../middleware/session";
 ## Coding Conventions
 
 - **No `as any`** — Never use `as any` type assertions. Use `@ts-expect-error` with an explanatory comment when the type system can't express something, or add a proper type/interface.
+- **Always `bunx`, never `npx`** — This is a Bun project. Use `bunx` for all package runner commands.
 
 ## Testing Patterns
 
