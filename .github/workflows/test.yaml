@@ -111,6 +111,7 @@ jobs:
           bun test $shard_files
         env:
           DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/keryx-test
+          RATE_LIMIT_ENABLED_TEST: "false"
 
   test-example-frontend:
     runs-on: ubuntu-latest
