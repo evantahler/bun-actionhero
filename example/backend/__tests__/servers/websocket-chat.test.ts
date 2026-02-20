@@ -9,6 +9,8 @@ import {
   waitForBroadcastMessages,
 } from "./websocket-helpers";
 
+const originalRateLimitEnabled = config.rateLimit.enabled;
+
 beforeAll(async () => {
   (config.rateLimit as any).enabled = false;
   await api.start();
@@ -17,7 +19,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await api.stop();
-  (config.rateLimit as any).enabled = true;
+  (config.rateLimit as any).enabled = originalRateLimitEnabled;
 }, HOOK_TIMEOUT);
 
 beforeEach(async () => {

@@ -8,6 +8,8 @@ import {
   subscribeToChannel,
 } from "./websocket-helpers";
 
+const originalRateLimitEnabled = config.rateLimit.enabled;
+
 beforeAll(async () => {
   (config.rateLimit as any).enabled = false;
   await api.start();
@@ -15,7 +17,7 @@ beforeAll(async () => {
 }, HOOK_TIMEOUT);
 
 afterAll(async () => {
-  (config.rateLimit as any).enabled = true;
+  (config.rateLimit as any).enabled = originalRateLimitEnabled;
   await api.stop();
 }, HOOK_TIMEOUT);
 
