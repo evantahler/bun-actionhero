@@ -14,6 +14,14 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Ensure Homebrew Postgres binaries (psql, createdb, pg_isready) are on PATH
+if command -v brew &>/dev/null; then
+  PG_PREFIX="$(brew --prefix postgresql@17 2>/dev/null || true)"
+  if [ -n "$PG_PREFIX" ] && [ -d "$PG_PREFIX/bin" ]; then
+    export PATH="$PG_PREFIX/bin:$PATH"
+  fi
+fi
+
 if [ -z "${SUPERSET_WORKSPACE_NAME:-}" ]; then
   echo "SUPERSET_WORKSPACE_NAME is not set. Using defaults."
   BACKEND_PORT=8080
