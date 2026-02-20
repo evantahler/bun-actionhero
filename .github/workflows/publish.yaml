@@ -8,9 +8,15 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: https://registry.npmjs.org
       - run: bun install
 
       - name: Check if version changed
@@ -28,7 +34,5 @@ jobs:
 
       - name: Publish to npm
         if: steps.version.outputs.changed == 'true'
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         working-directory: packages/keryx
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
