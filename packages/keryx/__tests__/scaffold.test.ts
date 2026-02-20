@@ -49,6 +49,8 @@ describe("scaffoldProject", () => {
     expect(files).toContain("migrations.ts");
     expect(files).toContain("schema/.gitkeep");
     expect(files).toContain("drizzle/.gitkeep");
+    expect(files).toContain("actions/status.ts");
+    expect(files).toContain("actions/swagger.ts");
     expect(files).toContain("actions/hello.ts");
 
     // Verify files actually exist on disk
@@ -101,7 +103,8 @@ describe("scaffoldProject", () => {
     });
 
     expect(files).not.toContain("actions/hello.ts");
-    expect(files).toContain("actions/.gitkeep");
+    expect(files).toContain("actions/status.ts");
+    expect(files).toContain("actions/swagger.ts");
   });
 
   test("index.ts sets rootDir", async () => {
