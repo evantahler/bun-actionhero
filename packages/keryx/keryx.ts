@@ -19,13 +19,14 @@ program
   .command("new [project-name]")
   .summary("Create a new Keryx project")
   .description("Scaffold a new Keryx application with project boilerplate")
+  .option("-y, --yes", "Skip prompts and use defaults")
   .option("--no-interactive", "Skip prompts and use defaults")
   .option("--no-db", "Skip database setup files")
   .option("--no-example", "Skip example action")
   .action(async (projectName: string | undefined, opts) => {
     let options: ScaffoldOptions;
 
-    if (opts.interactive === false) {
+    if (opts.yes || opts.interactive === false) {
       // --no-interactive: use defaults
       projectName = projectName || "my-keryx-app";
       options = {
