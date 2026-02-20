@@ -199,12 +199,31 @@ export async function scaffoldProject(
     await write("drizzle/.gitkeep", "");
   }
 
+  // --- Built-in actions (always included) ---
+  // Copy status and swagger actions from the framework, adjusting imports
+  const builtinActions = ["status.ts", "swagger.ts"];
+  const actionsDir = path.join(import.meta.dir, "..", "actions");
+  for (const file of builtinActions) {
+    let content = await Bun.file(path.join(actionsDir, file)).text();
+
+    // Rewrite relative imports to package imports
+    content = content.replace(/from ["']\.\.\/api["']/g, 'from "keryx"');
+    content = content.replace(
+      /from ["']\.\.\/classes\/Action["']/g,
+      'from "keryx/classes/Action.ts"',
+    );
+    content = content.replace(
+      /from ["']\.\.\/package\.json["']/g,
+      'from "../package.json"',
+    );
+
+    await write(`actions/${file}`, content);
+  }
+
   // --- Example action ---
 
   if (options.includeExample) {
     await writeTemplate("actions/hello.ts", "hello-action.ts.mustache");
-  } else {
-    await write("actions/.gitkeep", "");
   }
 
   return createdFiles;

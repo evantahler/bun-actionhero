@@ -604,24 +604,7 @@ export class Actions extends Initializer {
   };
 
   async initialize() {
-    // Load framework actions from the package directory
-    const frameworkActions = await globLoader<Action>(
-      path.join(api.packageDir, "actions"),
-    );
-
-    // Load user project actions (if rootDir differs from packageDir)
-    let userActions: Action[] = [];
-    if (api.rootDir !== api.packageDir) {
-      try {
-        userActions = await globLoader<Action>(
-          path.join(api.rootDir, "actions"),
-        );
-      } catch {
-        // user project may not have actions, that's fine
-      }
-    }
-
-    const actions = [...frameworkActions, ...userActions];
+    const actions = await globLoader<Action>(path.join(api.rootDir, "actions"));
 
     for (const a of actions) {
       if (!a.description) a.description = `An Action: ${a.name}`;

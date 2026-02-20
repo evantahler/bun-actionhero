@@ -64,22 +64,13 @@ program
     await api.start();
   });
 
-// Load framework actions from the package directory
-const frameworkActions = await globLoader<Action>(
-  path.join(api.packageDir, "actions"),
-);
-
-// Load user project actions (if rootDir differs from packageDir)
-let userActions: Action[] = [];
-if (api.rootDir !== api.packageDir) {
-  try {
-    userActions = await globLoader<Action>(path.join(api.rootDir, "actions"));
-  } catch {
-    // user project may not have actions, that's fine
-  }
+// Load actions from the project directory
+let actions: Action[] = [];
+try {
+  actions = await globLoader<Action>(path.join(api.rootDir, "actions"));
+} catch {
+  // project may not have actions yet
 }
-
-const actions = [...frameworkActions, ...userActions];
 actions.forEach((action) => addActionToProgram(program, action));
 
 program

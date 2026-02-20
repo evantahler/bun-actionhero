@@ -179,11 +179,8 @@ export class SwaggerInitializer extends Initializer {
     const cacheDir = path.join(api.rootDir, ".cache");
     const cacheFile = path.join(cacheDir, "swagger-schemas.json");
 
-    // Hash action source files to detect changes (scan both packageDir and rootDir)
-    const actionsDirs = [path.join(api.packageDir, "actions")];
-    if (api.rootDir !== api.packageDir) {
-      actionsDirs.push(path.join(api.rootDir, "actions"));
-    }
+    // Hash action source files to detect changes
+    const actionsDirs = [path.join(api.rootDir, "actions")];
     const glob = new Bun.Glob("**/*.ts");
     const hasher = new Bun.CryptoHasher("sha256");
     for (const actionsDir of actionsDirs) {

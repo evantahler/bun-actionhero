@@ -20,20 +20,13 @@ program
     await api.start();
   });
 
-// Load framework actions from the package directory
-const frameworkActions = await globLoader<Action>(
-  path.join(api.packageDir, "actions"),
-);
-
-// Load user project actions
-let userActions: Action[] = [];
+// Load actions from the project directory
+let actions: Action[] = [];
 try {
-  userActions = await globLoader<Action>(path.join(api.rootDir, "actions"));
+  actions = await globLoader<Action>(path.join(api.rootDir, "actions"));
 } catch {
-  // user project may not have actions, that's fine
+  // project may not have actions yet
 }
-
-const actions = [...frameworkActions, ...userActions];
 actions.forEach((action) => addActionToProgram(program, action));
 
 program
