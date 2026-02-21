@@ -216,7 +216,14 @@ export async function scaffoldProject(
         },
         dependencies: {
           keryx: `^${keryxVersion}`,
-          ...(options.includeDb ? { "drizzle-zod": "^0.8.3" } : {}),
+          commander: "^12.1.0",
+          zod: "^4.3.6",
+          ...(options.includeDb
+            ? {
+                "drizzle-orm": "^0.45.1",
+                "drizzle-zod": "^0.8.3",
+              }
+            : {}),
         },
         devDependencies: {
           "@types/bun": "latest",

@@ -18,7 +18,10 @@
   },
   "dependencies": {
     "keryx": "workspace:*",
-    "drizzle-zod": "^0.8.3"
+    "commander": "^12.1.0",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
