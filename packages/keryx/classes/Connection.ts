@@ -32,7 +32,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     this.subscriptions = new Set();
     this.rawConnection = rawConnection;
 
-    api.connections.connections.push(this);
+    api.connections.connections.set(this.id, this);
   }
 
   /**

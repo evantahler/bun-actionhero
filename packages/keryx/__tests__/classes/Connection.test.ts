@@ -37,12 +37,12 @@ describe("Connection class", () => {
     expect(conn.identifier).toBe("ws-client-123");
   });
 
-  test("connection is added to api.connections array", () => {
-    const initialCount = api.connections.connections.length;
+  test("connection is added to api.connections map", () => {
+    const initialCount = api.connections.connections.size;
     const conn = new Connection("test", "test-added");
 
-    expect(api.connections.connections.length).toBe(initialCount + 1);
-    expect(api.connections.connections).toContain(conn);
+    expect(api.connections.connections.size).toBe(initialCount + 1);
+    expect(api.connections.connections.get(conn.id)).toBe(conn);
   });
 
   test("subscriptions set is initialized empty", () => {

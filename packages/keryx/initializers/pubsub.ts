@@ -72,7 +72,7 @@ export class PubSub extends Initializer {
     incomingMessage: string | Buffer,
   ) {
     const payload = JSON.parse(incomingMessage.toString()) as PubSubMessage;
-    for (const connection of api.connections.connections) {
+    for (const connection of api.connections.connections.values()) {
       if (connection.subscriptions.has(payload.channel)) {
         connection.onBroadcastMessageReceived(payload);
       }

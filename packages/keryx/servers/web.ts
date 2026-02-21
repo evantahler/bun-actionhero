@@ -220,6 +220,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.id,
     );
+    if (!connection) return;
+
     this.wsRateMap.delete(connection.id);
 
     try {

@@ -161,12 +161,10 @@ test("should expire orphaned presence keys after TTL", async () => {
   expect(ttl).toBeGreaterThan(0);
   expect(ttl).toBeLessThanOrEqual(2);
 
-  // Simulate a crash by NOT calling removePresence — just splice out all
+  // Simulate a crash by NOT calling removePresence — just clear all
   // connections so the heartbeat won't refresh their keys
-  const savedConnections = api.connections.connections.splice(
-    0,
-    api.connections.connections.length,
-  );
+  const savedConnections = new Map(api.connections.connections);
+  api.connections.connections.clear();
 
   // Presence should still exist immediately
   expect((await api.channels.members("messages")).length).toBe(1);
@@ -178,7 +176,9 @@ test("should expire orphaned presence keys after TTL", async () => {
   expect((await api.channels.members("messages")).length).toBe(0);
 
   // Restore connections so cleanup can proceed, then close
-  api.connections.connections.push(...savedConnections);
+  for (const [id, conn] of savedConnections) {
+    api.connections.connections.set(id, conn);
+  }
   (config.channels as any).presenceTTL = originalTTL;
   socket.close();
   await Bun.sleep(100);
