@@ -102,9 +102,10 @@ export class DB extends Initializer {
    */
   async generateMigrations() {
     const migrationConfig = {
+      driver: "pg",
       schema: path.join("models", "*"),
       dbCredentials: {
-        url: config.database.connectionString,
+        connectionString: config.database.connectionString,
       },
       out: path.join("drizzle"),
     } satisfies DrizzleMigrateConfig;
