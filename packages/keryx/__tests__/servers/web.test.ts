@@ -209,4 +209,68 @@ describe("static files", () => {
     const res = await fetch(url + "/%2e%2e/package.json");
     expect(res.status).toBe(404);
   });
+
+  test("includes ETag and Last-Modified headers", async () => {
+    const res = await fetch(url + "/test.txt");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("etag")).toMatch(/^".+"$/);
+    expect(res.headers.get("last-modified")).toBeTruthy();
+  });
+
+  test("includes Cache-Control header", async () => {
+    const res = await fetch(url + "/test.txt");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=3600");
+  });
+
+  test("returns 304 for matching If-None-Match", async () => {
+    const res1 = await fetch(url + "/test.txt");
+    const etag = res1.headers.get("etag")!;
+    expect(etag).toBeTruthy();
+
+    const res2 = await fetch(url + "/test.txt", {
+      headers: { "If-None-Match": etag },
+    });
+    expect(res2.status).toBe(304);
+  });
+
+  test("returns 200 for non-matching If-None-Match", async () => {
+    const res = await fetch(url + "/test.txt", {
+      headers: { "If-None-Match": '"bogus"' },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("hello static");
+  });
+
+  test("returns 304 for If-Modified-Since when file is not newer", async () => {
+    const res1 = await fetch(url + "/test.txt");
+    const lastModified = res1.headers.get("last-modified")!;
+    expect(lastModified).toBeTruthy();
+
+    const res2 = await fetch(url + "/test.txt", {
+      headers: { "If-Modified-Since": lastModified },
+    });
+    expect(res2.status).toBe(304);
+  });
+
+  test("returns 200 for If-Modified-Since in the distant past", async () => {
+    const res = await fetch(url + "/test.txt", {
+      headers: { "If-Modified-Since": "Thu, 01 Jan 1970 00:00:00 GMT" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.text()).toBe("hello static");
+  });
+
+  test("omits ETag when staticFilesEtag is disabled", async () => {
+    const original = config.server.web.staticFilesEtag;
+    (config.server.web as any).staticFilesEtag = false;
+    try {
+      const res = await fetch(url + "/test.txt");
+      expect(res.status).toBe(200);
+      expect(res.headers.get("etag")).toBeNull();
+      expect(res.headers.get("last-modified")).toBeNull();
+    } finally {
+      (config.server.web as any).staticFilesEtag = original;
+    }
+  });
 });

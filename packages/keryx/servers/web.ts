@@ -547,7 +547,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   }
 
   async handleStaticFile(
-    _req: Request,
+    req: Request,
     url: ReturnType<typeof parse>,
   ): Promise<Response | null> {
     const staticRoute = config.server.web.staticFilesRoute;
@@ -592,21 +592,64 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
           const indexFile = Bun.file(indexPath);
           const indexExists = await indexFile.exists();
           if (indexExists) {
-            return new Response(indexFile, {
-              headers: this.getStaticFileHeaders(finalPath + "/index.html"),
-            });
+            return this.buildStaticFileResponse(
+              req,
+              indexFile,
+              finalPath + "/index.html",
+            );
           }
         }
         return null; // File not found, let other handlers deal with it
       }
 
-      return new Response(file, {
-        headers: this.getStaticFileHeaders(finalPath),
-      });
+      return this.buildStaticFileResponse(req, file, finalPath);
     } catch (error) {
       logger.error(`Error serving static file ${finalPath}: ${error}`);
       return null;
     }
+  }
+
+  private async buildStaticFileResponse(
+    req: Request,
+    file: ReturnType<typeof Bun.file>,
+    filePath: string,
+  ): Promise<Response> {
+    const headers = this.getStaticFileHeaders(filePath);
+
+    // Generate ETag from mtime + size (fast, no hashing needed)
+    if (config.server.web.staticFilesEtag) {
+      const mtime = file.lastModified;
+      const size = file.size;
+      const etag = `"${mtime.toString(36)}-${size.toString(36)}"`;
+      headers["ETag"] = etag;
+      headers["Last-Modified"] = new Date(mtime).toUTCString();
+
+      // Check If-None-Match (takes precedence over If-Modified-Since per HTTP spec)
+      const ifNoneMatch = req.headers.get("if-none-match");
+      if (ifNoneMatch && ifNoneMatch === etag) {
+        return new Response(null, { status: 304, headers });
+      }
+
+      // Check If-Modified-Since
+      const ifModifiedSince = req.headers.get("if-modified-since");
+      if (ifModifiedSince) {
+        const ifModifiedSinceDate = new Date(ifModifiedSince).getTime();
+        // File mtime is in ms; compare at second precision (HTTP dates are second-precision)
+        if (
+          !isNaN(ifModifiedSinceDate) &&
+          Math.floor(mtime / 1000) <= Math.floor(ifModifiedSinceDate / 1000)
+        ) {
+          return new Response(null, { status: 304, headers });
+        }
+      }
+    }
+
+    // Add Cache-Control
+    if (config.server.web.staticFilesCacheControl) {
+      headers["Cache-Control"] = config.server.web.staticFilesCacheControl;
+    }
+
+    return new Response(file, { headers });
   }
 
   private getStaticFileHeaders(filePath: string): Record<string, string> {

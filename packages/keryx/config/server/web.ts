@@ -27,6 +27,11 @@ export const configServerWeb = {
     "assets",
   ),
   staticFilesRoute: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
+  staticFilesCacheControl: await loadFromEnvIfSet(
+    "WEB_SERVER_STATIC_CACHE_CONTROL",
+    "public, max-age=3600",
+  ),
+  staticFilesEtag: await loadFromEnvIfSet("WEB_SERVER_STATIC_ETAG", true),
   websocketMaxPayloadSize: await loadFromEnvIfSet(
     "WS_MAX_PAYLOAD_SIZE",
     65_536,
