@@ -31,7 +31,7 @@ export class DB extends Initializer {
   async initialize() {
     const dbContainer = {} as {
       db: ReturnType<typeof drizzle>;
-      pool: Pool;
+      pool: InstanceType<typeof Pool>;
     };
     return Object.assign(
       {
@@ -104,7 +104,7 @@ export class DB extends Initializer {
     const migrationConfig = {
       schema: path.join("models", "*"),
       dbCredentials: {
-        uri: config.database.connectionString,
+        url: config.database.connectionString,
       },
       out: path.join("drizzle"),
     } satisfies DrizzleMigrateConfig;
