@@ -1,6 +1,6 @@
 {
   "name": "keryx",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
@@ -78,7 +78,10 @@
     "pg": "^8.18.0",
     "ts-morph": "^27.0.2",
     "typescript": "^5.9.3",
-    "zod": "^4.3.6"
+    "zod": "^4.3.6",
+    "@types/cookie": "^0.6.0",
+    "@types/mustache": "^4.2.6",
+    "@types/pg": "^8.16.0"
   },
   "peerDependencies": {
     "drizzle-zod": "^0.8.3"
@@ -86,10 +89,7 @@
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/bun": "latest",
-    "@types/cookie": "^0.6.0",
     "@types/formidable": "^3.4.6",
-    "@types/mustache": "^4.2.6",
-    "@types/pg": "^8.16.0",
     "drizzle-kit": "^0.20.18",
     "drizzle-zod": "^0.8.3",
     "prettier": "^3.8.1",
