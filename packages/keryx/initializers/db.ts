@@ -102,10 +102,10 @@ export class DB extends Initializer {
    */
   async generateMigrations() {
     const migrationConfig = {
-      driver: "pg",
+      dialect: "postgresql",
       schema: path.join("models", "*"),
       dbCredentials: {
-        connectionString: config.database.connectionString,
+        url: config.database.connectionString,
       },
       out: path.join("drizzle"),
     } satisfies DrizzleMigrateConfig;
@@ -116,7 +116,7 @@ export class DB extends Initializer {
     try {
       await Bun.write(tmpfilePath, fileContent);
       const { exitCode, stdout, stderr } =
-        await $`bun drizzle-kit generate:pg --config ${tmpfilePath}`;
+        await $`bun drizzle-kit generate --config ${tmpfilePath}`;
       logger.trace(stdout.toString());
       if (exitCode !== 0) {
         {
