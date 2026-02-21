@@ -6,7 +6,7 @@ export default function Page() {
   return (
     <MainLayout title="Hello World">
       <Container>
-        <h1>Bun Actionhero</h1>
+        <h1>Keryx</h1>
         <p>
           <a href="/swagger">View API Endpoints</a>
         </p>
