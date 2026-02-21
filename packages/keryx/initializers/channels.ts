@@ -175,7 +175,7 @@ export class Channels extends Initializer {
   refreshPresence = async (): Promise<void> => {
     const keysToRefresh = new Set<string>();
 
-    for (const connection of api.connections.connections) {
+    for (const connection of api.connections.connections.values()) {
       for (const channelName of connection.subscriptions) {
         const channel = this.findChannel(channelName);
         const key = channel
