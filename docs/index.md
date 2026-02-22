@@ -43,6 +43,9 @@ features:
   - icon: "\U0001F5C4\uFE0F"
     title: Drizzle ORM
     details: First-class database support with auto-migrations and type-safe schemas. No separate ORM plugin needed — it's part of the stack.
+  - icon: "\U0001F4CA"
+    title: Observability & Structured Logging
+    details: Built-in OpenTelemetry metrics, plus structured logging for log aggregation. Correlation IDs trace requests across services.
 ---
 
 <!--@include: ../README.md-->
