@@ -153,56 +153,18 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
             });
     }
 
-    const sanitizedParams = sanitizeParams(params, action);
-    const duration = new Date().getTime() - reqStartTime;
-
-    if (config.logger.format === LogFormat.json) {
-      const data: Record<string, any> = {
-        action: actionName,
-        connectionType: this.type,
-        status: loggerResponsePrefix,
-        duration,
-        params: sanitizedParams,
-      };
-      if (method) data.method = method;
-      if (url) data.url = url;
-      if (this.identifier) data.identifier = this.identifier;
-      if (this.correlationId) data.correlationId = this.correlationId;
-      if (error) {
-        data.error = error.message;
-        data.errorType = error.type;
-        if (error.stack) data.errorStack = error.stack;
-      }
-
-      logger.info(`action: ${actionName}`, data);
-    } else {
-      // Note: we want the params object to remain on the same line as the message, so we stringify
-      const loggingParams = config.logger.colorize
-        ? colors.gray(JSON.stringify(sanitizedParams))
-        : JSON.stringify(sanitizedParams);
-
-      const statusMessage = `[ACTION:${this.type.toUpperCase()}:${loggerResponsePrefix}]`;
-      const messagePrefix = config.logger.colorize
-        ? loggerResponsePrefix === "OK"
-          ? colors.bgBlue(statusMessage)
-          : colors.bgMagenta(statusMessage)
-        : statusMessage;
-
-      const errorStack =
-        error && error.stack
-          ? config.logger.colorize
-            ? "\r\n" + colors.gray(error.stack)
-            : "\r\n" + error.stack
-          : "";
-
-      const correlationIdTag = this.correlationId
-        ? ` [cor:${this.correlationId}]`
-        : "";
-
-      logger.info(
-        `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""}${correlationIdTag} ${error ? error : ""} ${loggingParams} ${errorStack}`,
-      );
-    }
+    logAction({
+      actionName,
+      connectionType: this.type,
+      status: loggerResponsePrefix,
+      duration: new Date().getTime() - reqStartTime,
+      params: sanitizeParams(params, action),
+      method,
+      url,
+      identifier: this.identifier,
+      correlationId: this.correlationId,
+      error,
+    });
 
     return { response, error };
   }
@@ -353,6 +315,66 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
 
     // If we get here, inputs is not a zod schema, return empty object
     return {} as ActionParams<Action>;
+  }
+}
+
+function logAction(opts: {
+  actionName: string | undefined;
+  connectionType: string;
+  status: "OK" | "ERROR";
+  duration: number;
+  params: Record<string, any>;
+  method: string;
+  url: string;
+  identifier: string;
+  correlationId: string | undefined;
+  error: TypedError | undefined;
+}) {
+  if (config.logger.format === LogFormat.json) {
+    const data: Record<string, any> = {
+      action: opts.actionName,
+      connectionType: opts.connectionType,
+      status: opts.status,
+      duration: opts.duration,
+      params: opts.params,
+    };
+    if (opts.method) data.method = opts.method;
+    if (opts.url) data.url = opts.url;
+    if (opts.identifier) data.identifier = opts.identifier;
+    if (opts.correlationId) data.correlationId = opts.correlationId;
+    if (opts.error) {
+      data.error = opts.error.message;
+      data.errorType = opts.error.type;
+      if (opts.error.stack) data.errorStack = opts.error.stack;
+    }
+
+    logger.info(`action: ${opts.actionName}`, data);
+  } else {
+    const loggingParams = config.logger.colorize
+      ? colors.gray(JSON.stringify(opts.params))
+      : JSON.stringify(opts.params);
+
+    const statusMessage = `[ACTION:${opts.connectionType.toUpperCase()}:${opts.status}]`;
+    const messagePrefix = config.logger.colorize
+      ? opts.status === "OK"
+        ? colors.bgBlue(statusMessage)
+        : colors.bgMagenta(statusMessage)
+      : statusMessage;
+
+    const errorStack =
+      opts.error && opts.error.stack
+        ? config.logger.colorize
+          ? "\r\n" + colors.gray(opts.error.stack)
+          : "\r\n" + opts.error.stack
+        : "";
+
+    const correlationIdTag = opts.correlationId
+      ? ` [cor:${opts.correlationId}]`
+      : "";
+
+    logger.info(
+      `${messagePrefix} ${opts.actionName} (${opts.duration}ms) ${opts.method.length > 0 ? `[${opts.method}]` : ""} ${opts.identifier}${opts.url.length > 0 ? `(${opts.url})` : ""}${correlationIdTag} ${opts.error ? opts.error : ""} ${loggingParams} ${errorStack}`,
+    );
   }
 }
 
