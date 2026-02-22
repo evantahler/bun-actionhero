@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { Connection, api, logger } from "../../api";
 import { Action } from "../../classes/Action";
+import { LogFormat, LogLevel } from "../../classes/Logger";
 import { ErrorType } from "../../classes/TypedError";
 import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
@@ -167,6 +168,49 @@ describe("Connection class", () => {
       }
     } finally {
       logger.info = originalInfo;
+    }
+  });
+
+  test("act outputs structured JSON log in json format mode", async () => {
+    const logMessages: string[] = [];
+    const originalFormat = config.logger.format;
+    const originalLoggerFormat = logger.format;
+    const originalLevel = logger.level;
+    const origOutputStream = logger.outputStream;
+    config.logger.format = LogFormat.json;
+    logger.format = LogFormat.json;
+    logger.level = LogLevel.trace;
+    logger.outputStream = (...args: any[]) => {
+      logMessages.push(args.join(" "));
+    };
+
+    try {
+      const conn = new Connection("web", "test-json-log");
+      const params = new FormData();
+      await conn.act("status", params);
+
+      const actionLog = logMessages.find((msg) => {
+        try {
+          const parsed = JSON.parse(msg);
+          return parsed.action === "status";
+        } catch {
+          return false;
+        }
+      });
+      expect(actionLog).toBeDefined();
+
+      const parsed = JSON.parse(actionLog!);
+      expect(parsed.level).toBe("info");
+      expect(parsed.action).toBe("status");
+      expect(parsed.connectionType).toBe("web");
+      expect(parsed.status).toBe("OK");
+      expect(typeof parsed.duration).toBe("number");
+      expect(parsed.pid).toBe(process.pid);
+    } finally {
+      config.logger.format = originalFormat;
+      logger.format = originalLoggerFormat;
+      logger.level = originalLevel;
+      logger.outputStream = origOutputStream;
     }
   });
 

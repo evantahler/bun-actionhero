@@ -18,7 +18,7 @@ export {
 } from "./classes/Channel";
 export { Connection } from "./classes/Connection";
 export { Initializer } from "./classes/Initializer";
-export { Logger } from "./classes/Logger";
+export { LogFormat, Logger } from "./classes/Logger";
 export { Server } from "./classes/Server";
 export type {
   FanOutJob,

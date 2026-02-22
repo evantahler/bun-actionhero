@@ -15,9 +15,22 @@ import {
   type ActionParams,
 } from "../api";
 import { Initializer } from "../classes/Initializer";
+import { LogFormat } from "../classes/Logger";
 import { TypedError } from "../classes/TypedError";
 
 const namespace = "resque";
+
+function logResqueEvent(
+  level: "info" | "warn",
+  textMessage: string,
+  data: Record<string, any>,
+) {
+  if (config.logger.format === LogFormat.json) {
+    logger[level](`resque ${data.event}`, data);
+  } else {
+    logger[level](textMessage);
+  }
+}
 
 declare module "../classes/API" {
   export interface API {
@@ -156,19 +169,48 @@ export class Resque extends Initializer {
       });
 
       worker.on("failure", (queue, job, failure, duration) => {
-        logger.warn(
+        logResqueEvent(
+          "warn",
           `[resque:${worker.name}] job failed, ${queue}, ${job.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${failure} (${duration}ms)`,
+          {
+            worker: worker.name,
+            event: "failure",
+            queue,
+            jobClass: job?.class,
+            args: job?.args[0] ?? {},
+            error: String(failure),
+            duration,
+          },
         );
       });
       worker.on("error", (error, queue, job) => {
-        logger.warn(
+        logResqueEvent(
+          "warn",
           `[resque:${worker.name}] job error, ${queue}, ${job?.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${error}`,
+          {
+            worker: worker.name,
+            event: "error",
+            queue,
+            jobClass: job?.class,
+            args: job?.args[0] ?? {},
+            error: String(error),
+          },
         );
       });
 
       worker.on("success", (queue, job: ParsedJob, result, duration) => {
-        logger.info(
+        logResqueEvent(
+          "info",
           `[resque:${worker.name}] job success ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${JSON.stringify(result)} (${duration}ms)`,
+          {
+            worker: worker.name,
+            event: "success",
+            queue,
+            jobClass: job.class,
+            args: job.args[0],
+            result,
+            duration,
+          },
         );
       });
 
