@@ -34,8 +34,14 @@ export class Observability extends Initializer {
   }
 
   async initialize() {
-    const noopAdd = (_value: number, _attributes?: Record<string, string>) => {};
-    const noopRecord = (_value: number, _attributes?: Record<string, string>) => {};
+    const noopAdd = (
+      _value: number,
+      _attributes?: Record<string, string>,
+    ) => {};
+    const noopRecord = (
+      _value: number,
+      _attributes?: Record<string, string>,
+    ) => {};
     return {
       enabled: false,
       http: {
@@ -139,10 +145,9 @@ export class Observability extends Initializer {
     });
 
     // --- Action Metrics ---
-    ns.action.executionsTotal = meter.createCounter(
-      "keryx.action.executions",
-      { description: "Total action executions" },
-    );
+    ns.action.executionsTotal = meter.createCounter("keryx.action.executions", {
+      description: "Total action executions",
+    });
     ns.action.duration = meter.createHistogram("keryx.action.duration", {
       description: "Action execution duration in milliseconds",
       unit: "ms",
@@ -187,8 +192,14 @@ export class Observability extends Initializer {
     // MeterProvider is intentionally NOT shut down — shutting it down would
     // make the reader unable to collect, but start() may create a new one.
     // In production stop() is called right before process exit.
-    const noopAdd = (_value: number, _attributes?: Record<string, string>) => {};
-    const noopRecord = (_value: number, _attributes?: Record<string, string>) => {};
+    const noopAdd = (
+      _value: number,
+      _attributes?: Record<string, string>,
+    ) => {};
+    const noopRecord = (
+      _value: number,
+      _attributes?: Record<string, string>,
+    ) => {};
     const ns = api.observability;
     ns.enabled = false;
     ns.http.requestsTotal = { add: noopAdd };
