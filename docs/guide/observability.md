@@ -66,7 +66,9 @@ Action metrics are recorded for all transports (HTTP, WebSocket, tasks, internal
 
 ## Prometheus Integration
 
-The `/metrics` endpoint serves metrics in [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). Add a scrape target to your `prometheus.yml`:
+The `/metrics` endpoint serves metrics in [Prometheus exposition format](https://prometheus.io/docs/instrumenting/exposition_formats/). Because each Keryx process serves its own `/metrics` endpoint, **every node in your cluster must be scraped individually** — metrics are not aggregated across instances. Use Prometheus service discovery or list each target explicitly.
+
+Add a scrape target to your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
