@@ -156,12 +156,12 @@ export class Resque extends Initializer {
       });
 
       worker.on("failure", (queue, job, failure, duration) => {
-        api.observability?.task.executedTotal.add(1, {
+        api.observability.task.executedTotal.add(1, {
           action: job.class,
           queue,
           status: "failure",
         });
-        api.observability?.task.duration.record(duration, {
+        api.observability.task.duration.record(duration, {
           action: job.class,
         });
         logger.warn(
@@ -175,12 +175,12 @@ export class Resque extends Initializer {
       });
 
       worker.on("success", (queue, job: ParsedJob, result, duration) => {
-        api.observability?.task.executedTotal.add(1, {
+        api.observability.task.executedTotal.add(1, {
           action: job.class,
           queue,
           status: "success",
         });
-        api.observability?.task.duration.record(duration, {
+        api.observability.task.duration.record(duration, {
           action: job.class,
         });
         logger.info(
