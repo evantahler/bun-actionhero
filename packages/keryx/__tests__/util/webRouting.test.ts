@@ -3,10 +3,7 @@ import { ErrorType } from "../../classes/TypedError";
 import { parseRequestParams } from "../../util/webRouting";
 
 // Helpers to build minimal Request objects for testing
-function jsonRequest(
-  body: Record<string, unknown>,
-  method = "POST",
-): Request {
+function jsonRequest(body: Record<string, unknown>, method = "POST"): Request {
   return new Request("http://localhost/test", {
     method,
     headers: { "content-type": "application/json" },

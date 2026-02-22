@@ -24,10 +24,7 @@ export async function determineActionName(
     if (!action?.web?.route) continue;
 
     // Convert route with path parameters to regex
-    const routeWithParams = `${action.web.route}`.replace(
-      /:\w+/g,
-      "([^/]+)",
-    );
+    const routeWithParams = `${action.web.route}`.replace(/:\w+/g, "([^/]+)");
     const matcher =
       action.web.route instanceof RegExp
         ? action.web.route
@@ -57,8 +54,7 @@ export async function determineActionName(
 
       return {
         actionName: action.name,
-        pathParams:
-          Object.keys(pathParams).length > 0 ? pathParams : undefined,
+        pathParams: Object.keys(pathParams).length > 0 ? pathParams : undefined,
       };
     }
   }

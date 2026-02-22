@@ -16,16 +16,13 @@ import {
   buildErrorPayload,
   buildResponse,
 } from "../util/webResponse";
-import {
-  determineActionName,
-  parseRequestParams,
-} from "../util/webRouting";
-import { handleStaticFile } from "../util/webStaticFiles";
+import { determineActionName, parseRequestParams } from "../util/webRouting";
 import {
   handleWebsocketAction,
   handleWebsocketSubscribe,
   handleWebsocketUnsubscribe,
 } from "../util/webSocket";
+import { handleStaticFile } from "../util/webStaticFiles";
 
 /**
  * HTTP + WebSocket server built on `Bun.serve`. Handles REST action routing (with path params),
