@@ -43,6 +43,7 @@ export default defineConfig({
           items: [
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Security", link: "/guide/security" },
+            { text: "Observability", link: "/guide/observability" },
             { text: "Testing", link: "/guide/testing" },
             { text: "Deployment", link: "/guide/deployment" },
           ],

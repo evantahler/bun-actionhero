@@ -156,6 +156,14 @@ export class Resque extends Initializer {
       });
 
       worker.on("failure", (queue, job, failure, duration) => {
+        api.observability?.task.executedTotal.add(1, {
+          action: job.class,
+          queue,
+          status: "failure",
+        });
+        api.observability?.task.duration.record(duration, {
+          action: job.class,
+        });
         logger.warn(
           `[resque:${worker.name}] job failed, ${queue}, ${job.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${failure} (${duration}ms)`,
         );
@@ -167,6 +175,14 @@ export class Resque extends Initializer {
       });
 
       worker.on("success", (queue, job: ParsedJob, result, duration) => {
+        api.observability?.task.executedTotal.add(1, {
+          action: job.class,
+          queue,
+          status: "success",
+        });
+        api.observability?.task.duration.record(duration, {
+          action: job.class,
+        });
         logger.info(
           `[resque:${worker.name}] job success ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${JSON.stringify(result)} (${duration}ms)`,
         );

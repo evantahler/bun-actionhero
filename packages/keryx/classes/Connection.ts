@@ -167,6 +167,14 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
 
     const duration = new Date().getTime() - reqStartTime;
 
+    api.observability?.action.executionsTotal.add(1, {
+      action: actionName ?? "unknown",
+      status: loggerResponsePrefix === "OK" ? "success" : "error",
+    });
+    api.observability?.action.duration.record(duration, {
+      action: actionName ?? "unknown",
+    });
+
     const errorStack =
       error && error.stack
         ? config.logger.colorize

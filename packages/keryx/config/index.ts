@@ -2,6 +2,7 @@ import { configActions } from "./actions";
 import { configChannels } from "./channels";
 import { configDatabase } from "./database";
 import { configLogger } from "./logger";
+import { configObservability } from "./observability";
 import { configProcess } from "./process";
 import { configRateLimit } from "./rateLimit";
 import { configRedis } from "./redis";
@@ -17,6 +18,7 @@ export const config = {
   process: configProcess,
   logger: configLogger,
   database: configDatabase,
+  observability: configObservability,
   redis: configRedis,
   rateLimit: configRateLimit,
   session: configSession,

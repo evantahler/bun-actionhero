@@ -93,6 +93,10 @@ export class Actions extends Initializer {
       });
     }
     queue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+    api.observability?.task.enqueuedTotal.add(1, {
+      action: actionName,
+      queue,
+    });
     return api.resque.queue.enqueue(queue, actionName, [inputs]);
   };
 
