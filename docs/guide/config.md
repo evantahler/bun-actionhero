@@ -15,7 +15,7 @@ backend/config/
 ├── index.ts        # Aggregates everything into one `config` object
 ├── actions.ts      # Action timeout, fan-out batch size and TTL
 ├── database.ts     # Database connection string, auto-migrate flag
-├── logger.ts       # Log level, timestamps, colors
+├── logger.ts       # Log level, timestamps, colors, output format (text/JSON)
 ├── process.ts      # Process name, shutdown timeout
 ├── rateLimit.ts    # Rate limiting windows and thresholds
 ├── redis.ts        # Redis connection string
@@ -79,11 +79,36 @@ The helper is also type-aware — it parses `"true"`/`"false"` strings into bool
 
 ### Logger
 
-| Key                 | Env Var                  | Default  |
-| ------------------- | ------------------------ | -------- |
-| `level`             | `LOG_LEVEL`              | `"info"` |
-| `includeTimestamps` | `LOG_INCLUDE_TIMESTAMPS` | `true`   |
-| `colorize`          | `LOG_COLORIZE`           | `true`   |
+| Key                 | Env Var                  | Default  | Description                                                                |
+| ------------------- | ------------------------ | -------- | -------------------------------------------------------------------------- |
+| `level`             | `LOG_LEVEL`              | `"info"` | Minimum log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`)     |
+| `includeTimestamps` | `LOG_INCLUDE_TIMESTAMPS` | `true`   | Prepend ISO-8601 timestamp to each log line                                |
+| `colorize`          | `LOG_COLORIZE`           | `true`   | Apply ANSI color codes (text format only)                                  |
+| `format`            | `LOG_FORMAT`             | `"text"` | Output format: `"text"` for human-readable, `"json"` for structured NDJSON |
+
+In JSON mode, each log line is a single JSON object with `timestamp`, `level`, `message`, and `pid` fields. Action and task logs include additional structured fields like `action`, `duration`, `status`, `method`, `url`, `correlationId`, `queue`, and `jobClass` — making them easy to parse with log aggregation systems (ELK, Datadog, CloudWatch, Loki, etc.).
+
+```bash
+# Enable JSON logging in production
+LOG_FORMAT=json bun run start
+```
+
+Example JSON output:
+
+```json
+{
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "level": "info",
+  "message": "action: status",
+  "pid": 12345,
+  "action": "status",
+  "connectionType": "web",
+  "status": "OK",
+  "duration": 12,
+  "method": "GET",
+  "url": "/api/status"
+}
+```
 
 ### Redis
 

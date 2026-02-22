@@ -7,6 +7,7 @@ import type { SessionData } from "../initializers/session";
 import type { RateLimitInfo } from "../middleware/rateLimit";
 import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
+import { LogFormat } from "./Logger";
 import { ErrorType, TypedError } from "./TypedError";
 
 /**
@@ -152,35 +153,56 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
             });
     }
 
-    // Note: we want the params object to remain on the same line as the message, so we stringify
     const sanitizedParams = sanitizeParams(params, action);
-    const loggingParams = config.logger.colorize
-      ? colors.gray(JSON.stringify(sanitizedParams))
-      : JSON.stringify(sanitizedParams);
-
-    const statusMessage = `[ACTION:${this.type.toUpperCase()}:${loggerResponsePrefix}]`;
-    const messagePrefix = config.logger.colorize
-      ? loggerResponsePrefix === "OK"
-        ? colors.bgBlue(statusMessage)
-        : colors.bgMagenta(statusMessage)
-      : statusMessage;
-
     const duration = new Date().getTime() - reqStartTime;
 
-    const errorStack =
-      error && error.stack
-        ? config.logger.colorize
-          ? "\r\n" + colors.gray(error.stack)
-          : "\r\n" + error.stack
+    if (config.logger.format === LogFormat.json) {
+      const data: Record<string, any> = {
+        action: actionName,
+        connectionType: this.type,
+        status: loggerResponsePrefix,
+        duration,
+        params: sanitizedParams,
+      };
+      if (method) data.method = method;
+      if (url) data.url = url;
+      if (this.identifier) data.identifier = this.identifier;
+      if (this.correlationId) data.correlationId = this.correlationId;
+      if (error) {
+        data.error = error.message;
+        data.errorType = error.type;
+        if (error.stack) data.errorStack = error.stack;
+      }
+
+      logger.info(`action: ${actionName}`, data);
+    } else {
+      // Note: we want the params object to remain on the same line as the message, so we stringify
+      const loggingParams = config.logger.colorize
+        ? colors.gray(JSON.stringify(sanitizedParams))
+        : JSON.stringify(sanitizedParams);
+
+      const statusMessage = `[ACTION:${this.type.toUpperCase()}:${loggerResponsePrefix}]`;
+      const messagePrefix = config.logger.colorize
+        ? loggerResponsePrefix === "OK"
+          ? colors.bgBlue(statusMessage)
+          : colors.bgMagenta(statusMessage)
+        : statusMessage;
+
+      const errorStack =
+        error && error.stack
+          ? config.logger.colorize
+            ? "\r\n" + colors.gray(error.stack)
+            : "\r\n" + error.stack
+          : "";
+
+      const correlationIdTag = this.correlationId
+        ? ` [cor:${this.correlationId}]`
         : "";
 
-    const correlationIdTag = this.correlationId
-      ? ` [cor:${this.correlationId}]`
-      : "";
-
-    logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""}${correlationIdTag} ${error ? error : ""} ${loggingParams} ${errorStack}`,
-    );
+      logger.info(
+        `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""}${correlationIdTag} ${error ? error : ""} ${loggingParams} ${errorStack}`,
+      );
+    }
 
     return { response, error };
   }

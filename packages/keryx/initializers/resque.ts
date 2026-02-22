@@ -15,6 +15,7 @@ import {
   type ActionParams,
 } from "../api";
 import { Initializer } from "../classes/Initializer";
+import { LogFormat } from "../classes/Logger";
 import { TypedError } from "../classes/TypedError";
 
 const namespace = "resque";
@@ -156,20 +157,55 @@ export class Resque extends Initializer {
       });
 
       worker.on("failure", (queue, job, failure, duration) => {
-        logger.warn(
-          `[resque:${worker.name}] job failed, ${queue}, ${job.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${failure} (${duration}ms)`,
-        );
+        if (config.logger.format === LogFormat.json) {
+          logger.warn(`resque job failed`, {
+            worker: worker.name,
+            event: "failure",
+            queue,
+            jobClass: job?.class,
+            args: job?.args[0] ?? {},
+            error: String(failure),
+            duration,
+          });
+        } else {
+          logger.warn(
+            `[resque:${worker.name}] job failed, ${queue}, ${job.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${failure} (${duration}ms)`,
+          );
+        }
       });
       worker.on("error", (error, queue, job) => {
-        logger.warn(
-          `[resque:${worker.name}] job error, ${queue}, ${job?.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${error}`,
-        );
+        if (config.logger.format === LogFormat.json) {
+          logger.warn(`resque job error`, {
+            worker: worker.name,
+            event: "error",
+            queue,
+            jobClass: job?.class,
+            args: job?.args[0] ?? {},
+            error: String(error),
+          });
+        } else {
+          logger.warn(
+            `[resque:${worker.name}] job error, ${queue}, ${job?.class}, ${JSON.stringify(job?.args[0] ?? {})}: ${error}`,
+          );
+        }
       });
 
       worker.on("success", (queue, job: ParsedJob, result, duration) => {
-        logger.info(
-          `[resque:${worker.name}] job success ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${JSON.stringify(result)} (${duration}ms)`,
-        );
+        if (config.logger.format === LogFormat.json) {
+          logger.info(`resque job success`, {
+            worker: worker.name,
+            event: "success",
+            queue,
+            jobClass: job.class,
+            args: job.args[0],
+            result,
+            duration,
+          });
+        } else {
+          logger.info(
+            `[resque:${worker.name}] job success ${queue}, ${job.class}, ${JSON.stringify(job.args[0])} | ${JSON.stringify(result)} (${duration}ms)`,
+          );
+        }
       });
 
       api.resque.workers.push(worker);

@@ -1,8 +1,9 @@
-import { LogLevel } from "../classes/Logger";
+import { LogFormat, LogLevel } from "../classes/Logger";
 import { loadFromEnvIfSet } from "../util/config";
 
 export const configLogger = {
   level: await loadFromEnvIfSet<LogLevel>("LOG_LEVEL", LogLevel.info),
   includeTimestamps: await loadFromEnvIfSet("LOG_INCLUDE_TIMESTAMPS", true),
   colorize: await loadFromEnvIfSet("LOG_COLORIZE", true),
+  format: await loadFromEnvIfSet<LogFormat>("LOG_FORMAT", LogFormat.text),
 };
