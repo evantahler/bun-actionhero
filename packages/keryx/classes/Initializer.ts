@@ -1,18 +1,21 @@
 import { RUN_MODE } from "./../api";
 
 /**
- * Create a new Initializer. The required properties of an initializer. These can be defined statically (this.name) or as methods which return a value.
+ * Abstract base class for lifecycle components. Initializers are discovered automatically
+ * and run in priority order during the framework's initialize → start → stop phases.
+ * Each initializer typically extends the `API` interface via module augmentation and
+ * returns its namespace object from `initialize()`.
  */
 export abstract class Initializer {
-  /**The name of the Initializer. */
+  /** The unique name of this initializer (also used as the key on the `api` object). */
   name: string;
-  /**What order should this Initializer load at (Default: 1000, core methods are < 1000) */
+  /** Priority order for `initialize()`. Lower values run first. Default: 1000; core initializers use < 1000. */
   loadPriority: number;
-  /**What order should this Initializer start at (Default: 1000, core methods are < 1000) */
+  /** Priority order for `start()`. Lower values run first. Default: 1000; core initializers use < 1000. */
   startPriority: number;
-  /**What order should this Initializer stop at (Default: 1000, core methods are < 1000) */
+  /** Priority order for `stop()`. Lower values run first. Default: 1000; core initializers use < 1000. */
   stopPriority: number;
-  /** which run modes does this sever start in*/
+  /** Which run modes this initializer participates in. Defaults to both SERVER and CLI. */
   runModes: RUN_MODE[];
 
   constructor(name: string) {
@@ -24,17 +27,18 @@ export abstract class Initializer {
   }
 
   /**
-   * Method run as part of the `initialize` lifecycle of your process.  Usually sets api['YourNamespace']
+   * Called during the `initialize` phase. Return a namespace object to attach to `api[this.name]`.
+   * @returns The namespace object (e.g., `{ actions, enqueue, ... }`) that gets set on `api`.
    */
   async initialize?(): Promise<any>;
 
   /**
-   * Method run as part of the `start` lifecycle of your process.  Usually connects to remote servers or processes.
+   * Called during the `start` phase. Connect to external services, bind ports, start workers.
    */
   async start?(): Promise<any>;
 
   /**
-   * Method run as part of the `initialize` lifecycle of your process.  Usually disconnects from remote servers or processes.
+   * Called during the `stop` phase. Disconnect from services, release resources, stop workers.
    */
   async stop?(): Promise<any>;
 }

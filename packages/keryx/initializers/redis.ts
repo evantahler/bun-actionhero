@@ -14,6 +14,11 @@ declare module "../classes/API" {
   }
 }
 
+/**
+ * Initializer that manages two Redis connections: `redis` for general commands and
+ * `subscription` for PubSub. Both are created during `start()` and closed during `stop()`.
+ * Exposes `api.redis.redis` and `api.redis.subscription` as ioredis `RedisClient` instances.
+ */
 export class Redis extends Initializer {
   constructor() {
     super(namespace);

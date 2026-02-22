@@ -1,3 +1,10 @@
+/**
+ * Validate an OAuth redirect URI per RFC 6749 / OAuth 2.1 rules:
+ * no fragments, no userinfo, and HTTPS required for non-localhost URIs.
+ *
+ * @param uri - The redirect URI to validate.
+ * @returns `{ valid: true }` or `{ valid: false, error: string }`.
+ */
 export function validateRedirectUri(uri: string): {
   valid: boolean;
   error?: string;
@@ -32,6 +39,10 @@ export function validateRedirectUri(uri: string): {
   return { valid: true };
 }
 
+/**
+ * Compare two redirect URIs by origin and pathname (ignoring query params).
+ * Returns `false` if either URI is malformed.
+ */
 export function redirectUrisMatch(
   registeredUri: string,
   requestedUri: string,
@@ -48,6 +59,7 @@ export function redirectUrisMatch(
   }
 }
 
+/** Encode a byte array as a URL-safe base64 string (no padding). Used for PKCE code challenges. */
 export function base64UrlEncode(buffer: Uint8Array): string {
   let binary = "";
   for (const byte of buffer) {
@@ -59,6 +71,7 @@ export function base64UrlEncode(buffer: Uint8Array): string {
     .replace(/=+$/, "");
 }
 
+/** Escape a string for safe inclusion in HTML output (prevents XSS). */
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, "&amp;")

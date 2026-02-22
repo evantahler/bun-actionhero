@@ -18,6 +18,12 @@ function getKey(connectionId: Connection["id"]) {
   return `${prefix}:${connectionId}`;
 }
 
+/**
+ * Load a session from Redis by connection ID. Refreshes the TTL on access.
+ *
+ * @param connection - The connection whose session to load.
+ * @returns The parsed session data, or `null` if no session exists.
+ */
 async function load<T extends Record<string, any>>(connection: Connection) {
   const key = getKey(connection.id);
   const data = await api.redis.redis.get(key);
@@ -26,6 +32,13 @@ async function load<T extends Record<string, any>>(connection: Connection) {
   return JSON.parse(data) as SessionData<T>;
 }
 
+/**
+ * Create a new session in Redis for the given connection.
+ *
+ * @param connection - The connection to create a session for.
+ * @param data - Initial session data. Defaults to `{}`.
+ * @returns The newly created `SessionData` object.
+ */
 async function create<T extends Record<string, any>>(
   connection: Connection,
   data = {} as T,
@@ -44,6 +57,13 @@ async function create<T extends Record<string, any>>(
   return sessionData;
 }
 
+/**
+ * Merge new data into an existing session and persist to Redis. Refreshes the TTL.
+ *
+ * @param session - The existing session object to update.
+ * @param data - Partial data to shallow-merge into `session.data`.
+ * @returns The updated `session.data`.
+ */
 async function update<T extends Record<string, any>>(
   session: SessionData<T>,
   data: Record<string, any>,
@@ -55,6 +75,12 @@ async function update<T extends Record<string, any>>(
   return session.data;
 }
 
+/**
+ * Delete a session from Redis.
+ *
+ * @param connection - The connection whose session to destroy.
+ * @returns `true` if a session was deleted, `false` if none existed.
+ */
 async function destroy(connection: Connection) {
   const key = getKey(connection.id);
   const response = await api.redis.redis.del(key);

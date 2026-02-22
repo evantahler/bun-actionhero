@@ -213,6 +213,7 @@ import { SessionMiddleware } from "../middleware/session";
 
 - **No `as any`** — Never use `as any` type assertions. Use `@ts-expect-error` with an explanatory comment when the type system can't express something, or add a proper type/interface.
 - **Always `bunx`, never `npx`** — This is a Bun project. Use `bunx` for all package runner commands.
+- **JSDoc annotations on public APIs** — All public classes, methods, and types in `packages/keryx/` must have JSDoc annotations. Use `@param` for every parameter (with detailed prose explaining edge cases), `@returns` when non-obvious, and `@throws {TypedError}` where applicable. See `Action.run()` in `packages/keryx/classes/Action.ts` as the reference pattern. Keep simpler methods concise — don't over-document the obvious.
 
 ## Testing Patterns
 

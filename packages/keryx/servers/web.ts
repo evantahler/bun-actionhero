@@ -27,6 +27,11 @@ function validateChannelName(channel: string) {
   }
 }
 
+/**
+ * HTTP + WebSocket server built on `Bun.serve`. Handles REST action routing (with path params),
+ * static file serving (with ETag/304 caching), WebSocket connections (actions, PubSub subscribe/unsubscribe),
+ * OAuth endpoints, and MCP SSE streams. Exposes `api.servers.web`.
+ */
 export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   /** The actual port the server bound to (resolved after start, e.g. when config port is 0). */
   port: number = 0;
@@ -77,6 +82,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
+  /**
+   * Main request handler passed to `Bun.serve({ fetch })`. Dispatches to WebSocket upgrade,
+   * static files, OAuth, MCP, or REST action handling in that order.
+   */
   async handleIncomingConnection(
     req: Request,
     server: ReturnType<typeof Bun.serve>,
@@ -129,6 +138,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     return this.handleWebAction(req, parsedUrl, ip, id);
   }
 
+  /** Called when a new WebSocket connection opens. Creates a `Connection` and wires up broadcast delivery. */
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
     //@ts-expect-error (ws.data is not defined in the bun types)
     const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
@@ -140,6 +150,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
   }
 
+  /**
+   * Called when a WebSocket message arrives. Parses JSON, enforces per-connection rate limiting,
+   * and dispatches to action, subscribe, or unsubscribe handlers based on `messageType`.
+   */
   async handleWebSocketConnectionMessage(
     ws: ServerWebSocket,
     message: string | Buffer,
@@ -212,6 +226,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
   }
 
+  /** Called when a WebSocket connection closes. Removes presence from all channels and destroys the connection. */
   async handleWebSocketConnectionClose(ws: ServerWebSocket) {
     const { connection } = api.connections.find(
       "websocket",

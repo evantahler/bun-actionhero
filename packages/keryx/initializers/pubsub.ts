@@ -38,6 +38,13 @@ export class PubSub extends Initializer {
   }
 
   async initialize() {
+    /**
+     * Publish a message to all subscribers of a channel across the cluster via Redis PubSub.
+     *
+     * @param channel - The application-level channel name.
+     * @param message - The message payload (will be JSON-serialized).
+     * @param sender - Identifier of the sending connection. Defaults to `"unknown-sender"`.
+     */
     async function broadcast(
       channel: string,
       message: any,
@@ -67,6 +74,10 @@ export class PubSub extends Initializer {
     }
   }
 
+  /**
+   * Redis subscription callback. Delivers the incoming PubSub message to all local
+   * connections subscribed to the target channel, and forwards to MCP if enabled.
+   */
   async handleMessage(
     _pubSubChannel: string,
     incomingMessage: string | Buffer,

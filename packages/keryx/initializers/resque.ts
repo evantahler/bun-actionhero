@@ -27,6 +27,11 @@ declare module "../classes/API" {
 
 let SERVER_JOB_COUNTER = 1;
 
+/**
+ * Initializer for the node-resque background job system. Manages the queue, scheduler,
+ * and worker pool. All actions are automatically registered as resque jobs.
+ * Exposes `api.resque.queue`, `api.resque.scheduler`, and `api.resque.workers`.
+ */
 export class Resque extends Initializer {
   constructor() {
     super(namespace);
@@ -36,6 +41,7 @@ export class Resque extends Initializer {
     this.stopPriority = 900;
   }
 
+  /** Create and connect the resque `Queue` instance (used for enqueuing jobs). */
   startQueue = async () => {
     api.resque.queue = new Queue(
       { connection: { redis: api.redis.redis } },
@@ -49,12 +55,14 @@ export class Resque extends Initializer {
     await api.resque.queue.connect();
   };
 
+  /** Disconnect the resque `Queue`. */
   stopQueue = async () => {
     if (api.resque.queue) {
       return api.resque.queue.end();
     }
   };
 
+  /** Create and start the resque `Scheduler` (leader election, delayed job promotion, stuck worker cleanup). */
   startScheduler = async () => {
     if (config.tasks.enabled === true) {
       api.resque.scheduler = new Scheduler({
@@ -96,12 +104,14 @@ export class Resque extends Initializer {
     }
   };
 
+  /** Stop the resque `Scheduler` and disconnect. */
   stopScheduler = async () => {
     if (api.resque.scheduler && api.resque.scheduler.connection.connected) {
       await api.resque.scheduler.end();
     }
   };
 
+  /** Spin up `config.tasks.taskProcessors` worker instances and connect them to Redis. */
   startWorkers = async () => {
     let id = 0;
 
@@ -177,6 +187,7 @@ export class Resque extends Initializer {
     }
   };
 
+  /** Gracefully stop all workers: signal them to stop polling, drain in-flight operations, then disconnect. */
   stopWorkers = async () => {
     // Signal all workers to stop polling/pinging before closing connections.
     // worker.end() clears timers and closes the Redis connection, but if a
@@ -208,6 +219,11 @@ export class Resque extends Initializer {
     return jobs;
   };
 
+  /**
+   * Wrap an action as a node-resque job. Creates a temporary `Connection` with type `"resque"`,
+   * converts inputs to `FormData`, and runs the action via `connection.act()`. Handles
+   * fan-out result/error collection and recurring task re-enqueue.
+   */
   wrapActionAsJob = (
     action: Action,
   ): Job<Awaited<ReturnType<(typeof action)["run"]>>> => {

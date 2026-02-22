@@ -1,3 +1,7 @@
+/**
+ * Categorizes all framework errors. Each type maps to an HTTP status code via `ErrorStatusCodes`.
+ * Actions should always throw `TypedError` with one of these types.
+ */
 export enum ErrorType {
   // general
   "SERVER_INITIALIZATION" = "SERVER_INITIALIZATION",
@@ -33,6 +37,7 @@ export enum ErrorType {
   "CONNECTION_TASK_DEFINITION" = "CONNECTION_TASK_DEFINITION",
 }
 
+/** Maps each `ErrorType` to the HTTP status code returned to the client. */
 export const ErrorStatusCodes: Record<ErrorType, number> = {
   [ErrorType.SERVER_INITIALIZATION]: 500,
   [ErrorType.SERVER_START]: 500,
@@ -64,16 +69,29 @@ export const ErrorStatusCodes: Record<ErrorType, number> = {
 };
 
 export type TypedErrorArgs = {
+  /** Human-readable error message returned to the client. */
   message: string;
+  /** The error category, which determines the HTTP status code. */
   type: ErrorType;
+  /** The original caught error, if wrapping. Its stack trace is preserved on the `TypedError`. */
   originalError?: unknown;
+  /** The param key that caused the error (for validation errors). */
   key?: string;
+  /** The param value that caused the error (for validation errors). */
   value?: any;
 };
 
+/**
+ * Structured error class for action and framework failures. Extends `Error` with an
+ * `ErrorType` that maps to an HTTP status code, and optional `key`/`value` fields for
+ * param validation errors. If `originalError` is provided, its stack trace is preserved.
+ */
 export class TypedError extends Error {
+  /** The error category, used to determine the HTTP status code via `ErrorStatusCodes`. */
   type: ErrorType;
+  /** The param key that caused the error (for validation errors). */
   key?: string;
+  /** The param value that caused the error (for validation errors). */
   value?: any;
 
   constructor(args: TypedErrorArgs) {
