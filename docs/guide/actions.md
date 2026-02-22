@@ -43,6 +43,7 @@ That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hi
 | `task`        | `{ queue, frequency? }` | Makes this action schedulable as a background job                              |
 | `middleware`  | `ActionMiddleware[]`    | Runs before/after the action (auth, logging, etc.)                             |
 | `mcp`         | `McpActionConfig`       | Controls MCP tool exposure (default: enabled)                                  |
+| `timeout`     | `number`                | Per-action timeout in ms (overrides `config.actions.timeout`; `0` disables)    |
 
 ## Input Validation
 
@@ -126,6 +127,37 @@ task = { queue: "default", frequency: 1000 * 60 * 60 }; // every hour
 - `frequency` — optional interval in ms for recurring execution
 
 See [Tasks](/guide/tasks) for the full story on background processing and the fan-out pattern.
+
+## Timeouts
+
+Every action execution is wrapped with a timeout (default: 5 minutes). If an action exceeds its timeout, the framework aborts it and returns an HTTP `408` error with type `CONNECTION_ACTION_TIMEOUT`.
+
+The global default is set in `config.actions.timeout` (env: `ACTION_TIMEOUT`). You can override it per-action:
+
+```ts
+export class SlowReport extends Action {
+  name = "report:generate";
+  timeout = 600_000; // 10 minutes for this action
+  // ...
+}
+```
+
+Set `timeout = 0` to disable the timeout for a specific action.
+
+### AbortSignal
+
+When timeouts are enabled, `run()` receives an `AbortSignal` as its third argument. Long-running actions should check the signal or pass it to cancellable APIs:
+
+```ts
+async run(params: ActionParams<SlowReport>, connection?: Connection, abortSignal?: AbortSignal) {
+  const res = await fetch("https://slow-api.example.com/data", {
+    signal: abortSignal,
+  });
+  // ...
+}
+```
+
+If the action doesn't check the signal, the timeout still works — `Promise.race()` ensures the caller gets the timeout error immediately.
 
 ## Error Handling
 

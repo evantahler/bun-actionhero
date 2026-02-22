@@ -45,7 +45,7 @@ describe("upgradeProject", () => {
     expect(output).toContain("up to date");
     expect(output).not.toContain("⚡ updated");
     expect(output).not.toContain("+ created");
-    expect(output).toContain("15 already up to date");
+    expect(output).toContain("16 already up to date");
   });
 
   test("detects and updates modified config file with --force", async () => {

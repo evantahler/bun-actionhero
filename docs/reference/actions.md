@@ -30,6 +30,9 @@ abstract class Action {
     method: HTTP_METHOD;
   };
 
+  /** Per-action timeout in ms (overrides config.actions.timeout; 0 disables) */
+  timeout?: number;
+
   /** Background task config — queue is required, frequency makes it recurring */
   task?: {
     frequency?: number;
@@ -39,10 +42,12 @@ abstract class Action {
   /**
    * The handler. Return data to send to the client.
    * Throw TypedError for error responses.
+   * abortSignal is fired when the action timeout elapses.
    */
   abstract run(
     params: ActionParams<Action>,
     connection?: Connection,
+    abortSignal?: AbortSignal,
   ): Promise<any>;
 }
 ```

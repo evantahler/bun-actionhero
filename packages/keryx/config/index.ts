@@ -1,3 +1,4 @@
+import { configActions } from "./actions";
 import { configChannels } from "./channels";
 import { configDatabase } from "./database";
 import { configLogger } from "./logger";
@@ -11,6 +12,7 @@ import { configSession } from "./session";
 import { configTasks } from "./tasks";
 
 export const config = {
+  actions: configActions,
   channels: configChannels,
   process: configProcess,
   logger: configLogger,

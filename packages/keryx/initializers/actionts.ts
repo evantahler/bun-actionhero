@@ -5,12 +5,10 @@ import { api, logger } from "../api";
 import { DEFAULT_QUEUE, type Action } from "../classes/Action";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
+import { config } from "../config";
 import { globLoader } from "../util/glob";
 
 const namespace = "actions";
-
-const DEFAULT_FAN_OUT_BATCH_SIZE = 100;
-const DEFAULT_FAN_OUT_RESULT_TTL = 600; // 10 minutes in seconds
 
 export type FanOutJob = {
   action: string;
@@ -130,8 +128,10 @@ export class Actions extends Initializer {
       return { ...job, queue: resolvedQueue, inputs: job.inputs ?? {} };
     });
 
-    const batchSize = resolvedOptions.batchSize ?? DEFAULT_FAN_OUT_BATCH_SIZE;
-    const resultTtl = resolvedOptions.resultTtl ?? DEFAULT_FAN_OUT_RESULT_TTL;
+    const batchSize =
+      resolvedOptions.batchSize ?? config.actions.fanOutBatchSize;
+    const resultTtl =
+      resolvedOptions.resultTtl ?? config.actions.fanOutResultTtl;
     const fanOutId = randomUUID();
     const metaKey = `fanout:${fanOutId}`;
 
