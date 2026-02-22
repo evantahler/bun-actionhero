@@ -248,6 +248,10 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     ws: ServerWebSocket,
     formattedMessage: ActionParams<any>,
   ) {
+    if (config.server.web.requestId.header) {
+      connection.requestId = randomUUID();
+    }
+
     const params = new FormData();
     for (const [key, value] of Object.entries(formattedMessage.params)) {
       params.append(key, value as string);
@@ -399,6 +403,16 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const connection = new Connection("web", ip, id);
+
+    if (config.server.web.requestId.header) {
+      const headerName = config.server.web.requestId.header;
+      const incomingId = req.headers.get(headerName);
+      connection.requestId =
+        config.server.web.requestId.trustProxy && incomingId
+          ? incomingId
+          : randomUUID();
+    }
+
     const requestOrigin = req.headers.get("origin") ?? undefined;
 
     // Handle OPTIONS requests.
@@ -719,6 +733,10 @@ const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
       if (rateLimitInfo.retryAfter !== undefined) {
         headers["Retry-After"] = String(rateLimitInfo.retryAfter);
       }
+    }
+
+    if (config.server.web.requestId.header && connection.requestId) {
+      headers[config.server.web.requestId.header] = connection.requestId;
     }
   }
 

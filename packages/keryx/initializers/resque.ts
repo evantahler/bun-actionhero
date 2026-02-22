@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import {
   Queue,
   Scheduler,
@@ -220,6 +221,12 @@ export class Resque extends Initializer {
           "resque",
           `job:${api.process.name}:${SERVER_JOB_COUNTER++}}`,
         );
+
+        if (config.server.web.requestId.header) {
+          connection.requestId =
+            (params._requestId as string | undefined) ?? randomUUID();
+        }
+
         const paramsAsFormData = new FormData();
 
         if (typeof params.entries === "function") {

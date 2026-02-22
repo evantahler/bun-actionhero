@@ -126,6 +126,15 @@ The helper is also type-aware — it parses `"true"`/`"false"` strings into bool
 | `websocketMaxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND`         | `20`                                             |
 | `websocketMaxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`               | `100`                                            |
 
+#### Request IDs
+
+| Key                    | Env Var                      | Default          | Description                                                |
+| ---------------------- | ---------------------------- | ---------------- | ---------------------------------------------------------- |
+| `requestId.header`     | `WEB_REQUEST_ID_HEADER`      | `"X-Request-Id"` | Header name for request/response (empty string to disable) |
+| `requestId.trustProxy` | `WEB_REQUEST_ID_TRUST_PROXY` | `false`          | Accept incoming header value from proxies                  |
+
+See the [Security guide](/guide/security#request-ids) for details.
+
 #### Security Headers
 
 All HTTP responses include these headers. Each is configurable:

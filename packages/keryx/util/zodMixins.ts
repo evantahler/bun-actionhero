@@ -1,11 +1,11 @@
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "zod/v4";
 import { api } from "../api";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
 // Zod v4: Extend GlobalMeta to support custom 'isSecret' metadata
 // This allows using .meta({ isSecret: true }) on any zod schema
-declare module "zod" {
+declare module "zod/v4" {
   interface GlobalMeta {
     isSecret?: boolean;
   }

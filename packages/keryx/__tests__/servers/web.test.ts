@@ -192,6 +192,72 @@ describe("cookies", () => {
   });
 });
 
+describe("request IDs", () => {
+  test("responses include X-Request-Id header with UUID format", async () => {
+    const res = await fetch(url + "/api/status");
+    const requestId = res.headers.get("X-Request-Id");
+    expect(requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+
+  test("each request gets a unique X-Request-Id", async () => {
+    const res1 = await fetch(url + "/api/status");
+    const res2 = await fetch(url + "/api/status");
+    expect(res1.headers.get("X-Request-Id")).not.toBe(
+      res2.headers.get("X-Request-Id"),
+    );
+  });
+
+  test("respects incoming X-Request-Id when trustProxy is true", async () => {
+    const original = config.server.web.requestId.trustProxy;
+    (config.server.web.requestId as any).trustProxy = true;
+    try {
+      const incomingId = crypto.randomUUID();
+      const res = await fetch(url + "/api/status", {
+        headers: { "X-Request-Id": incomingId },
+      });
+      expect(res.headers.get("X-Request-Id")).toBe(incomingId);
+    } finally {
+      (config.server.web.requestId as any).trustProxy = original;
+    }
+  });
+
+  test("ignores incoming X-Request-Id when trustProxy is false", async () => {
+    const original = config.server.web.requestId.trustProxy;
+    (config.server.web.requestId as any).trustProxy = false;
+    try {
+      const sentId = crypto.randomUUID();
+      const res = await fetch(url + "/api/status", {
+        headers: { "X-Request-Id": sentId },
+      });
+      expect(res.headers.get("X-Request-Id")).not.toBe(sentId);
+    } finally {
+      (config.server.web.requestId as any).trustProxy = original;
+    }
+  });
+
+  test("no X-Request-Id header when requestId.header is empty", async () => {
+    const original = config.server.web.requestId.header;
+    (config.server.web.requestId as any).header = "";
+    try {
+      const res = await fetch(url + "/api/status");
+      expect(res.headers.get("X-Request-Id")).toBeNull();
+    } finally {
+      (config.server.web.requestId as any).header = original;
+    }
+  });
+
+  test("error responses also include X-Request-Id header", async () => {
+    const res = await fetch(url + "/api/non-existent-action");
+    expect(res.status).toBe(404);
+    const requestId = res.headers.get("X-Request-Id");
+    expect(requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    );
+  });
+});
+
 describe("static files", () => {
   test("serves a file from the static directory", async () => {
     const res = await fetch(url + "/test.txt");

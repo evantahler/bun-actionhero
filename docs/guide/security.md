@@ -145,6 +145,31 @@ By default, error responses include stack traces in development but omit them in
 
 The web server default is based on `NODE_ENV` — when `NODE_ENV=production`, stack traces are automatically hidden from HTTP responses to avoid leaking internal implementation details.
 
+## Request IDs
+
+Every HTTP response includes a unique request ID for tracing and debugging. By default, the server generates a UUID v4 for each request and returns it in the `X-Request-Id` header. WebSocket messages and background tasks also get their own request IDs, which appear in log output.
+
+| Config Key   | Env Var                      | Default          | Description                                                |
+| ------------ | ---------------------------- | ---------------- | ---------------------------------------------------------- |
+| `header`     | `WEB_REQUEST_ID_HEADER`      | `"X-Request-Id"` | Header name for request/response (empty string to disable) |
+| `trustProxy` | `WEB_REQUEST_ID_TRUST_PROXY` | `false`          | Accept incoming header value from proxies                  |
+
+When `trustProxy` is `true`, the server uses the value from the incoming request header instead of generating a new one. This is useful when a load balancer or reverse proxy upstream already assigns request IDs and you want to preserve them through the stack.
+
+Request IDs appear in action log lines as `[req:<id>]`:
+
+```
+[ACTION:WEB:OK] status (3ms) [GET] 127.0.0.1(http://localhost:8080/api/status) [req:a1b2c3d4-...] {}
+```
+
+For fan-out tasks, you can propagate the parent's request ID to child jobs via `correlationId` in the fan-out options:
+
+```ts
+const result = await api.actions.fanOut("child:action", inputsArray, "worker", {
+  correlationId: connection.requestId,
+});
+```
+
 ## Static File Path Traversal
 
 Static file serving validates requested paths to prevent directory traversal attacks. Requests containing `..` segments that would escape the configured static files directory are rejected with a `403`.
