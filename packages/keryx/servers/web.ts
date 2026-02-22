@@ -34,6 +34,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   url: string = "";
   /** Per-connection message rate tracking (keyed by connection id). */
   private wsRateMap = new Map<string, { count: number; windowStart: number }>();
+  /** Set to true when the server is shutting down; rejects new WS upgrades. */
+  private shuttingDown = false;
 
   constructor() {
     super("web");
@@ -43,6 +45,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async start() {
     if (config.server.web.enabled !== true) return;
+    this.shuttingDown = false;
 
     let startupAttempts = 0;
     try {
@@ -70,7 +73,57 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
   async stop() {
     if (this.server) {
+      this.shuttingDown = true;
+
+      // Send close frame to all WebSocket connections
+      const wsConnections: ServerWebSocket[] = [];
+      for (const connection of api.connections.connections.values()) {
+        if (connection.type === "websocket" && connection.rawConnection) {
+          wsConnections.push(connection.rawConnection);
+        }
+      }
+
+      if (wsConnections.length > 0) {
+        logger.info(
+          `Draining ${wsConnections.length} WebSocket connection(s)...`,
+        );
+
+        for (const ws of wsConnections) {
+          try {
+            ws.close(1001, "Server shutting down");
+          } catch (_e) {
+            // Connection may already be closed
+          }
+        }
+
+        // Wait for clients to disconnect gracefully, up to the drain timeout
+        const drainTimeout = config.server.web.websocketDrainTimeout;
+        const deadline = Date.now() + drainTimeout;
+        while (Date.now() < deadline) {
+          const remaining = [...api.connections.connections.values()].filter(
+            (c) => c.type === "websocket",
+          );
+          if (remaining.length === 0) break;
+          await Bun.sleep(50);
+        }
+
+        // Force-destroy any lingering WebSocket connections
+        const lingering = [...api.connections.connections.values()].filter(
+          (c) => c.type === "websocket",
+        );
+        for (const connection of lingering) {
+          connection.destroy();
+        }
+
+        if (lingering.length > 0) {
+          logger.info(
+            `Force-closed ${lingering.length} lingering WebSocket connection(s)`,
+          );
+        }
+      }
+
       this.server.stop(true);
+
       logger.info(
         `stopped app server @ ${config.server.web.host}:${config.server.web.port + 1}`,
       );
@@ -85,6 +138,14 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const headers = req.headers;
     const cookies = cookie.parse(req.headers.get("cookie") ?? "");
     const id = cookies[config.session.cookieName] || randomUUID();
+
+    // Reject new WebSocket upgrades during shutdown
+    if (
+      this.shuttingDown &&
+      req.headers.get("upgrade")?.toLowerCase() === "websocket"
+    ) {
+      return new Response("Server is shutting down", { status: 503 });
+    }
 
     // Validate Origin header before WebSocket upgrade to prevent CSWSH
     if (req.headers.get("upgrade")?.toLowerCase() === "websocket") {
