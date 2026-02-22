@@ -11,22 +11,30 @@ export enum LogLevel {
   "fatal" = "fatal",
 }
 
+export enum LogFormat {
+  "text" = "text",
+  "json" = "json",
+}
+
 /**
- * The Logger Class.  I write to stdout or stderr, and can be colorized.
+ * The Logger Class. Writes to stdout/stderr in either human-readable text format
+ * (with optional ANSI colors) or structured NDJSON format for log aggregation systems.
  */
 export class Logger {
   /** Minimum log level to output. Messages below this level are silently dropped. */
   level: LogLevel;
-  /** Whether to apply ANSI color codes to the output. */
+  /** Whether to apply ANSI color codes to the output (text format only). */
   colorize: boolean;
   /** Whether to prepend an ISO-8601 timestamp to each log line. */
   includeTimestamps: boolean;
-  /** Indentation spaces used when JSON-stringifying the optional object argument. */
+  /** Indentation spaces used when JSON-stringifying the optional data argument in text mode. */
   jSONObjectParsePadding: number;
   /** When `true`, all logging is suppressed (used by CLI mode). */
   quiet: boolean;
   /** The output function — defaults to `console.log`. Override for custom transports. */
   outputStream: typeof console.log;
+  /** Output format: `"text"` for human-readable colored output, `"json"` for structured NDJSON. */
+  format: LogFormat;
 
   constructor(config: typeof configLogger) {
     this.level = config.level;
@@ -35,17 +43,23 @@ export class Logger {
     this.jSONObjectParsePadding = 4;
     this.quiet = false;
     this.outputStream = console.log;
+    this.format = config.format;
   }
 
   /**
    * Core logging method. Formats and writes a log line to `outputStream` if the given
-   * level meets the minimum threshold. Optionally includes a timestamp and pretty-printed object.
+   * level meets the minimum threshold.
+   *
+   * In text mode, outputs a human-readable string with optional timestamp, colors, and
+   * pretty-printed data object. In JSON mode, outputs a single NDJSON line with structured
+   * fields including `timestamp`, `level`, `message`, `pid`, and any fields from `data`.
    *
    * @param level - The severity level of this log entry.
    * @param message - The log message string.
-   * @param object - An optional object to JSON-stringify and append to the log line.
+   * @param data - Optional structured data to include. In text mode, JSON-stringified and
+   *   appended to the log line. In JSON mode, merged into the output object.
    */
-  log(level: LogLevel, message: string, object?: any) {
+  log(level: LogLevel, message: string, data?: any) {
     if (this.quiet) return;
 
     if (
@@ -55,6 +69,68 @@ export class Logger {
       return;
     }
 
+    if (this.format === LogFormat.json) {
+      this.logJson(level, message, data);
+    } else {
+      this.logText(level, message, data);
+    }
+  }
+
+  /**
+   * Log a trace message.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  trace(message: string, data?: any) {
+    this.log(LogLevel.trace, message, data);
+  }
+
+  /**
+   * Log a debug message.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  debug(message: string, data?: any) {
+    this.log(LogLevel.debug, message, data);
+  }
+
+  /**
+   * Log an info message.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  info(message: string, data?: any) {
+    this.log(LogLevel.info, message, data);
+  }
+
+  /**
+   * Log a warning.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  warn(message: string, data?: any) {
+    this.log(LogLevel.warn, message, data);
+  }
+
+  /**
+   * Log an error.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  error(message: string, data?: any) {
+    this.log(LogLevel.error, message, data);
+  }
+
+  /**
+   * Log a fatal error.
+   * @param message - The message to log.
+   * @param data - Optional structured data to include in the log entry.
+   */
+  fatal(message: string, data?: any) {
+    this.log(LogLevel.fatal, message, data);
+  }
+
+  private logText(level: LogLevel, message: string, data?: any) {
     let timestamp = this.includeTimestamps ? `${new Date().toISOString()}` : "";
     if (this.colorize && timestamp.length > 0) {
       timestamp = colors.gray(timestamp);
@@ -62,12 +138,12 @@ export class Logger {
 
     let formattedLevel = `[${level}]`;
     if (this.colorize) {
-      formattedLevel = this.colorFromLopLevel(level)(formattedLevel);
+      formattedLevel = this.colorFromLogLevel(level)(formattedLevel);
     }
 
     let prettyObject =
-      object !== undefined
-        ? JSON.stringify(object, null, this.jSONObjectParsePadding)
+      data !== undefined
+        ? JSON.stringify(data, null, this.jSONObjectParsePadding)
         : "";
     if (this.colorize && prettyObject.length > 0) {
       prettyObject = colors.cyan(prettyObject);
@@ -78,61 +154,26 @@ export class Logger {
     );
   }
 
-  /**
-   * Log a trace message.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  trace(message: string, object?: any) {
-    this.log(LogLevel.trace, message, object);
+  private logJson(level: LogLevel, message: string, data?: any) {
+    const entry: Record<string, any> = {
+      timestamp: new Date().toISOString(),
+      level,
+      message,
+      pid: process.pid,
+    };
+
+    if (data !== undefined && data !== null) {
+      if (typeof data === "object" && !Array.isArray(data)) {
+        Object.assign(entry, data);
+      } else {
+        entry.data = data;
+      }
+    }
+
+    this.outputStream(JSON.stringify(entry));
   }
 
-  /**
-   * Log a debug message.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  debug(message: string, object?: any) {
-    this.log(LogLevel.debug, message, object);
-  }
-
-  /**
-   * Log an info message.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  info(message: string, object?: any) {
-    this.log(LogLevel.info, message, object);
-  }
-
-  /**
-   * Log a warning.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  warn(message: string, object?: any) {
-    this.log(LogLevel.warn, message, object);
-  }
-
-  /**
-   * Log an error.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  error(message: string, object?: any) {
-    this.log(LogLevel.error, message, object);
-  }
-
-  /**
-   * Log a fatal error.
-   * @param message - The message to log.
-   * @param object - The object to log.
-   */
-  fatal(message: string, object?: any) {
-    this.log(LogLevel.fatal, message, object);
-  }
-
-  private colorFromLopLevel(level: LogLevel) {
+  private colorFromLogLevel(level: LogLevel) {
     switch (level) {
       case LogLevel.trace:
         return colors.gray;

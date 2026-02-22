@@ -44,6 +44,7 @@ export const configServerWeb = {
     "WS_MAX_SUBSCRIPTIONS",
     100,
   ),
+  websocketDrainTimeout: await loadFromEnvIfSet("WS_DRAIN_TIMEOUT", 5000),
   includeStackInErrors: await loadFromEnvIfSet(
     "WEB_SERVER_INCLUDE_STACK_IN_ERRORS",
     (Bun.env.NODE_ENV ?? "development") !== "production",

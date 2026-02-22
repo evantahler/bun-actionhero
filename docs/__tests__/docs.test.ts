@@ -179,6 +179,99 @@ describe("internal links", () => {
   });
 });
 
+describe("internal link anchors", () => {
+  /** Convert a markdown heading to its VitePress slug (GitHub-flavored). */
+  function headingToSlug(heading: string): string {
+    return heading
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "") // strip non-word chars except spaces/hyphens
+      .replace(/\s+/g, "-") // spaces → hyphens
+      .replace(/-+/g, "-") // collapse multiple hyphens
+      .replace(/^-|-$/g, ""); // trim leading/trailing hyphens
+  }
+
+  /** Extract all heading slugs from a markdown file. */
+  function extractHeadingSlugs(content: string): Set<string> {
+    const slugs = new Set<string>();
+    for (const match of content.matchAll(/^#{1,6}\s+(.+)$/gm)) {
+      // Strip inline code backticks and markdown links for slug generation
+      const text = match[1]
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+      slugs.add(headingToSlug(text));
+    }
+    return slugs;
+  }
+
+  test("all internal link anchors resolve to headings", () => {
+    const allMarkdown = getMarkdownFiles(docsDir).filter(
+      (f) => !f.includes("node_modules"),
+    );
+    const broken: string[] = [];
+
+    for (const file of allMarkdown) {
+      const content = readFileSync(file, "utf-8");
+      // Match [text](/guide/foo#anchor) or [text](/reference/foo#anchor)
+      const linkRefs = content.matchAll(
+        /\[.*?\]\(\/(guide|reference)(\/[^)#]*)?#([^)]+)\)/g,
+      );
+      for (const match of linkRefs) {
+        const link = "/" + match[1] + (match[2] ?? "");
+        const anchor = match[3];
+        const targetFile = link.endsWith("/")
+          ? resolve(docsDir, link.slice(1) + "index.md")
+          : resolve(docsDir, link.slice(1) + ".md");
+
+        if (!existsSync(targetFile)) {
+          broken.push(
+            `${relative(docsDir, file)}: ${link}#${anchor} (file missing)`,
+          );
+          continue;
+        }
+
+        const targetContent = readFileSync(targetFile, "utf-8");
+        const slugs = extractHeadingSlugs(targetContent);
+        if (!slugs.has(anchor)) {
+          broken.push(
+            `${relative(docsDir, file)}: ${link}#${anchor} (no such heading)`,
+          );
+        }
+      }
+    }
+    expect(broken).toEqual([]);
+  });
+});
+
+describe("source sync", () => {
+  test("CLI docs list all generator types from source", () => {
+    const generateSrc = readFileSync(
+      resolve(docsDir, "..", "packages", "keryx", "util", "generate.ts"),
+      "utf-8",
+    );
+    // Extract VALID_TYPES array values from source
+    const typesMatch = generateSrc.match(
+      /VALID_TYPES\s*=\s*\[([\s\S]*?)\]\s*as\s*const/,
+    );
+    expect(typesMatch).not.toBeNull();
+
+    const sourceTypes = [...typesMatch![1].matchAll(/"(\w+)"/g)].map(
+      (m) => m[1],
+    );
+    expect(sourceTypes.length).toBeGreaterThan(0);
+
+    // Check that the CLI docs page mentions every type
+    const cliDocs = readFileSync(resolve(docsDir, "guide", "cli.md"), "utf-8");
+    const missing: string[] = [];
+    for (const type of sourceTypes) {
+      // Each type should appear in the supported types table as `type`
+      if (!cliDocs.includes(`\`${type}\``)) {
+        missing.push(type);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});
+
 describe("llms.txt", () => {
   const distDir = resolve(docsDir, ".vitepress", "dist");
   const llmsTxt = resolve(distDir, "llms.txt");

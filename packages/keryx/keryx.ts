@@ -5,6 +5,7 @@ import path from "path";
 import { Action, api } from "./api";
 import pkg from "./package.json";
 import { addActionToProgram } from "./util/cli";
+import { generateComponent } from "./util/generate";
 import { globLoader } from "./util/glob";
 import {
   interactiveScaffold,
@@ -76,6 +77,51 @@ program
       process.exit(1);
     }
   });
+
+program
+  .command("generate <type> <name>")
+  .alias("g")
+  .summary("Generate a new component")
+  .description(
+    "Scaffold a new action, initializer, middleware, channel, or ops file.\n\n" +
+      "Examples:\n" +
+      "  keryx generate action user:delete\n" +
+      "  keryx generate initializer cache\n" +
+      "  keryx generate middleware auth\n" +
+      "  keryx generate channel notifications\n" +
+      "  keryx generate ops UserOps\n" +
+      "  keryx g action hello",
+  )
+  .option("--dry-run", "Show what would be generated without writing files")
+  .option("--force", "Overwrite existing files")
+  .option("--no-test", "Skip generating a test file")
+  .action(
+    async (
+      type: string,
+      name: string,
+      opts: { dryRun?: boolean; force?: boolean; test?: boolean },
+    ) => {
+      try {
+        const rootDir = process.cwd();
+        const files = await generateComponent(type, name, rootDir, {
+          dryRun: opts.dryRun,
+          force: opts.force,
+          noTest: opts.test === false,
+        });
+
+        if (!opts.dryRun) {
+          console.log("\nGenerated:");
+          files.forEach((f) => console.log(`  ${f}`));
+          console.log();
+        }
+
+        process.exit(0);
+      } catch (e) {
+        console.error((e as Error).message);
+        process.exit(1);
+      }
+    },
+  );
 
 program
   .command("start")
