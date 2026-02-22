@@ -110,6 +110,7 @@ export async function compressResponse(
 
     // Compress the buffered body
     const format: Bun.CompressionFormat = encoding === "br" ? "brotli" : "gzip";
+    // @ts-ignore CompressionStream types from stream/web vs node:stream/web are incompatible with some bun-types versions
     const stream = new Blob([body])
       .stream()
       .pipeThrough(new CompressionStream(format));
@@ -119,6 +120,7 @@ export async function compressResponse(
     headers.append("Vary", "Accept-Encoding");
     headers.delete("Content-Length");
 
+    // @ts-ignore ReadableStream type mismatch between stream/web and some bun-types versions
     return new Response(stream, {
       status: response.status,
       headers,
@@ -127,6 +129,7 @@ export async function compressResponse(
 
   // Content-Length is present and above threshold — stream-compress
   const format: Bun.CompressionFormat = encoding === "br" ? "brotli" : "gzip";
+  // @ts-ignore CompressionStream types from stream/web vs node:stream/web are incompatible with some bun-types versions
   const stream = response.body.pipeThrough(new CompressionStream(format));
 
   const headers = new Headers(response.headers);
@@ -134,6 +137,7 @@ export async function compressResponse(
   headers.append("Vary", "Accept-Encoding");
   headers.delete("Content-Length");
 
+  // @ts-ignore ReadableStream type mismatch between stream/web and some bun-types versions
   return new Response(stream, {
     status: response.status,
     headers,
