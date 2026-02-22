@@ -161,6 +161,48 @@ test("limits max subscriptions per connection", async () => {
   }
 });
 
+test("WebSocket connection survives concurrent HTTP requests", async () => {
+  const { socket, messages } = await buildWebSocket();
+
+  // Send a WebSocket action to confirm it works
+  socket.send(
+    JSON.stringify({
+      messageType: "action",
+      action: "status",
+      messageId: 1,
+      params: {},
+    }),
+  );
+  while (messages.length === 0) await Bun.sleep(10);
+  expect(JSON.parse(messages[0].data).response.name).toBe("test-server");
+
+  // Make concurrent HTTP requests (simulates what the frontend ChatPage does
+  // when it fetches messages via REST while the WebSocket is open)
+  await Promise.all([
+    fetch(serverUrl() + "/api/status"),
+    fetch(serverUrl() + "/api/status"),
+    fetch(serverUrl() + "/api/status"),
+  ]);
+
+  // WebSocket should still work after the HTTP requests complete
+  socket.send(
+    JSON.stringify({
+      messageType: "action",
+      action: "status",
+      messageId: 2,
+      params: {},
+    }),
+  );
+
+  while (messages.length < 2) await Bun.sleep(10);
+  const secondResponse = JSON.parse(messages[1].data);
+  expect(secondResponse.messageId).toBe(2);
+  expect(secondResponse.response.name).toBe("test-server");
+  expect(secondResponse.error).toBeUndefined();
+
+  socket.close();
+});
+
 test("rejects WebSocket upgrade with disallowed Origin header", async () => {
   const originalOrigins = config.server.web.allowedOrigins;
   (config.server.web as any).allowedOrigins = "http://allowed.example.com";

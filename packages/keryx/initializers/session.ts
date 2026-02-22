@@ -14,18 +14,18 @@ export interface SessionData<
   data: T;
 }
 
-function getKey(connectionId: Connection["id"]) {
-  return `${prefix}:${connectionId}`;
+function getKey(sessionId: Connection["sessionId"]) {
+  return `${prefix}:${sessionId}`;
 }
 
 /**
- * Load a session from Redis by connection ID. Refreshes the TTL on access.
+ * Load a session from Redis by session ID. Refreshes the TTL on access.
  *
  * @param connection - The connection whose session to load.
  * @returns The parsed session data, or `null` if no session exists.
  */
 async function load<T extends Record<string, any>>(connection: Connection) {
-  const key = getKey(connection.id);
+  const key = getKey(connection.sessionId);
   const data = await api.redis.redis.get(key);
   if (!data) return null;
   await api.redis.redis.expire(key, config.session.ttl);
@@ -43,10 +43,10 @@ async function create<T extends Record<string, any>>(
   connection: Connection,
   data = {} as T,
 ) {
-  const key = getKey(connection.id);
+  const key = getKey(connection.sessionId);
 
   const sessionData: SessionData<T> = {
-    id: connection.id,
+    id: connection.sessionId,
     cookieName: config.session.cookieName,
     createdAt: new Date().getTime(),
     data,
@@ -82,7 +82,7 @@ async function update<T extends Record<string, any>>(
  * @returns `true` if a session was deleted, `false` if none existed.
  */
 async function destroy(connection: Connection) {
-  const key = getKey(connection.id);
+  const key = getKey(connection.sessionId);
   const response = await api.redis.redis.del(key);
   return response > 0;
 }
