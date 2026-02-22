@@ -1,0 +1,27 @@
+import { Initializer, api } from "keryx";
+
+const namespace = "{{name}}";
+
+declare module "keryx" {
+  export interface API {
+    [namespace]: Awaited<ReturnType<{{className}}["initialize"]>>;
+  }
+}
+
+export class {{className}} extends Initializer {
+  constructor() {
+    super(namespace);
+  }
+
+  async initialize() {
+    return {};
+  }
+
+  async start() {
+    // TODO: connect to services
+  }
+
+  async stop() {
+    // TODO: cleanup
+  }
+}
