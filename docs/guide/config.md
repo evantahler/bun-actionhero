@@ -126,6 +126,15 @@ The helper is also type-aware — it parses `"true"`/`"false"` strings into bool
 | `websocketMaxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND`         | `20`                                             |
 | `websocketMaxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`               | `100`                                            |
 
+#### Correlation IDs
+
+| Key                        | Env Var                          | Default          | Description                                                   |
+| -------------------------- | -------------------------------- | ---------------- | ------------------------------------------------------------- |
+| `correlationId.header`     | `WEB_CORRELATION_ID_HEADER`      | `"X-Request-Id"` | Header name to read/echo (empty string to disable)            |
+| `correlationId.trustProxy` | `WEB_CORRELATION_ID_TRUST_PROXY` | `false`          | Read and echo the incoming correlation ID header from proxies |
+
+See the [Security guide](/guide/security#correlation-ids) for details.
+
 #### Security Headers
 
 All HTTP responses include these headers. Each is configurable:

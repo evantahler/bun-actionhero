@@ -399,6 +399,17 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
     const connection = new Connection("web", ip, id);
+
+    if (
+      config.server.web.correlationId.header &&
+      config.server.web.correlationId.trustProxy
+    ) {
+      const incomingId = req.headers.get(
+        config.server.web.correlationId.header,
+      );
+      if (incomingId) connection.correlationId = incomingId;
+    }
+
     const requestOrigin = req.headers.get("origin") ?? undefined;
 
     // Handle OPTIONS requests.
@@ -719,6 +730,11 @@ const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
       if (rateLimitInfo.retryAfter !== undefined) {
         headers["Retry-After"] = String(rateLimitInfo.retryAfter);
       }
+    }
+
+    if (config.server.web.correlationId.header && connection.correlationId) {
+      headers[config.server.web.correlationId.header] =
+        connection.correlationId;
     }
   }
 

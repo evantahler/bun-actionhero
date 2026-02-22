@@ -19,6 +19,7 @@ export type FanOutJob = {
 export type FanOutOptions = {
   batchSize?: number;
   resultTtl?: number;
+  correlationId?: string;
 };
 
 export type FanOutResult = {
@@ -166,6 +167,9 @@ export class Actions extends Initializer {
           const enrichedInputs = {
             ...job.inputs,
             _fanOutId: fanOutId,
+            ...(resolvedOptions.correlationId
+              ? { _correlationId: resolvedOptions.correlationId }
+              : {}),
           };
           return this.enqueue(job.action, enrichedInputs, job.queue);
         }),

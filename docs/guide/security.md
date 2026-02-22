@@ -145,6 +145,29 @@ By default, error responses include stack traces in development but omit them in
 
 The web server default is based on `NODE_ENV` — when `NODE_ENV=production`, stack traces are automatically hidden from HTTP responses to avoid leaking internal implementation details.
 
+## Correlation IDs
+
+When a reverse proxy or load balancer sets a correlation ID header (e.g. `X-Request-Id`), the server can propagate it through the stack for distributed tracing. Enable this by setting `trustProxy` to `true` — the server will read the configured header from the incoming request and echo it back in the response. If the header is not present on a request, no correlation ID is set.
+
+| Config Key   | Env Var                          | Default          | Description                                                   |
+| ------------ | -------------------------------- | ---------------- | ------------------------------------------------------------- |
+| `header`     | `WEB_CORRELATION_ID_HEADER`      | `"X-Request-Id"` | Header name to read/echo (empty string to disable)            |
+| `trustProxy` | `WEB_CORRELATION_ID_TRUST_PROXY` | `false`          | Read and echo the incoming correlation ID header from proxies |
+
+Correlation IDs appear in action log lines as `[cor:<id>]`:
+
+```
+[ACTION:WEB:OK] status (3ms) [GET] 127.0.0.1(http://localhost:8080/api/status) [cor:a1b2c3d4-...] {}
+```
+
+For fan-out tasks, you can propagate the parent's correlation ID to child jobs via `correlationId` in the fan-out options:
+
+```ts
+const result = await api.actions.fanOut("child:action", inputsArray, "worker", {
+  correlationId: connection.correlationId,
+});
+```
+
 ## Static File Path Traversal
 
 Static file serving validates requested paths to prevent directory traversal attacks. Requests containing `..` segments that would escape the configured static files directory are rejected with a `403`.

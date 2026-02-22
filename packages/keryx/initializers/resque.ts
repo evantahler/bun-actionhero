@@ -220,6 +220,14 @@ export class Resque extends Initializer {
           "resque",
           `job:${api.process.name}:${SERVER_JOB_COUNTER++}}`,
         );
+
+        const propagatedCorrelationId = params._correlationId as
+          | string
+          | undefined;
+        if (propagatedCorrelationId) {
+          connection.correlationId = propagatedCorrelationId;
+        }
+
         const paramsAsFormData = new FormData();
 
         if (typeof params.entries === "function") {

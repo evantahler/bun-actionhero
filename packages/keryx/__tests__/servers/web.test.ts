@@ -192,6 +192,69 @@ describe("cookies", () => {
   });
 });
 
+describe("correlation IDs", () => {
+  test("no X-Request-Id header by default (trustProxy is false)", async () => {
+    const res = await fetch(url + "/api/status");
+    expect(res.headers.get("X-Request-Id")).toBeNull();
+  });
+
+  test("echoes incoming X-Request-Id when trustProxy is true", async () => {
+    const original = config.server.web.correlationId.trustProxy;
+    (config.server.web.correlationId as any).trustProxy = true;
+    try {
+      const incomingId = crypto.randomUUID();
+      const res = await fetch(url + "/api/status", {
+        headers: { "X-Request-Id": incomingId },
+      });
+      expect(res.headers.get("X-Request-Id")).toBe(incomingId);
+    } finally {
+      (config.server.web.correlationId as any).trustProxy = original;
+    }
+  });
+
+  test("no X-Request-Id when trustProxy is true but no header sent", async () => {
+    const original = config.server.web.correlationId.trustProxy;
+    (config.server.web.correlationId as any).trustProxy = true;
+    try {
+      const res = await fetch(url + "/api/status");
+      expect(res.headers.get("X-Request-Id")).toBeNull();
+    } finally {
+      (config.server.web.correlationId as any).trustProxy = original;
+    }
+  });
+
+  test("no X-Request-Id header when correlationId.header is empty", async () => {
+    const originalHeader = config.server.web.correlationId.header;
+    const originalTrust = config.server.web.correlationId.trustProxy;
+    (config.server.web.correlationId as any).header = "";
+    (config.server.web.correlationId as any).trustProxy = true;
+    try {
+      const res = await fetch(url + "/api/status", {
+        headers: { "X-Request-Id": crypto.randomUUID() },
+      });
+      expect(res.headers.get("X-Request-Id")).toBeNull();
+    } finally {
+      (config.server.web.correlationId as any).header = originalHeader;
+      (config.server.web.correlationId as any).trustProxy = originalTrust;
+    }
+  });
+
+  test("error responses also echo X-Request-Id when trustProxy is true", async () => {
+    const original = config.server.web.correlationId.trustProxy;
+    (config.server.web.correlationId as any).trustProxy = true;
+    try {
+      const incomingId = crypto.randomUUID();
+      const res = await fetch(url + "/api/non-existent-action", {
+        headers: { "X-Request-Id": incomingId },
+      });
+      expect(res.status).toBe(404);
+      expect(res.headers.get("X-Request-Id")).toBe(incomingId);
+    } finally {
+      (config.server.web.correlationId as any).trustProxy = original;
+    }
+  });
+});
+
 describe("static files", () => {
   test("serves a file from the static directory", async () => {
     const res = await fetch(url + "/test.txt");
