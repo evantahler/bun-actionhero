@@ -94,6 +94,67 @@ describe("Connection class", () => {
     expect(conn.rawConnection).toBe(rawConn);
   });
 
+  test("sessionId defaults to id when not provided", () => {
+    const conn = new Connection("test", "test-session-default");
+    expect(conn.sessionId).toBe(conn.id);
+  });
+
+  test("sessionId defaults to custom id when not provided", () => {
+    const conn = new Connection("test", "test-session-custom-id", "my-id");
+    expect(conn.id).toBe("my-id");
+    expect(conn.sessionId).toBe("my-id");
+  });
+
+  test("sessionId can differ from id", () => {
+    const conn = new Connection(
+      "websocket",
+      "test-ws",
+      "connection-uuid",
+      undefined,
+      "session-cookie-value",
+    );
+    expect(conn.id).toBe("connection-uuid");
+    expect(conn.sessionId).toBe("session-cookie-value");
+  });
+
+  test("connections with different ids but same sessionId share a session", async () => {
+    const sessionCookie = "shared-session-cookie";
+
+    // Simulate a WebSocket connection with unique id but shared sessionId
+    const wsConn = new Connection(
+      "websocket",
+      "127.0.0.1",
+      "ws-unique-id",
+      undefined,
+      sessionCookie,
+    );
+
+    // Create a session via the WebSocket connection
+    await api.session.create(wsConn, { userId: 42 });
+
+    // Simulate an HTTP connection with a different unique id but same sessionId
+    const httpConn = new Connection(
+      "web",
+      "127.0.0.1",
+      sessionCookie,
+      undefined,
+    );
+
+    // HTTP connection should find the same session
+    const session = await api.session.load(httpConn);
+    expect(session).toBeDefined();
+    expect(session?.data.userId).toBe(42);
+
+    // Both connections should coexist in the map
+    expect(api.connections.connections.get("ws-unique-id")).toBe(wsConn);
+    expect(api.connections.connections.get(sessionCookie)).toBe(httpConn);
+
+    // Destroying the HTTP connection should not remove the WebSocket connection
+    httpConn.destroy();
+    expect(api.connections.connections.get("ws-unique-id")).toBe(wsConn);
+    expect(api.connections.connections.get(sessionCookie)).toBeUndefined();
+  });
+
   test("act executes status action successfully", async () => {
     const conn = new Connection("test", "test-act-status");
     const params = new FormData();

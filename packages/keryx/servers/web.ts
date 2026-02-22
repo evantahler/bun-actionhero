@@ -162,7 +162,12 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       }
     }
 
-    if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
+    if (
+      server.upgrade(req, {
+        data: { ip, id, wsConnectionId: randomUUID(), headers, cookies },
+      })
+    )
+      return; // upgrade the request to a WebSocket
 
     const response = await this.handleHttpRequest(req, server, ip, id);
     return compressResponse(response, req);
@@ -228,7 +233,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
   /** Called when a new WebSocket connection opens. Creates a `Connection` and wires up broadcast delivery. */
   handleWebSocketConnectionOpen(ws: ServerWebSocket) {
     //@ts-expect-error (ws.data is not defined in the bun types)
-    const connection = new Connection("websocket", ws.data.ip, ws.data.id, ws);
+    const { ip, id, wsConnectionId } = ws.data;
+    const connection = new Connection("websocket", ip, wsConnectionId, ws, id);
     connection.onBroadcastMessageReceived = function (payload: PubSubMessage) {
       ws.send(JSON.stringify({ message: payload }));
     };
@@ -251,7 +257,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.ip,
       //@ts-expect-error
-      ws.data.id,
+      ws.data.wsConnectionId,
     );
 
     if (!connection) {
@@ -323,7 +329,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       //@ts-expect-error
       ws.data.ip,
       //@ts-expect-error
-      ws.data.id,
+      ws.data.wsConnectionId,
     );
     if (!connection) return;
 

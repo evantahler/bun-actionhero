@@ -22,6 +22,8 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   identifier: string;
   /** Unique connection ID (UUID by default). Used as the key in `api.connections`. */
   id: string;
+  /** Session ID used for Redis session lookup. Defaults to `id` but may differ for WebSocket connections where the session cookie differs from the connection map key. */
+  sessionId: string;
   /** The connection's session data, lazily loaded on first action invocation. */
   session?: SessionData<T>;
   /** Set of channel names this connection is currently subscribed to. */
@@ -42,16 +44,19 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
    * @param identifier - Human-readable identifier, typically the remote IP address.
    * @param id - Unique connection ID. Defaults to a random UUID.
    * @param rawConnection - The underlying transport handle (e.g., Bun `ServerWebSocket`).
+   * @param sessionId - Session ID for Redis session lookup. Defaults to `id`. Use a different value when the connection map key should differ from the session cookie (e.g., WebSocket connections).
    */
   constructor(
     type: string,
     identifier: string,
     id = randomUUID() as string,
     rawConnection: any = undefined,
+    sessionId?: string,
   ) {
     this.type = type;
     this.identifier = identifier;
     this.id = id;
+    this.sessionId = sessionId ?? id;
     this.sessionLoaded = false;
     this.subscriptions = new Set();
     this.rawConnection = rawConnection;
