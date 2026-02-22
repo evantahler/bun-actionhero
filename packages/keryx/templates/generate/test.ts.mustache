@@ -1,0 +1,16 @@
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { api } from "keryx";
+
+beforeAll(async () => {
+  await api.start();
+});
+
+afterAll(async () => {
+  await api.stop();
+});
+
+describe("{{name}}", () => {
+  test("TODO: implement", async () => {
+    // TODO: implement
+  });
+});

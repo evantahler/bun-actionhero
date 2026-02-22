@@ -150,6 +150,7 @@ Example JSON output:
 | `websocketMaxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`                | `65536` (64 KB)                                  |
 | `websocketMaxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND`         | `20`                                             |
 | `websocketMaxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`               | `100`                                            |
+| `websocketDrainTimeout`         | `WS_DRAIN_TIMEOUT`                   | `5000` (5 s)                                     |
 
 #### Correlation IDs
 

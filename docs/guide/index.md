@@ -76,6 +76,17 @@ my-app/
 
 Actions, initializers, and channels are auto-discovered from their directories — just drop in a `.ts` file and the framework picks it up.
 
+## Generate Components
+
+Use the CLI generator to scaffold new components with boilerplate:
+
+```bash
+bunx keryx generate action user:create
+bunx keryx g initializer cache        # "g" is a shorthand alias
+```
+
+This creates the component file and a matching test file. See the [CLI guide](/guide/cli) for all generator types and options.
+
 ## What's Next
 
 - [Actions](/guide/actions) — the core concept. Everything is an action.
