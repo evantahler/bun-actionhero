@@ -58,8 +58,8 @@ test("unknown actions", async () => {
 });
 
 test("rate limits rapid messages", async () => {
-  const originalLimit = config.server.web.websocketMaxMessagesPerSecond;
-  (config.server.web as any).websocketMaxMessagesPerSecond = 3;
+  const originalLimit = config.server.web.websocket.maxMessagesPerSecond;
+  (config.server.web.websocket as any).maxMessagesPerSecond = 3;
 
   try {
     const { socket, messages } = await buildWebSocket();
@@ -88,13 +88,13 @@ test("rate limits rapid messages", async () => {
 
     socket.close();
   } finally {
-    (config.server.web as any).websocketMaxMessagesPerSecond = originalLimit;
+    (config.server.web.websocket as any).maxMessagesPerSecond = originalLimit;
   }
 });
 
 test("limits max subscriptions per connection", async () => {
-  const originalLimit = config.server.web.websocketMaxSubscriptions;
-  (config.server.web as any).websocketMaxSubscriptions = 2;
+  const originalLimit = config.server.web.websocket.maxSubscriptions;
+  (config.server.web.websocket as any).maxSubscriptions = 2;
 
   // Register temporary test channels so they pass authorization
   class TestChannel extends Channel {
@@ -152,7 +152,7 @@ test("limits max subscriptions per connection", async () => {
 
     socket.close();
   } finally {
-    (config.server.web as any).websocketMaxSubscriptions = originalLimit;
+    (config.server.web.websocket as any).maxSubscriptions = originalLimit;
     // Remove temporary test channels
     for (const tc of testChannels) {
       const idx = api.channels.channels.indexOf(tc);

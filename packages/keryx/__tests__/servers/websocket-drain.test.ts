@@ -31,8 +31,8 @@ test("sends close frame with reason to WebSocket clients on shutdown", async () 
   });
 
   // Use a short drain timeout for tests
-  const originalTimeout = config.server.web.websocketDrainTimeout;
-  (config.server.web as any).websocketDrainTimeout = 500;
+  const originalTimeout = config.server.web.websocket.drainTimeout;
+  (config.server.web.websocket as any).drainTimeout = 500;
 
   try {
     // Stop just the web server (not the full api, so other tests can still use shared resources)
@@ -45,7 +45,7 @@ test("sends close frame with reason to WebSocket clients on shutdown", async () 
     // 1001 code. The server sends close(1001, "Server shutting down").
     expect(event.reason).toBe("Server shutting down");
   } finally {
-    (config.server.web as any).websocketDrainTimeout = originalTimeout;
+    (config.server.web.websocket as any).drainTimeout = originalTimeout;
   }
 });
 
@@ -65,8 +65,8 @@ test("cleans up all WebSocket connections on shutdown", async () => {
   );
   expect(wsBefore.length).toBe(2);
 
-  const originalTimeout = config.server.web.websocketDrainTimeout;
-  (config.server.web as any).websocketDrainTimeout = 500;
+  const originalTimeout = config.server.web.websocket.drainTimeout;
+  (config.server.web.websocket as any).drainTimeout = 500;
 
   try {
     await web.stop();
@@ -77,7 +77,7 @@ test("cleans up all WebSocket connections on shutdown", async () => {
     );
     expect(wsAfter.length).toBe(0);
   } finally {
-    (config.server.web as any).websocketDrainTimeout = originalTimeout;
+    (config.server.web.websocket as any).drainTimeout = originalTimeout;
   }
 });
 

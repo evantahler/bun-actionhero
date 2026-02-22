@@ -11,6 +11,7 @@ import { ErrorStatusCodes, ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import type { PubSubMessage } from "../initializers/pubsub";
 import { isOriginAllowed } from "../util/http";
+import { compressResponse } from "../util/webCompression";
 import {
   buildError,
   buildErrorPayload,
@@ -56,7 +57,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         hostname: config.server.web.host,
         fetch: this.handleIncomingConnection.bind(this),
         websocket: {
-          maxPayloadLength: config.server.web.websocketMaxPayloadSize,
+          maxPayloadLength: config.server.web.websocket.maxPayloadSize,
           open: this.handleWebSocketConnectionOpen.bind(this),
           message: this.handleWebSocketConnectionMessage.bind(this),
           close: this.handleWebSocketConnectionClose.bind(this),
@@ -99,7 +100,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
         }
 
         // Wait for clients to disconnect gracefully, up to the drain timeout
-        const drainTimeout = config.server.web.websocketDrainTimeout;
+        const drainTimeout = config.server.web.websocket.drainTimeout;
         const deadline = Date.now() + drainTimeout;
         while (Date.now() < deadline) {
           const remaining = [...api.connections.connections.values()].filter(
@@ -163,10 +164,24 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     if (server.upgrade(req, { data: { ip, id, headers, cookies } })) return; // upgrade the request to a WebSocket
 
+    const response = await this.handleHttpRequest(req, server, ip, id);
+    return compressResponse(response, req);
+  }
+
+  /**
+   * Routes an HTTP request to the appropriate handler (static files, OAuth, MCP, metrics, or actions).
+   * Called after WebSocket upgrade handling; the returned Response is compressed by the caller.
+   */
+  private async handleHttpRequest(
+    req: Request,
+    server: ReturnType<typeof Bun.serve>,
+    ip: string,
+    id: string,
+  ): Promise<Response> {
     const parsedUrl = parse(req.url!, true);
 
     // Handle static file serving
-    if (config.server.web.staticFilesEnabled && req.method === "GET") {
+    if (config.server.web.staticFiles.enabled && req.method === "GET") {
       const staticResponse = await handleStaticFile(req, parsedUrl);
       if (staticResponse) return staticResponse;
     }
@@ -247,7 +262,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     }
 
     // Per-connection message rate limiting
-    const maxMps = config.server.web.websocketMaxMessagesPerSecond;
+    const maxMps = config.server.web.websocket.maxMessagesPerSecond;
     if (maxMps > 0) {
       const now = Date.now();
       const entry = this.wsRateMap.get(connection.id);

@@ -12,8 +12,8 @@ export async function handleStaticFile(
   req: Request,
   url: ReturnType<typeof parse>,
 ): Promise<Response | null> {
-  const staticRoute = config.server.web.staticFilesRoute;
-  const staticDir = config.server.web.staticFilesDirectory;
+  const staticRoute = config.server.web.staticFiles.route;
+  const staticDir = config.server.web.staticFiles.directory;
 
   if (!url.pathname?.startsWith(staticRoute)) {
     return null;
@@ -79,7 +79,7 @@ async function buildStaticFileResponse(
   const headers = getStaticFileHeaders(filePath);
 
   // Generate ETag from mtime + size (fast, no hashing needed)
-  if (config.server.web.staticFilesEtag) {
+  if (config.server.web.staticFiles.etag) {
     const mtime = file.lastModified;
     const size = file.size;
     const etag = `"${mtime.toString(36)}-${size.toString(36)}"`;
@@ -107,8 +107,8 @@ async function buildStaticFileResponse(
   }
 
   // Add Cache-Control
-  if (config.server.web.staticFilesCacheControl) {
-    headers["Cache-Control"] = config.server.web.staticFilesCacheControl;
+  if (config.server.web.staticFiles.cacheControl) {
+    headers["Cache-Control"] = config.server.web.staticFiles.cacheControl;
   }
 
   return new Response(file, { headers });

@@ -62,7 +62,7 @@ export async function handleWebsocketSubscribe(
     validateChannelName(formattedMessage.channel);
 
     // Check subscription limit
-    const maxSubs = config.server.web.websocketMaxSubscriptions;
+    const maxSubs = config.server.web.websocket.maxSubscriptions;
     if (maxSubs > 0 && connection.subscriptions.size >= maxSubs) {
       throw new TypedError({
         message: `Too many subscriptions (max ${maxSubs})`,
