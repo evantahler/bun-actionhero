@@ -12,7 +12,7 @@ beforeAll(async () => {
   url = serverUrl();
 }, HOOK_TIMEOUT);
 
-const staticDir = config.server.web.staticFilesDirectory;
+const staticDir = config.server.web.staticFiles.directory;
 
 beforeAll(async () => {
   // Ensure the static assets directory exists with test files
@@ -334,21 +334,21 @@ describe("static files", () => {
     expect(await res.text()).toBe("hello static");
   });
 
-  test("omits ETag when staticFilesEtag is disabled", async () => {
-    const original = config.server.web.staticFilesEtag;
-    (config.server.web as any).staticFilesEtag = false;
+  test("omits ETag when staticFiles.etag is disabled", async () => {
+    const original = config.server.web.staticFiles.etag;
+    (config.server.web.staticFiles as any).etag = false;
     try {
       const res = await fetch(url + "/test.txt");
       expect(res.status).toBe(200);
       expect(res.headers.get("etag")).toBeNull();
       expect(res.headers.get("last-modified")).toBeNull();
     } finally {
-      (config.server.web as any).staticFilesEtag = original;
+      (config.server.web.staticFiles as any).etag = original;
     }
   });
 
   test("serves index.html for root static route", async () => {
-    const staticRoute = config.server.web.staticFilesRoute;
+    const staticRoute = config.server.web.staticFiles.route;
     const res = await fetch(url + staticRoute);
     expect(res.status).toBe(200);
     expect(await res.text()).toContain("root index");
@@ -412,5 +412,99 @@ describe("rate limit response headers", () => {
     expect(headers["X-RateLimit-Reset"]).toBeUndefined();
     expect(headers["Retry-After"]).toBeUndefined();
     connection.destroy();
+  });
+});
+
+describe("compression", () => {
+  // The /api/swagger endpoint returns a large OpenAPI spec (well above 1024 bytes)
+  test("returns gzip-compressed response when Accept-Encoding: gzip", async () => {
+    const res = await fetch(url + "/api/swagger", {
+      headers: { "Accept-Encoding": "gzip" },
+      decompress: false,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Encoding")).toBe("gzip");
+    expect(res.headers.get("Vary")).toInclude("Accept-Encoding");
+
+    // Decompress and verify valid JSON
+    const decompressed = new Response(
+      res.body!.pipeThrough(new DecompressionStream("gzip")),
+    );
+    const body = (await decompressed.json()) as Record<string, unknown>;
+    expect(body.openapi).toBeDefined();
+  });
+
+  test("returns brotli-compressed response when Accept-Encoding: br", async () => {
+    const res = await fetch(url + "/api/swagger", {
+      headers: { "Accept-Encoding": "br" },
+      decompress: false,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Encoding")).toBe("br");
+
+    const decompressed = new Response(
+      res.body!.pipeThrough(new DecompressionStream("brotli")),
+    );
+    const body = (await decompressed.json()) as Record<string, unknown>;
+    expect(body.openapi).toBeDefined();
+  });
+
+  test("prefers brotli over gzip when both are accepted", async () => {
+    const res = await fetch(url + "/api/swagger", {
+      headers: { "Accept-Encoding": "gzip, br" },
+      decompress: false,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Encoding")).toBe("br");
+  });
+
+  test("does not compress when Accept-Encoding is absent", async () => {
+    const res = await fetch(url + "/api/swagger", {
+      headers: { "Accept-Encoding": "" },
+      decompress: false,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Encoding")).toBeNull();
+  });
+
+  test("does not compress responses below the threshold", async () => {
+    // /api/status returns a small JSON object (~200 bytes), below the 1024 byte threshold
+    const res = await fetch(url + "/api/status", {
+      headers: { "Accept-Encoding": "gzip" },
+      decompress: false,
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Encoding")).toBeNull();
+  });
+
+  test("does not compress null-body responses", async () => {
+    const res = await fetch(url + "/.well-known/test", {
+      headers: { "Accept-Encoding": "gzip" },
+      decompress: false,
+    });
+    expect(res.status).toBe(404);
+    expect(res.headers.get("Content-Encoding")).toBeNull();
+  });
+
+  test("compresses static text files above threshold", async () => {
+    const largeContent = "x".repeat(2048);
+    writeFileSync(path.join(staticDir, "large.txt"), largeContent);
+
+    try {
+      const res = await fetch(url + "/large.txt", {
+        headers: { "Accept-Encoding": "gzip" },
+        decompress: false,
+      });
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Content-Encoding")).toBe("gzip");
+
+      const decompressed = new Response(
+        res.body!.pipeThrough(new DecompressionStream("gzip")),
+      );
+      const text = await decompressed.text();
+      expect(text).toBe(largeContent);
+    } finally {
+      rmSync(path.join(staticDir, "large.txt"), { force: true });
+    }
   });
 });

@@ -135,22 +135,46 @@ Example JSON output:
 
 ### Web Server
 
-| Key                             | Env Var                              | Default                                          |
-| ------------------------------- | ------------------------------------ | ------------------------------------------------ |
-| `enabled`                       | `WEB_SERVER_ENABLED`                 | `true`                                           |
-| `port`                          | `WEB_SERVER_PORT`                    | `8080`                                           |
-| `host`                          | `WEB_SERVER_HOST`                    | `"localhost"`                                    |
-| `applicationUrl`                | `APPLICATION_URL`                    | `"http://localhost:8080"`                        |
-| `apiRoute`                      | `WEB_SERVER_API_ROUTE`               | `"/api"`                                         |
-| `allowedOrigins`                | `WEB_SERVER_ALLOWED_ORIGINS`         | `"*"`                                            |
-| `allowedMethods`                | `WEB_SERVER_ALLOWED_METHODS`         | `"HEAD, GET, POST, PUT, PATCH, DELETE, OPTIONS"` |
-| `allowedHeaders`                | `WEB_SERVER_ALLOWED_HEADERS`         | `"Content-Type"`                                 |
-| `staticFilesEnabled`            | `WEB_SERVER_STATIC_ENABLED`          | `true`                                           |
-| `includeStackInErrors`          | `WEB_SERVER_INCLUDE_STACK_IN_ERRORS` | `true` (dev) / `false` (prod)                    |
-| `websocketMaxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`                | `65536` (64 KB)                                  |
-| `websocketMaxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND`         | `20`                                             |
-| `websocketMaxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`               | `100`                                            |
-| `websocketDrainTimeout`         | `WS_DRAIN_TIMEOUT`                   | `5000` (5 s)                                     |
+| Key                    | Env Var                              | Default                                          |
+| ---------------------- | ------------------------------------ | ------------------------------------------------ |
+| `enabled`              | `WEB_SERVER_ENABLED`                 | `true`                                           |
+| `port`                 | `WEB_SERVER_PORT`                    | `8080`                                           |
+| `host`                 | `WEB_SERVER_HOST`                    | `"localhost"`                                    |
+| `applicationUrl`       | `APPLICATION_URL`                    | `"http://localhost:8080"`                        |
+| `apiRoute`             | `WEB_SERVER_API_ROUTE`               | `"/api"`                                         |
+| `allowedOrigins`       | `WEB_SERVER_ALLOWED_ORIGINS`         | `"*"`                                            |
+| `allowedMethods`       | `WEB_SERVER_ALLOWED_METHODS`         | `"HEAD, GET, POST, PUT, PATCH, DELETE, OPTIONS"` |
+| `allowedHeaders`       | `WEB_SERVER_ALLOWED_HEADERS`         | `"Content-Type"`                                 |
+| `includeStackInErrors` | `WEB_SERVER_INCLUDE_STACK_IN_ERRORS` | `true` (dev) / `false` (prod)                    |
+
+#### Static Files
+
+| Key                        | Env Var                           | Default                  | Description                         |
+| -------------------------- | --------------------------------- | ------------------------ | ----------------------------------- |
+| `staticFiles.enabled`      | `WEB_SERVER_STATIC_ENABLED`       | `true`                   | Enable static file serving          |
+| `staticFiles.directory`    | `WEB_SERVER_STATIC_DIRECTORY`     | `"assets"`               | Directory to serve files from       |
+| `staticFiles.route`        | `WEB_SERVER_STATIC_ROUTE`         | `"/"`                    | URL route prefix for static files   |
+| `staticFiles.cacheControl` | `WEB_SERVER_STATIC_CACHE_CONTROL` | `"public, max-age=3600"` | Cache-Control header value          |
+| `staticFiles.etag`         | `WEB_SERVER_STATIC_ETAG`          | `true`                   | Enable ETag/304 conditional caching |
+
+#### WebSocket
+
+| Key                              | Env Var                      | Default         | Description                              |
+| -------------------------------- | ---------------------------- | --------------- | ---------------------------------------- |
+| `websocket.maxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`        | `65536` (64 KB) | Max message size in bytes                |
+| `websocket.maxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND` | `20`            | Per-connection rate limit                |
+| `websocket.maxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`       | `100`           | Max channel subscriptions per connection |
+| `websocket.drainTimeout`         | `WS_DRAIN_TIMEOUT`           | `5000` (5 s)    | Graceful shutdown drain period           |
+
+#### Compression
+
+HTTP responses are automatically compressed when the client sends an `Accept-Encoding` header. Brotli is preferred over gzip. Responses below the threshold or with incompressible content types (images, video, etc.) are served uncompressed.
+
+| Key                     | Env Var                     | Default          | Description                                |
+| ----------------------- | --------------------------- | ---------------- | ------------------------------------------ |
+| `compression.enabled`   | `WEB_COMPRESSION_ENABLED`   | `true`           | Enable HTTP response compression           |
+| `compression.threshold` | `WEB_COMPRESSION_THRESHOLD` | `1024`           | Minimum response size in bytes to compress |
+| `compression.encodings` | —                           | `["br", "gzip"]` | Encoding preference order (brotli first)   |
 
 #### Correlation IDs
 

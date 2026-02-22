@@ -97,11 +97,11 @@ Before upgrading an HTTP connection to WebSocket, the server validates the `Orig
 
 ### Message Limits
 
-| Config Key                      | Env Var                      | Default | Description                        |
-| ------------------------------- | ---------------------------- | ------- | ---------------------------------- |
-| `websocketMaxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`        | `65536` | Max message size in bytes (64 KB)  |
-| `websocketMaxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND` | `20`    | Per-connection rate limit          |
-| `websocketMaxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`       | `100`   | Max channel subscriptions per conn |
+| Config Key                       | Env Var                      | Default | Description                        |
+| -------------------------------- | ---------------------------- | ------- | ---------------------------------- |
+| `websocket.maxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`        | `65536` | Max message size in bytes (64 KB)  |
+| `websocket.maxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND` | `20`    | Per-connection rate limit          |
+| `websocket.maxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`       | `100`   | Max channel subscriptions per conn |
 
 Messages exceeding the payload size are rejected. Clients sending more than the per-second limit are disconnected. These protect against resource exhaustion from misbehaving or malicious clients.
 

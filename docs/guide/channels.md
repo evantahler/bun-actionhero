@@ -164,9 +164,9 @@ Before upgrading an HTTP connection to WebSocket, the server checks the `Origin`
 
 Each WebSocket connection is subject to:
 
-- **Message size** — messages larger than `websocketMaxPayloadSize` (default 64 KB) are rejected
-- **Message rate** — clients sending more than `websocketMaxMessagesPerSecond` (default 20/s) are disconnected
-- **Subscription count** — each connection can subscribe to at most `websocketMaxSubscriptions` (default 100) channels
+- **Message size** — messages larger than `websocket.maxPayloadSize` (default 64 KB) are rejected
+- **Message rate** — clients sending more than `websocket.maxMessagesPerSecond` (default 20/s) are disconnected
+- **Subscription count** — each connection can subscribe to at most `websocket.maxSubscriptions` (default 100) channels
 
 All of these are configurable via environment variables. See [Configuration](/guide/config) for details.
 

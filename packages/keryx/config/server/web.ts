@@ -21,30 +21,25 @@ export const configServerWeb = {
     "WEB_SERVER_ALLOWED_HEADERS",
     "Content-Type",
   ),
-  staticFilesEnabled: await loadFromEnvIfSet("WEB_SERVER_STATIC_ENABLED", true),
-  staticFilesDirectory: await loadFromEnvIfSet(
-    "WEB_SERVER_STATIC_DIRECTORY",
-    "assets",
-  ),
-  staticFilesRoute: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
-  staticFilesCacheControl: await loadFromEnvIfSet(
-    "WEB_SERVER_STATIC_CACHE_CONTROL",
-    "public, max-age=3600",
-  ),
-  staticFilesEtag: await loadFromEnvIfSet("WEB_SERVER_STATIC_ETAG", true),
-  websocketMaxPayloadSize: await loadFromEnvIfSet(
-    "WS_MAX_PAYLOAD_SIZE",
-    65_536,
-  ),
-  websocketMaxMessagesPerSecond: await loadFromEnvIfSet(
-    "WS_MAX_MESSAGES_PER_SECOND",
-    20,
-  ),
-  websocketMaxSubscriptions: await loadFromEnvIfSet(
-    "WS_MAX_SUBSCRIPTIONS",
-    100,
-  ),
-  websocketDrainTimeout: await loadFromEnvIfSet("WS_DRAIN_TIMEOUT", 5000),
+  staticFiles: {
+    enabled: await loadFromEnvIfSet("WEB_SERVER_STATIC_ENABLED", true),
+    directory: await loadFromEnvIfSet("WEB_SERVER_STATIC_DIRECTORY", "assets"),
+    route: await loadFromEnvIfSet("WEB_SERVER_STATIC_ROUTE", "/"),
+    cacheControl: await loadFromEnvIfSet(
+      "WEB_SERVER_STATIC_CACHE_CONTROL",
+      "public, max-age=3600",
+    ),
+    etag: await loadFromEnvIfSet("WEB_SERVER_STATIC_ETAG", true),
+  },
+  websocket: {
+    maxPayloadSize: await loadFromEnvIfSet("WS_MAX_PAYLOAD_SIZE", 65_536),
+    maxMessagesPerSecond: await loadFromEnvIfSet(
+      "WS_MAX_MESSAGES_PER_SECOND",
+      20,
+    ),
+    maxSubscriptions: await loadFromEnvIfSet("WS_MAX_SUBSCRIPTIONS", 100),
+    drainTimeout: await loadFromEnvIfSet("WS_DRAIN_TIMEOUT", 5000),
+  },
   includeStackInErrors: await loadFromEnvIfSet(
     "WEB_SERVER_INCLUDE_STACK_IN_ERRORS",
     (Bun.env.NODE_ENV ?? "development") !== "production",
@@ -71,6 +66,11 @@ export const configServerWeb = {
       "strict-origin-when-cross-origin",
     ),
   } as Record<string, string>,
+  compression: {
+    enabled: await loadFromEnvIfSet("WEB_COMPRESSION_ENABLED", true),
+    threshold: await loadFromEnvIfSet("WEB_COMPRESSION_THRESHOLD", 1024),
+    encodings: ["br", "gzip"] as ("br" | "gzip")[],
+  },
   correlationId: {
     header: await loadFromEnvIfSet("WEB_CORRELATION_ID_HEADER", "X-Request-Id"),
     trustProxy: await loadFromEnvIfSet("WEB_CORRELATION_ID_TRUST_PROXY", false),

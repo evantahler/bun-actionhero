@@ -34,7 +34,7 @@ The built-in web server uses `Bun.serve` to handle HTTP requests and WebSocket c
 When an HTTP request comes in, the server:
 
 1. Checks for a WebSocket upgrade — if the client is requesting a WebSocket connection, it upgrades transparently
-2. Tries to serve a static file (if `staticFilesEnabled` is `true` and the path matches)
+2. Tries to serve a static file (if `staticFiles.enabled` is `true` and the path matches)
 3. Matches the request path and method against registered action routes
 4. Extracts params from path segments (`:param`), query string, and request body
 5. Creates a `Connection`, calls `connection.act()` with the action name and params
@@ -66,15 +66,15 @@ The web server can serve static files from a configured directory (default: `ass
 
 All web server settings are in `config.server.web`:
 
-| Key                    | Default       | What it does                  |
-| ---------------------- | ------------- | ----------------------------- |
-| `enabled`              | `true`        | Enable/disable the web server |
-| `port`                 | `8080`        | Listen port                   |
-| `host`                 | `"localhost"` | Bind address                  |
-| `apiRoute`             | `"/api"`      | URL prefix for action routes  |
-| `allowedOrigins`       | `"*"`         | CORS allowed origins          |
-| `staticFilesEnabled`   | `true`        | Serve static files            |
-| `staticFilesDirectory` | `"assets"`    | Directory for static files    |
+| Key                     | Default       | What it does                  |
+| ----------------------- | ------------- | ----------------------------- |
+| `enabled`               | `true`        | Enable/disable the web server |
+| `port`                  | `8080`        | Listen port                   |
+| `host`                  | `"localhost"` | Bind address                  |
+| `apiRoute`              | `"/api"`      | URL prefix for action routes  |
+| `allowedOrigins`        | `"*"`         | CORS allowed origins          |
+| `staticFiles.enabled`   | `true`        | Serve static files            |
+| `staticFiles.directory` | `"assets"`    | Directory for static files    |
 
 ## CLI "Server"
 
