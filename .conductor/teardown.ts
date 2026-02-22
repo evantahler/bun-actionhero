@@ -48,4 +48,30 @@ for (const db of [redisDb, redisDbTest]) {
   }
 }
 
+// Pull latest main in the parent repo (if it's on main)
+const rootPath = process.env.CONDUCTOR_ROOT_PATH;
+const defaultBranch = process.env.CONDUCTOR_DEFAULT_BRANCH ?? "main";
+if (rootPath) {
+  try {
+    const currentBranch =
+      (await $`git -C ${rootPath} branch --show-current`.text()).trim();
+    if (currentBranch === defaultBranch) {
+      console.log(`Pulling latest ${defaultBranch} in parent repo (${rootPath})...`);
+      const result =
+        await $`git -C ${rootPath} pull --ff-only origin ${defaultBranch}`.nothrow();
+      if (result.exitCode === 0) {
+        console.log(`Parent repo updated to latest ${defaultBranch}.`);
+      } else {
+        console.log(`WARNING: Could not pull latest ${defaultBranch} in parent repo.`);
+      }
+    } else {
+      console.log(
+        `Parent repo is on '${currentBranch}', not ${defaultBranch}. Skipping pull.`,
+      );
+    }
+  } catch {
+    console.log("WARNING: Could not update parent repo.");
+  }
+}
+
 console.log("Teardown complete.");
