@@ -9,9 +9,10 @@ export default function Layout() {
 
   return (
     <>
-      <Navbar bg="dark" variant="dark" expand="md" className="mb-4">
+      <Navbar expand="md" className="mb-4">
         <Container>
           <Navbar.Brand as={Link} to="/">
+            <img src="/images/horn.svg" alt="" />
             Keryx
           </Navbar.Brand>
           <Navbar.Toggle />
@@ -54,6 +55,9 @@ export default function Layout() {
       <Container>
         <Outlet />
       </Container>
+      <div className="keryx-footer">
+        <img src="/images/lion-sitting.svg" alt="Keryx" />
+      </div>
     </>
   );
 }

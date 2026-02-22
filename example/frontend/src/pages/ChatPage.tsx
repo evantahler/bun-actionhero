@@ -133,7 +133,7 @@ export default function ChatPage() {
     <>
       <Row className="mb-3">
         <Col>
-          <Card bg="dark" border="secondary">
+          <Card>
             <Card.Header className="d-flex justify-content-between align-items-center">
               <h4 className="mb-0">Chat</h4>
               <div>
@@ -168,7 +168,7 @@ export default function ChatPage() {
                 </Row>
               </Form>
 
-              <Table variant="dark" striped bordered hover responsive>
+              <Table striped bordered hover responsive>
                 <thead>
                   <tr>
                     <th style={{ width: "15%" }}>Who</th>

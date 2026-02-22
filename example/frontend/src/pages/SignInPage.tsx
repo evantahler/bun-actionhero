@@ -32,7 +32,7 @@ export default function SignInPage() {
   return (
     <Row className="justify-content-center mt-4">
       <Col md={6} lg={4}>
-        <Card bg="dark" border="secondary">
+        <Card>
           <Card.Header>
             <h4 className="mb-0">Sign In</h4>
           </Card.Header>

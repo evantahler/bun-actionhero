@@ -16,7 +16,7 @@ export default function SwaggerPage() {
   return (
     <Row className="justify-content-center mt-2">
       <Col lg={12}>
-        <Card bg="dark" border="secondary">
+        <Card>
           <Card.Header className="d-flex justify-content-between align-items-center">
             <h4 className="mb-0">API Documentation</h4>
             {user && (

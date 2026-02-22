@@ -43,11 +43,11 @@ export default function StatusPage() {
   return (
     <Row className="justify-content-center mt-4">
       <Col md={8} lg={6}>
-        <Card bg="dark" border="secondary">
+        <Card>
           <Card.Header className="d-flex justify-content-between align-items-center">
             <h4 className="mb-0">Server Status</h4>
             <Button
-              variant="outline-light"
+              variant="outline-primary"
               size="sm"
               onClick={loadStatus}
               disabled={loading}
@@ -69,7 +69,7 @@ export default function StatusPage() {
               </div>
             )}
             {status && (
-              <Table variant="dark" striped bordered>
+              <Table striped bordered>
                 <tbody>
                   <tr>
                     <td className="fw-bold">Name</td>

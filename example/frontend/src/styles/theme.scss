@@ -1,18 +1,152 @@
-// Bootswatch Vapor theme
-@import "bootswatch/dist/vapor/variables";
+// Keryx custom theme — based on Darkly with warm earth-tone brand colors
+// matching the docs site at keryxjs.com
+
+// Brand palette (from docs)
+$keryx-brand-1: #b8701e; // burnt sienna
+$keryx-brand-2: #cf8128; // golden-orange
+$keryx-brand-3: #bb5533; // terracotta
+$keryx-gold: #e0a04a; // warm gold (dark-mode accent)
+
+// Override Darkly colors before import
+$primary: $keryx-brand-1;
+$info: $keryx-brand-2;
+$warning: #f39c12;
+$link-color: $keryx-gold;
+
+// Warm-tinted grays (slightly brown instead of pure neutral)
+$gray-700: #3d3530;
+$gray-800: #2a2520;
+$gray-900: #1c1816;
+$body-bg: $gray-900;
+$card-bg: $gray-800;
+$card-cap-bg: $gray-700;
+$table-border-color: $gray-700;
+
+// Forms — dark inputs to match the dark theme
+$input-bg: $gray-800;
+$input-color: #e8e0d8;
+$input-border-color: #4a403a;
+$input-placeholder-color: #7a7068;
+$input-group-addon-bg: $gray-700;
+$input-group-addon-color: #adb5bd;
+
+@import "bootswatch/dist/darkly/variables";
 @import "bootstrap/scss/bootstrap";
-@import "bootswatch/dist/vapor/bootswatch";
+@import "bootswatch/dist/darkly/bootswatch";
+
+// ── Global ──────────────────────────────────────────────
 
 body {
   min-height: 100vh;
 }
 
+// ── Navbar ──────────────────────────────────────────────
+
+.navbar {
+  background: linear-gradient(
+    135deg,
+    $keryx-brand-1,
+    $keryx-brand-3
+  ) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+}
+
 .navbar-brand {
   font-weight: bold;
   letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  img {
+    height: 28px;
+    width: 28px;
+  }
 }
 
-// Make swagger UI match the Vapor theme
+// ── Buttons ─────────────────────────────────────────────
+
+.btn-primary {
+  background-color: $keryx-brand-1;
+  border-color: $keryx-brand-1;
+
+  &:hover,
+  &:focus {
+    background-color: $keryx-brand-2;
+    border-color: $keryx-brand-2;
+  }
+
+  &:active {
+    background-color: #9a5e18;
+    border-color: #9a5e18;
+  }
+}
+
+.btn-outline-primary {
+  color: $keryx-gold;
+  border-color: $keryx-gold;
+
+  &:hover,
+  &:focus {
+    background-color: $keryx-brand-1;
+    border-color: $keryx-brand-1;
+    color: #fff;
+  }
+}
+
+// ── Hero section (home page) ────────────────────────────
+
+.keryx-hero {
+  text-align: center;
+  padding: 3rem 1rem;
+
+  .hero-icon {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 1.5rem;
+    filter: drop-shadow(0 4px 12px rgba(184, 112, 30, 0.3));
+  }
+
+  h1 {
+    background: linear-gradient(135deg, $keryx-brand-2, $keryx-brand-3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .lead {
+    color: #b0a89e;
+    font-size: 1.15rem;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+  }
+}
+
+// ── Footer ──────────────────────────────────────────────
+
+.keryx-footer {
+  text-align: center;
+  padding: 2rem 0;
+  margin-top: 3rem;
+  border-top: 1px solid $gray-700;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  img {
+    height: 48px;
+    width: 48px;
+  }
+}
+
+// ── Swagger UI ──────────────────────────────────────────
+
 .swagger-ui {
   font-family:
     system-ui,
@@ -21,9 +155,9 @@ body {
     Roboto,
     sans-serif;
   font-size: 15px;
-  color: #e0e0e0;
+  color: #e8e0d8;
 
-  // Disable Vapor's neon glow text-shadow inside swagger
+  // Kill any inherited text-shadow from theme
   * {
     text-shadow: none !important;
   }
@@ -32,95 +166,313 @@ body {
     display: none;
   }
 
-  // Titles and headings
+  // ─ Wrapper background ─
+  .swagger-ui {
+    background: transparent;
+  }
+
+  // ─ Info header ─
   .info .title {
     color: #fff;
     font-size: 2rem;
   }
 
   .info .description,
-  .info .description p {
+  .info .description p,
+  .info .base-url {
     color: #ccd0d4;
     font-size: 15px;
     line-height: 1.6;
   }
 
-  // Section tags (status, message, etc.)
+  .info a {
+    color: $keryx-gold;
+  }
+
+  // ─ Servers / scheme container ─
+  .scheme-container {
+    background: $gray-800;
+    border-bottom: 1px solid $gray-700;
+    padding: 16px 20px;
+
+    label {
+      color: #ccd0d4;
+      font-weight: 600;
+    }
+
+    select {
+      color: #e8e0d8;
+      background: $gray-900;
+      border: 1px solid #4a403a;
+      border-radius: 4px;
+      padding: 4px 8px;
+    }
+  }
+
+  // ─ Section tags (status, message, session, etc.) ─
+  .opblock-tag-section {
+    margin-bottom: 8px;
+  }
+
   .opblock-tag {
     color: #fff;
     font-size: 1.25rem;
-    border-bottom-color: rgba(255, 255, 255, 0.15);
+    font-weight: 600;
+    border-bottom: 1px solid $gray-700;
+
+    small {
+      color: #9a938b;
+    }
   }
 
-  // Endpoint summaries
-  .opblock-summary-description {
-    color: #d0d4da;
+  // ─ Operation blocks (the colored GET/PUT/POST/DELETE bars) ─
+  // Force all text inside operation summaries to be white/light
+  .opblock {
+    border-color: rgba(0, 0, 0, 0.3);
+    margin-bottom: 8px;
+
+    .opblock-summary {
+      border-bottom-color: rgba(0, 0, 0, 0.2);
+    }
+
+    // Path text
+    .opblock-summary-path {
+      color: #fff !important;
+      font-size: 15px;
+      font-weight: 600;
+
+      // Deprecated strikethrough paths
+      span {
+        color: #fff !important;
+      }
+    }
+
+    // Description text next to path
+    .opblock-summary-description {
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-size: 14px;
+    }
+
+    // The toggle arrow
+    .opblock-control-arrow {
+      fill: #fff;
+    }
+  }
+
+  // Operation block inner body (expanded)
+  .opblock .opblock-section-header {
+    background: $gray-800;
+    border-bottom: 1px solid $gray-700;
+
+    h4,
+    label {
+      color: #e8e0d8;
+    }
+  }
+
+  .opblock-body {
+    background: $gray-900;
+
+    pre.microlight,
+    pre {
+      color: #e8e0d8;
+      font-size: 13px;
+      background: #15110e;
+      border-radius: 4px;
+    }
+  }
+
+  .opblock-description-wrapper,
+  .opblock-external-docs-wrapper {
+    p {
+      color: #ccd0d4;
+    }
+  }
+
+  // ─ Parameters & responses ─
+  .parameter__name {
+    color: #e8e0d8;
     font-size: 14px;
   }
 
-  .opblock-summary-path {
-    font-size: 15px;
+  .parameter__name.required {
+    &::after {
+      color: $keryx-brand-3;
+    }
   }
 
-  // Parameters and responses
-  .parameter__name,
   .parameter__type,
-  .response-col_status,
+  .parameter__in {
+    color: #9a938b;
+    font-size: 13px;
+  }
+
+  .response-col_status {
+    color: #e8e0d8;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
   .response-col_description,
-  .model-title,
-  label,
-  .tab li,
-  .opblock-description-wrapper p,
-  .opblock-external-docs-wrapper p,
-  table thead tr th,
-  table thead tr td,
-  table tbody tr td {
+  .response-col_links {
     color: #ccd0d4;
     font-size: 14px;
   }
 
-  .parameter__name.required::after {
-    color: #ea6a9a;
+  // ─ Tables inside operations ─
+  table {
+    thead tr {
+      th,
+      td {
+        color: #b0a89e;
+        font-size: 13px;
+        border-bottom-color: $gray-700;
+      }
+    }
+
+    tbody tr {
+      td {
+        color: #ccd0d4;
+        font-size: 14px;
+        border-bottom-color: rgba(61, 53, 48, 0.5);
+      }
+    }
   }
 
-  // Backgrounds
-  .scheme-container,
-  .opblock .opblock-section-header {
-    background: #170229;
+  // ─ Tab navigation (e.g. "Example Value | Schema") ─
+  .tab li {
+    color: #9a938b;
+
+    &.active {
+      color: #fff;
+    }
   }
 
-  .opblock-body pre.microlight,
-  .opblock-body pre {
-    color: #e0e0e0;
-    font-size: 13px;
-    background: #0d0117;
-    border-radius: 4px;
+  .tabitem {
+    color: #ccd0d4;
   }
 
-  // Links
-  a {
-    color: #ea6a9a;
+  // ─ Models / schemas ─
+  .model-title {
+    color: #e8e0d8;
+    font-size: 14px;
   }
 
-  // Models
   .model-container,
   .model {
     color: #ccd0d4;
     font-size: 14px;
   }
 
-  // Inputs and selects
-  select,
-  input[type="text"],
-  textarea {
-    color: #e0e0e0;
-    background: #1a0430;
-    border-color: rgba(255, 255, 255, 0.2);
+  .model-toggle::after {
+    filter: invert(1);
   }
 
-  // Server dropdown
+  .prop-type {
+    color: $keryx-gold;
+  }
+
+  .prop-format {
+    color: #9a938b;
+  }
+
+  // ─ Links ─
+  a {
+    color: $keryx-gold;
+  }
+
+  // ─ Method badges (ensure contrast) ─
+  .opblock-summary-method {
+    font-weight: 700;
+    font-size: 14px;
+    min-width: 70px;
+    text-align: center;
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #fff;
+  }
+
+  // ─ Forms / inputs inside Swagger ─
+  select,
+  input[type="text"],
+  input[type="search"],
+  input[type="email"],
+  input[type="file"],
+  input[type="password"],
+  textarea {
+    color: #e8e0d8 !important;
+    background: $gray-800 !important;
+    border: 1px solid #4a403a !important;
+    border-radius: 4px;
+
+    &::placeholder {
+      color: #7a7068;
+    }
+  }
+
   .servers > label select {
-    color: #e0e0e0;
-    background: #1a0430;
+    color: #e8e0d8;
+    background: $gray-900;
+  }
+
+  // ─ Authorize button ─
+  .btn.authorize {
+    color: $keryx-gold;
+    border-color: $keryx-gold;
+
+    svg {
+      fill: $keryx-gold;
+    }
+  }
+
+  // ─ Try-it-out / Execute buttons ─
+  .btn.try-out__btn {
+    color: #e8e0d8;
+    border-color: #4a403a;
+
+    &:hover {
+      color: #fff;
+      background-color: $gray-700;
+    }
+  }
+
+  .btn.execute {
+    background-color: $keryx-brand-1;
+    border-color: $keryx-brand-1;
+    color: #fff;
+
+    &:hover {
+      background-color: $keryx-brand-2;
+    }
+  }
+
+  // ─ Response status highlights ─
+  .responses-inner {
+    h4,
+    h5 {
+      color: #e8e0d8;
+    }
+  }
+
+  .response-col_status {
+    .response-undocumented {
+      color: $keryx-brand-2;
+    }
+  }
+
+  // ─ Copy/download buttons ─
+  .copy-to-clipboard,
+  .download-contents {
+    background: $gray-700;
+    border: none;
+
+    &:hover {
+      background: $gray-800;
+    }
+  }
+
+  // ─ Loading indicator ─
+  .loading-container .loading::after {
+    color: $keryx-gold;
   }
 }
