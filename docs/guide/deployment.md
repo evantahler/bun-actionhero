@@ -128,3 +128,18 @@ In production, use a process manager to keep the backend running:
 - **PM2** — `pm2 start "bun start" --name keryx-backend`
 
 Keryx handles `SIGINT` and `SIGTERM` for graceful shutdown — it stops accepting new connections, finishes in-flight requests, and disconnects from Redis and Postgres before exiting.
+
+### WebSocket Drain
+
+During shutdown, Keryx sends a close frame with code `1001` (Going Away) and reason `"Server shutting down"` to all connected WebSocket clients before terminating connections. This gives clients an opportunity to reconnect gracefully:
+
+```javascript
+ws.onclose = (event) => {
+  if (event.code === 1001) {
+    // Server shutting down — reconnect after a delay
+    setTimeout(() => reconnect(), 5000);
+  }
+};
+```
+
+The drain period is configurable via `WS_DRAIN_TIMEOUT` (default: 5000 ms). After the timeout, any remaining connections are forcibly closed.
