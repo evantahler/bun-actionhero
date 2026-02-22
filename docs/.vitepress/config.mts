@@ -41,6 +41,7 @@ export default defineConfig({
         {
           text: "Usage",
           items: [
+            { text: "CLI", link: "/guide/cli" },
             { text: "Authentication", link: "/guide/authentication" },
             { text: "Security", link: "/guide/security" },
             { text: "Testing", link: "/guide/testing" },
