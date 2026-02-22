@@ -2,7 +2,6 @@ import type { ServerWebSocket } from "bun";
 import colors from "colors";
 import cookie from "cookie";
 import { randomUUID } from "crypto";
-import path from "node:path";
 import { parse } from "node:url";
 import { api, logger } from "../api";
 import { type HTTP_METHOD } from "../classes/Action";
@@ -16,8 +15,12 @@ import {
   buildError,
   buildErrorPayload,
   buildResponse,
-  getSecurityHeaders,
 } from "../util/webResponse";
+import {
+  determineActionName,
+  parseRequestParams,
+} from "../util/webRouting";
+import { handleStaticFile } from "../util/webStaticFiles";
 import {
   handleWebsocketAction,
   handleWebsocketSubscribe,
@@ -167,7 +170,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
 
     // Handle static file serving
     if (config.server.web.staticFilesEnabled && req.method === "GET") {
-      const staticResponse = await this.handleStaticFile(req, parsedUrl);
+      const staticResponse = await handleStaticFile(req, parsedUrl);
       if (staticResponse) return staticResponse;
     }
 
@@ -371,74 +374,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     if (httpMethod === "OPTIONS")
       return buildResponse(connection, {}, 200, requestOrigin);
 
-    const { actionName, pathParams } = await this.determineActionName(
+    const { actionName, pathParams } = await determineActionName(
       url,
       httpMethod,
     );
     if (!actionName) errorStatusCode = 404;
 
-    // param load order: path params -> url params -> body params -> query params
-    let params = new FormData();
-
-    // Add path parameters
-    if (pathParams) {
-      for (const [key, value] of Object.entries(pathParams)) {
-        params.set(key, String(value));
-      }
-    }
-
-    if (
-      req.method !== "GET" &&
-      req.headers.get("content-type") === "application/json"
-    ) {
-      try {
-        const bodyContent = (await req.json()) as Record<string, unknown>;
-        for (const [key, value] of Object.entries(bodyContent)) {
-          if (Array.isArray(value)) {
-            // Handle arrays by appending each element
-            if (value.length === 0) {
-              // For empty arrays, set an empty string to indicate the field exists
-              params.set(key, "");
-            } else {
-              for (const item of value) {
-                params.append(key, item);
-              }
-            }
-          } else {
-            params.set(key, value as any);
-          }
-        }
-      } catch (e) {
-        throw new TypedError({
-          message: `cannot parse request body: ${e}`,
-          type: ErrorType.CONNECTION_ACTION_RUN,
-          originalError: e,
-        });
-      }
-    } else if (
-      req.method !== "GET" &&
-      (req.headers.get("content-type")?.includes("multipart/form-data") ||
-        req.headers
-          .get("content-type")
-          ?.includes("application/x-www-form-urlencoded"))
-    ) {
-      const f = await req.formData();
-      f.forEach((value, key) => {
-        params.append(key, value);
-      });
-    }
-
-    if (url.query) {
-      for (const [key, values] of Object.entries(url.query)) {
-        if (values !== undefined) {
-          if (Array.isArray(values)) {
-            for (const v of values) params.append(key, v);
-          } else {
-            params.append(key, values);
-          }
-        }
-      }
-    }
+    const params = await parseRequestParams(req, url, pathParams ?? undefined);
 
     const { response, error } = await connection.act(
       actionName!,
@@ -469,178 +411,5 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     return error
       ? buildError(connection, error, errorStatusCode, requestOrigin)
       : buildResponse(connection, response, 200, requestOrigin);
-  }
-
-  async determineActionName(
-    url: ReturnType<typeof parse>,
-    method: HTTP_METHOD,
-  ): Promise<
-    | { actionName: string; pathParams?: Record<string, string> }
-    | { actionName: null; pathParams: null }
-  > {
-    const pathToMatch = url.pathname?.replace(
-      new RegExp(`${config.server.web.apiRoute}`),
-      "",
-    );
-
-    for (const action of api.actions.actions) {
-      if (!action?.web?.route) continue;
-
-      // Convert route with path parameters to regex
-      const routeWithParams = `${action.web.route}`.replace(/:\w+/g, "([^/]+)");
-      const matcher =
-        action.web.route instanceof RegExp
-          ? action.web.route
-          : new RegExp(`^${routeWithParams}$`);
-
-      if (
-        pathToMatch &&
-        pathToMatch.match(matcher) &&
-        method.toUpperCase() === action.web.method
-      ) {
-        // Extract path parameters if the route has them
-        const pathParams: Record<string, string> = {};
-        const paramNames = (`${action.web.route}`.match(/:\w+/g) || []).map(
-          (name) => name.slice(1),
-        );
-        const match = pathToMatch.match(matcher);
-
-        if (match && paramNames.length > 0) {
-          // Skip the first match (full string) and use the captured groups
-          for (let i = 0; i < paramNames.length; i++) {
-            const value = match[i + 1];
-            if (value !== undefined) {
-              pathParams[paramNames[i]] = value;
-            }
-          }
-        }
-
-        return {
-          actionName: action.name,
-          pathParams:
-            Object.keys(pathParams).length > 0 ? pathParams : undefined,
-        };
-      }
-    }
-
-    return { actionName: null, pathParams: null };
-  }
-
-  async handleStaticFile(
-    req: Request,
-    url: ReturnType<typeof parse>,
-  ): Promise<Response | null> {
-    const staticRoute = config.server.web.staticFilesRoute;
-    const staticDir = config.server.web.staticFilesDirectory;
-
-    if (!url.pathname?.startsWith(staticRoute)) {
-      return null;
-    }
-
-    const filePath = url.pathname.replace(staticRoute, "");
-
-    // Default to index.html for root requests
-    const finalPath =
-      filePath === "" || filePath === "/" ? "/index.html" : filePath;
-
-    try {
-      // Construct the full file path, ensuring proper path joining
-      const fullPath = path.resolve(path.join(staticDir, finalPath));
-      const basePath = path.resolve(staticDir);
-
-      // Prevent path traversal attacks (e.g. symlinks or encoded sequences)
-      if (!fullPath.startsWith(basePath + path.sep) && fullPath !== basePath) {
-        return null;
-      }
-
-      // Check if file exists
-      const file = Bun.file(fullPath);
-      const exists = await file.exists();
-
-      if (!exists) {
-        // Try serving index.html for directory requests
-        if (!finalPath.endsWith(".html")) {
-          const indexPath = path.resolve(
-            path.join(staticDir, finalPath, "index.html"),
-          );
-          if (
-            !indexPath.startsWith(basePath + path.sep) &&
-            indexPath !== basePath
-          ) {
-            return null;
-          }
-          const indexFile = Bun.file(indexPath);
-          const indexExists = await indexFile.exists();
-          if (indexExists) {
-            return this.buildStaticFileResponse(
-              req,
-              indexFile,
-              finalPath + "/index.html",
-            );
-          }
-        }
-        return null; // File not found, let other handlers deal with it
-      }
-
-      return this.buildStaticFileResponse(req, file, finalPath);
-    } catch (error) {
-      logger.error(`Error serving static file ${finalPath}: ${error}`);
-      return null;
-    }
-  }
-
-  private async buildStaticFileResponse(
-    req: Request,
-    file: ReturnType<typeof Bun.file>,
-    filePath: string,
-  ): Promise<Response> {
-    const headers = this.getStaticFileHeaders(filePath);
-
-    // Generate ETag from mtime + size (fast, no hashing needed)
-    if (config.server.web.staticFilesEtag) {
-      const mtime = file.lastModified;
-      const size = file.size;
-      const etag = `"${mtime.toString(36)}-${size.toString(36)}"`;
-      headers["ETag"] = etag;
-      headers["Last-Modified"] = new Date(mtime).toUTCString();
-
-      // Check If-None-Match (takes precedence over If-Modified-Since per HTTP spec)
-      const ifNoneMatch = req.headers.get("if-none-match");
-      if (ifNoneMatch && ifNoneMatch === etag) {
-        return new Response(null, { status: 304, headers });
-      }
-
-      // Check If-Modified-Since
-      const ifModifiedSince = req.headers.get("if-modified-since");
-      if (ifModifiedSince) {
-        const ifModifiedSinceDate = new Date(ifModifiedSince).getTime();
-        // File mtime is in ms; compare at second precision (HTTP dates are second-precision)
-        if (
-          !isNaN(ifModifiedSinceDate) &&
-          Math.floor(mtime / 1000) <= Math.floor(ifModifiedSinceDate / 1000)
-        ) {
-          return new Response(null, { status: 304, headers });
-        }
-      }
-    }
-
-    // Add Cache-Control
-    if (config.server.web.staticFilesCacheControl) {
-      headers["Cache-Control"] = config.server.web.staticFilesCacheControl;
-    }
-
-    return new Response(file, { headers });
-  }
-
-  private getStaticFileHeaders(filePath: string): Record<string, string> {
-    const headers: Record<string, string> = {
-      "X-SERVER-NAME": config.process.name,
-    };
-
-    const mimeType = Bun.file(filePath).type || "application/octet-stream";
-    headers["Content-Type"] = mimeType;
-    Object.assign(headers, getSecurityHeaders());
-
-    return headers;
   }
 }

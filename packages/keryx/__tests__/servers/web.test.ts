@@ -15,15 +15,25 @@ beforeAll(async () => {
 const staticDir = config.server.web.staticFilesDirectory;
 
 beforeAll(async () => {
-  // Ensure the static assets directory exists with a test file
+  // Ensure the static assets directory exists with test files
   if (!existsSync(staticDir)) mkdirSync(staticDir, { recursive: true });
   writeFileSync(path.join(staticDir, "test.txt"), "hello static");
+
+  // Create a root index.html for root fallback test
+  writeFileSync(path.join(staticDir, "index.html"), "<h1>root index</h1>");
+
+  // Create a subdirectory with an index.html for directory fallback tests
+  const subDir = path.join(staticDir, "subdir");
+  if (!existsSync(subDir)) mkdirSync(subDir, { recursive: true });
+  writeFileSync(path.join(subDir, "index.html"), "<h1>subdir index</h1>");
 });
 
 afterAll(async () => {
   await api.stop();
-  // Clean up the test file
+  // Clean up test files
   rmSync(path.join(staticDir, "test.txt"), { force: true });
+  rmSync(path.join(staticDir, "index.html"), { force: true });
+  rmSync(path.join(staticDir, "subdir"), { recursive: true, force: true });
 }, HOOK_TIMEOUT);
 
 describe("booting", () => {
@@ -335,5 +345,72 @@ describe("static files", () => {
     } finally {
       (config.server.web as any).staticFilesEtag = original;
     }
+  });
+
+  test("serves index.html for root static route", async () => {
+    const staticRoute = config.server.web.staticFilesRoute;
+    const res = await fetch(url + staticRoute);
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("root index");
+  });
+
+  test("serves index.html for subdirectory path", async () => {
+    const res = await fetch(url + "/subdir/");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("subdir index");
+  });
+
+  test("serves index.html for subdirectory path without trailing slash", async () => {
+    const res = await fetch(url + "/subdir");
+    expect(res.status).toBe(200);
+    expect(await res.text()).toContain("subdir index");
+  });
+});
+
+describe("rate limit response headers", () => {
+  test("includes rate limit headers when connection has rateLimitInfo", async () => {
+    const { buildHeaders } = await import("../../util/webResponse");
+    const { Connection } = await import("../../classes/Connection");
+    const connection = new Connection("test", "10.0.0.1");
+    connection.rateLimitInfo = {
+      limit: 100,
+      remaining: 95,
+      resetAt: 1700000000,
+    };
+    const headers = buildHeaders(connection);
+    expect(headers["X-RateLimit-Limit"]).toBe("100");
+    expect(headers["X-RateLimit-Remaining"]).toBe("95");
+    expect(headers["X-RateLimit-Reset"]).toBe("1700000000");
+    expect(headers["Retry-After"]).toBeUndefined();
+    connection.destroy();
+  });
+
+  test("includes Retry-After header when retryAfter is present", async () => {
+    const { buildHeaders } = await import("../../util/webResponse");
+    const { Connection } = await import("../../classes/Connection");
+    const connection = new Connection("test", "10.0.0.1");
+    connection.rateLimitInfo = {
+      limit: 100,
+      remaining: 0,
+      resetAt: 1700000000,
+      retryAfter: 30,
+    };
+    const headers = buildHeaders(connection);
+    expect(headers["X-RateLimit-Limit"]).toBe("100");
+    expect(headers["X-RateLimit-Remaining"]).toBe("0");
+    expect(headers["Retry-After"]).toBe("30");
+    connection.destroy();
+  });
+
+  test("omits rate limit headers when rateLimitInfo is not set", async () => {
+    const { buildHeaders } = await import("../../util/webResponse");
+    const { Connection } = await import("../../classes/Connection");
+    const connection = new Connection("test", "10.0.0.1");
+    const headers = buildHeaders(connection);
+    expect(headers["X-RateLimit-Limit"]).toBeUndefined();
+    expect(headers["X-RateLimit-Remaining"]).toBeUndefined();
+    expect(headers["X-RateLimit-Reset"]).toBeUndefined();
+    expect(headers["Retry-After"]).toBeUndefined();
+    connection.destroy();
   });
 });
