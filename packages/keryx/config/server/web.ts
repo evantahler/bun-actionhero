@@ -70,8 +70,8 @@ export const configServerWeb = {
       "strict-origin-when-cross-origin",
     ),
   } as Record<string, string>,
-  requestId: {
-    header: await loadFromEnvIfSet("WEB_REQUEST_ID_HEADER", "X-Request-Id"),
-    trustProxy: await loadFromEnvIfSet("WEB_REQUEST_ID_TRUST_PROXY", false),
+  correlationId: {
+    header: await loadFromEnvIfSet("WEB_CORRELATION_ID_HEADER", "X-Request-Id"),
+    trustProxy: await loadFromEnvIfSet("WEB_CORRELATION_ID_TRUST_PROXY", false),
   },
 };

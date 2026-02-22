@@ -401,11 +401,13 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     const connection = new Connection("web", ip, id);
 
     if (
-      config.server.web.requestId.header &&
-      config.server.web.requestId.trustProxy
+      config.server.web.correlationId.header &&
+      config.server.web.correlationId.trustProxy
     ) {
-      const incomingId = req.headers.get(config.server.web.requestId.header);
-      if (incomingId) connection.requestId = incomingId;
+      const incomingId = req.headers.get(
+        config.server.web.correlationId.header,
+      );
+      if (incomingId) connection.correlationId = incomingId;
     }
 
     const requestOrigin = req.headers.get("origin") ?? undefined;
@@ -730,8 +732,9 @@ const buildHeaders = (connection?: Connection, requestOrigin?: string) => {
       }
     }
 
-    if (config.server.web.requestId.header && connection.requestId) {
-      headers[config.server.web.requestId.header] = connection.requestId;
+    if (config.server.web.correlationId.header && connection.correlationId) {
+      headers[config.server.web.correlationId.header] =
+        connection.correlationId;
     }
   }
 

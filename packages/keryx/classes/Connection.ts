@@ -18,7 +18,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   sessionLoaded: boolean;
   rawConnection?: any;
   rateLimitInfo?: RateLimitInfo;
-  requestId?: string;
+  correlationId?: string;
 
   constructor(
     type: string,
@@ -142,10 +142,12 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
           : "\r\n" + error.stack
         : "";
 
-    const requestIdTag = this.requestId ? ` [req:${this.requestId}]` : "";
+    const correlationIdTag = this.correlationId
+      ? ` [cor:${this.correlationId}]`
+      : "";
 
     logger.info(
-      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""}${requestIdTag} ${error ? error : ""} ${loggingParams} ${errorStack}`,
+      `${messagePrefix} ${actionName} (${duration}ms) ${method.length > 0 ? `[${method}]` : ""} ${this.identifier}${url.length > 0 ? `(${url})` : ""}${correlationIdTag} ${error ? error : ""} ${loggingParams} ${errorStack}`,
     );
 
     return { response, error };

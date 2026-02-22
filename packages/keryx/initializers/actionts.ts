@@ -168,7 +168,7 @@ export class Actions extends Initializer {
             ...job.inputs,
             _fanOutId: fanOutId,
             ...(resolvedOptions.correlationId
-              ? { _requestId: resolvedOptions.correlationId }
+              ? { _correlationId: resolvedOptions.correlationId }
               : {}),
           };
           return this.enqueue(job.action, enrichedInputs, job.queue);
