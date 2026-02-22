@@ -4,23 +4,37 @@ import type { Connection } from "../classes/Connection";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 
+/** Rate-limit metadata attached to `connection.rateLimitInfo` and used to set response headers. */
 export type RateLimitInfo = {
+  /** The max number of requests allowed in the current window. */
   limit: number;
+  /** Requests remaining before the limit is hit. */
   remaining: number;
-  resetAt: number; // unix timestamp in seconds
-  retryAfter?: number; // seconds until window resets (only when limited)
+  /** Unix timestamp (seconds) when the current window resets. */
+  resetAt: number;
+  /** Seconds until the window resets. Only present when the limit has been exceeded. */
+  retryAfter?: number;
 };
 
+/** Optional overrides for `checkRateLimit()` to use a custom limit/window instead of the global config. */
 export type RateLimitOverrides = {
+  /** Max requests per window. Defaults to the authenticated or unauthenticated config limit. */
   limit?: number;
+  /** Window duration in milliseconds. Defaults to `config.rateLimit.windowMs`. */
   windowMs?: number;
+  /** Redis key prefix. Defaults to `config.rateLimit.keyPrefix`. */
   keyPrefix?: string;
 };
 
 /**
- * Sliding window rate-limit check using Redis.
- * Exported so OAuth and other non-action handlers can reuse it.
- * Pass `overrides` to use a custom limit/window instead of the global config.
+ * Sliding-window rate-limit check using Redis. Exported so OAuth and other
+ * non-action handlers can reuse it.
+ *
+ * @param identifier - A unique key for the client (e.g., `"ip:1.2.3.4"` or `"user:42"`).
+ * @param isAuthenticated - Whether the caller is authenticated. Determines which
+ *   config limit to use (authenticated vs unauthenticated).
+ * @param overrides - Optional overrides for limit, window duration, or key prefix.
+ * @returns Rate-limit metadata including remaining requests and retry-after (if limited).
  */
 export async function checkRateLimit(
   identifier: string,
@@ -68,6 +82,10 @@ export async function checkRateLimit(
   return { limit, remaining, resetAt };
 }
 
+/**
+ * Action middleware that enforces per-connection rate limiting. Add to an action's
+ * `middleware` array to apply. Throws `ErrorType.CONNECTION_RATE_LIMITED` when exceeded.
+ */
 export const RateLimitMiddleware: ActionMiddleware = {
   runBefore: async (_params, connection: Connection) => {
     if (!config.rateLimit.enabled) return;

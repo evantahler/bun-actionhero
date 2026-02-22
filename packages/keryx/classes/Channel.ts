@@ -37,6 +37,11 @@ export type ChannelConstructorInputs = {
   middleware?: ChannelMiddleware[];
 };
 
+/**
+ * Abstract base class for PubSub channels. Channels define a `name` (exact string or RegExp)
+ * and optional middleware for authorization on subscribe and cleanup on unsubscribe.
+ * Subclasses can override `authorize()` and `presenceKey()` for custom behavior.
+ */
 export abstract class Channel {
   name: string | RegExp;
   description?: string;

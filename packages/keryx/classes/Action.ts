@@ -67,17 +67,33 @@ export type ActionMiddlewareResponse = {
   updatedResponse?: any;
 };
 
+/**
+ * Middleware hooks that run before and/or after an action's `run()` method.
+ * Middleware can mutate params (via `updatedParams`) or replace the response (via `updatedResponse`).
+ */
 export type ActionMiddleware = {
+  /**
+   * Runs before the action's `run()` method. Can modify params by returning `{ updatedParams }`.
+   * Throw a `TypedError` to abort the action (e.g., for auth checks).
+   */
   runBefore?: (
     params: ActionParams<Action>,
     connection: Connection,
   ) => Promise<ActionMiddlewareResponse | void>;
+  /**
+   * Runs after the action's `run()` method. Can replace the response by returning `{ updatedResponse }`.
+   */
   runAfter?: (
     params: ActionParams<Action>,
     connection: Connection,
   ) => Promise<ActionMiddlewareResponse | void>;
 };
 
+/**
+ * Abstract base class for transport-agnostic controllers. Actions serve simultaneously as
+ * HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools.
+ * Subclasses must implement the `run()` method.
+ */
 export abstract class Action {
   name: string;
   description?: string;
@@ -139,10 +155,18 @@ export abstract class Action {
   ): Promise<any>;
 }
 
+/**
+ * Infers the validated input type for an action from its `inputs` Zod schema.
+ * Falls back to `Record<string, unknown>` when no schema is defined.
+ */
 export type ActionParams<A extends Action> =
   A["inputs"] extends z.ZodType<any>
     ? z.infer<A["inputs"]>
     : Record<string, unknown>;
 
+/**
+ * Infers the return type of an action's `run()` method, merged with an optional `error` field.
+ * Useful for typing API responses on the client side.
+ */
 export type ActionResponse<A extends Action> = Awaited<ReturnType<A["run"]>> &
   Partial<{ error?: TypedError }>;

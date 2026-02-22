@@ -40,6 +40,9 @@ if (!globalThis.api) {
   globalThis.config = Config;
 }
 
+/** The global API singleton. All framework state (actions, db, redis, etc.) is accessed through this object. */
 export const api = globalThis.api;
+/** Convenience re-export of `api.logger`. */
 export const logger = globalThis.logger;
+/** The merged configuration object (framework defaults + user overrides + env vars). */
 export const config = globalThis.config;

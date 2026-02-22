@@ -10,31 +10,51 @@ import { globLoader } from "../util/glob";
 
 const namespace = "actions";
 
+/** A single job descriptor for multi-action fan-out. */
 export type FanOutJob = {
+  /** The action name to enqueue. */
   action: string;
+  /** Inputs to pass to the action. Defaults to `{}`. */
   inputs?: TaskInputs;
+  /** Override the queue for this specific job. Falls back to the action's configured queue. */
   queue?: string;
 };
 
+/** Options for controlling fan-out behavior. */
 export type FanOutOptions = {
+  /** Max jobs to enqueue per Redis batch. Defaults to `config.actions.fanOutBatchSize`. */
   batchSize?: number;
+  /** TTL in seconds for the fan-out metadata and result keys in Redis. Defaults to `config.actions.fanOutResultTtl`. */
   resultTtl?: number;
+  /** Correlation ID to propagate to all child jobs for distributed tracing. Injected as `_correlationId` in each job's inputs. */
   correlationId?: string;
 };
 
+/** Returned immediately from `fanOut()` with metadata about the enqueue operation. */
 export type FanOutResult = {
+  /** Unique ID for querying status later via `fanOutStatus()`. */
   fanOutId: string;
+  /** The action name(s) that were fanned out. */
   actionName: string | string[];
+  /** The queue(s) jobs were enqueued to. */
   queue: string | string[];
+  /** Number of jobs successfully enqueued. */
   enqueued: number;
+  /** Any enqueue-time failures, with the index of the failed job. */
   errors: Array<{ index: number; error: string }>;
 };
 
+/** Status of a fan-out operation, as returned by `fanOutStatus()`. */
 export type FanOutStatus = {
+  /** Total number of jobs in this fan-out batch. */
   total: number;
+  /** Number of jobs that have completed successfully. */
   completed: number;
+  /** Number of jobs that have failed. */
   failed: number;
+  /** Collected results from completed child jobs. */
   results: Array<{ params: Record<string, any>; result: any }>;
+  /** Collected errors from failed child jobs. */
   errors: Array<{ params: Record<string, any>; error: string }>;
 };
 
@@ -54,7 +74,11 @@ export class Actions extends Initializer {
 
   /**
    * Enqueue an action to be performed in the background.
-   * Will throw an error if redis cannot be reached.
+   *
+   * @param actionName - The name of the action to enqueue.
+   * @param inputs - Inputs to pass to the action. Defaults to `{}`.
+   * @param queue - Which queue to enqueue on. Falls back to the action's configured queue, then `"default"`.
+   * @throws {TypedError} With `ErrorType.CONNECTION_TASK_DEFINITION` if the action is not found.
    */
   enqueue = async (
     actionName: string,
@@ -228,14 +252,15 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Enqueue a task to be performed in the background, at a certain time in the future.
-   * Will throw an error if redis cannot be reached.
+   * Enqueue an action to run at a specific time in the future.
    *
-   * Inputs:
-   * * actionName: The name of the task.
-   * * inputs: inputs to pass to the task.
-   * * queue: (Optional) Which queue/priority to run this instance of the task on.
-   * * suppressDuplicateTaskError: (optional) Suppress errors when the same task with the same arguments are double-enqueued for the same time
+   * @param timestamp - Epoch timestamp (ms) when the task becomes eligible to run.
+   *   Does not guarantee the task will run at exactly this time.
+   * @param actionName - The name of the action to enqueue.
+   * @param inputs - Inputs to pass to the action.
+   * @param queue - Which queue to enqueue on. Defaults to `"default"`.
+   * @param suppressDuplicateTaskError - If `true`, silently ignore errors when the same
+   *   task with the same arguments is already enqueued for the same time.
    */
   enqueueAt = async (
     timestamp: number,
@@ -254,15 +279,14 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Enqueue a task to be performed in the background, at a certain number of ms from now.
-   * Will throw an error if redis cannot be reached.
+   * Enqueue an action to run after a delay (in milliseconds from now).
    *
-   * Inputs:
-   * * timestamp: At what time the task is able to be run.  Does not guarantee that the task will be run at this time. (in ms)
-   * * actionName: The name of the task.
-   * * inputs: inputs to pass to the task.
-   * * queue: (Optional) Which queue/priority to run this instance of the task on.
-   * * suppressDuplicateTaskError: (optional) Suppress errors when the same task with the same arguments are double-enqueued for the same time
+   * @param time - Delay in milliseconds before the task becomes eligible to run.
+   * @param actionName - The name of the action to enqueue.
+   * @param inputs - Inputs to pass to the action.
+   * @param queue - Which queue to enqueue on. Defaults to `"default"`.
+   * @param suppressDuplicateTaskError - If `true`, silently ignore errors when the same
+   *   task with the same arguments is already enqueued for the same time.
    */
   enqueueIn = async (
     time: number,
@@ -281,14 +305,13 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Delete a previously enqueued task, which hasn't been run yet, from a queue.
-   * Will throw an error if redis cannot be reached.
+   * Delete a previously enqueued task that hasn't been run yet.
    *
-   * Inputs:
-   * * q: Which queue/priority is the task stored on?
-   * * actionName: The name of the job, likely to be the same name as a tak.
-   * * args: The arguments of the job.  Note, arguments passed to a Task initially may be modified when enqueuing.  It is best to read job properties first via `api.tasks.queued` or similar method.
-   * * count: Of the jobs that match q, actionName, and args, up to what position should we delete? (Default 0; this command is 0-indexed)
+   * @param queue - The queue the task is stored on.
+   * @param actionName - The name of the job to delete.
+   * @param args - The arguments of the job to match. Note: arguments may have been modified
+   *   during enqueuing — read job properties via `api.actions.queued` first.
+   * @param count - Up to how many matching jobs to delete (0-indexed). Default: 0.
    */
   del = async (
     queue: string,
@@ -300,15 +323,13 @@ export class Actions extends Initializer {
   };
 
   /**
-   * * will delete all jobs in the given queue of the named function/class
-   * * will not prevent new jobs from being added as this method is running
-   * * will not delete jobs in the delayed queues
+   * Delete all jobs of a given action name from a queue. Does not affect delayed queues,
+   * and will not prevent new jobs from being added while running.
    *
-   * Inputs:
-   * * q: Which queue/priority is to run on?
-   * * actionName: The name of the job, likely to be the same name as a tak.
-   * * start? - starting position of task count to remove
-   * * stop? - stop position of task count to remove
+   * @param queue - The queue to delete from.
+   * @param actionName - The action name whose jobs to remove.
+   * @param start - Starting position (0-indexed) of the range to remove.
+   * @param stop - Stop position (0-indexed) of the range to remove.
    */
   delByFunction = async (
     queue: string,
@@ -320,13 +341,12 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Delete all previously enqueued tasks, which haven't been run yet, from all possible delayed timestamps.
-   * Will throw an error if redis cannot be reached.
+   * Delete all delayed instances of a task across all future timestamps.
    *
-   * Inputs:
-   * * q: Which queue/priority is to run on?
-   * * actionName: The name of the job, likely to be the same name as a tak.
-   * * inputs  The arguments of the job.  Note, arguments passed to a Task initially may be modified when enqueuing. It is best to read job properties first via `api.tasks.delayedAt` or similar method.
+   * @param queue - The queue the task is stored on.
+   * @param actionName - The action name to delete.
+   * @param inputs - The job arguments to match. Arguments may have been modified during
+   *   enqueuing — read properties via `api.actions.delayedAt` first.
    */
   delDelayed = async (
     queue: string,
@@ -337,13 +357,12 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Return the timestamps a task is scheduled for.
-   * Will throw an error if redis cannot be reached.
+   * Return the timestamps at which a task is scheduled to run.
    *
-   * Inputs:
-   * * q: Which queue/priority is to run on?
-   * * actionName: The name of the job, likely to be the same name as a tak.
-   * * inputs: The arguments of the job.  Note, arguments passed to a Task initially may be modified when enqueuing.  It is best to read job properties first via `api.tasks.delayedAt` or similar method.
+   * @param queue - The queue the task is stored on.
+   * @param actionName - The action name to look up.
+   * @param inputs - The job arguments to match.
+   * @returns Array of epoch timestamps (ms) when the job is scheduled.
    */
   scheduledAt = async (
     queue: string,
@@ -362,13 +381,12 @@ export class Actions extends Initializer {
   };
 
   /**
-   * Retrieve the details of jobs enqueued on a certain queue between start and stop (0-indexed)
-   * Will throw an error if redis cannot be reached.
+   * Retrieve details of jobs enqueued on a queue (0-indexed range).
    *
-   * Inputs:
-   * * q      The name of the queue.
-   * * start  The index of the first job to return.
-   * * stop   The index of the last job to return.
+   * @param queue - The queue name. Defaults to `"default"`.
+   * @param start - Starting index. Defaults to 0.
+   * @param stop - Ending index. Defaults to 100.
+   * @returns Array of job input objects.
    */
   queued = (
     queue: string = DEFAULT_QUEUE,
@@ -596,6 +614,10 @@ export class Actions extends Initializer {
     return details;
   };
 
+  /**
+   * Swallow "already enqueued" errors for recurring tasks (expected during multi-process boot).
+   * Re-throws any other error.
+   */
   checkForRepeatRecurringTaskEnqueue = (actionName: string, error: any) => {
     if (error.toString().match(/already enqueued at this time/)) {
       // this is OK, the job was enqueued by another process as this method was running

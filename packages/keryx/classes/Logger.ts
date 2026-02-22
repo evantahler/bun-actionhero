@@ -15,11 +15,17 @@ export enum LogLevel {
  * The Logger Class.  I write to stdout or stderr, and can be colorized.
  */
 export class Logger {
+  /** Minimum log level to output. Messages below this level are silently dropped. */
   level: LogLevel;
+  /** Whether to apply ANSI color codes to the output. */
   colorize: boolean;
+  /** Whether to prepend an ISO-8601 timestamp to each log line. */
   includeTimestamps: boolean;
+  /** Indentation spaces used when JSON-stringifying the optional object argument. */
   jSONObjectParsePadding: number;
-  quiet: boolean; // an override to disable all logging (used by CLI)
+  /** When `true`, all logging is suppressed (used by CLI mode). */
+  quiet: boolean;
+  /** The output function — defaults to `console.log`. Override for custom transports. */
   outputStream: typeof console.log;
 
   constructor(config: typeof configLogger) {
@@ -31,6 +37,14 @@ export class Logger {
     this.outputStream = console.log;
   }
 
+  /**
+   * Core logging method. Formats and writes a log line to `outputStream` if the given
+   * level meets the minimum threshold. Optionally includes a timestamp and pretty-printed object.
+   *
+   * @param level - The severity level of this log entry.
+   * @param message - The log message string.
+   * @param object - An optional object to JSON-stringify and append to the log line.
+   */
   log(level: LogLevel, message: string, object?: any) {
     if (this.quiet) return;
 
@@ -82,6 +96,11 @@ export class Logger {
     this.log(LogLevel.debug, message, object);
   }
 
+  /**
+   * Log an info message.
+   * @param message - The message to log.
+   * @param object - The object to log.
+   */
   info(message: string, object?: any) {
     this.log(LogLevel.info, message, object);
   }

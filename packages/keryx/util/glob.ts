@@ -4,8 +4,12 @@ import { api } from "../api";
 import { ErrorType, TypedError } from "../classes/TypedError";
 
 /**
+ * Auto-discover and instantiate all exported classes from `.ts`/`.tsx` files in a directory.
+ * Files prefixed with `.` are skipped. Used to load actions, initializers, and servers.
  *
- * @param searchDir Absolute path or relative path (resolved from api.rootDir) to search for files
+ * @param searchDir - Absolute path or relative path (resolved from `api.rootDir`) to scan.
+ * @returns Array of instantiated class instances of type `T`.
+ * @throws {TypedError} With `ErrorType.SERVER_INITIALIZATION` if any class fails to instantiate.
  */
 export async function globLoader<T>(searchDir: string) {
   const results: T[] = [];

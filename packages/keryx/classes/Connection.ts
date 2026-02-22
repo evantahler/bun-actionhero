@@ -9,17 +9,39 @@ import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { ErrorType, TypedError } from "./TypedError";
 
+/**
+ * Represents a client connection to the server — HTTP request, WebSocket, or internal caller.
+ * Each connection tracks its own session, channel subscriptions, and rate-limit state.
+ * The generic `T` allows typing the session data shape for your application.
+ */
 export class Connection<T extends Record<string, any> = Record<string, any>> {
+  /** Transport type identifier (e.g., `"web"`, `"websocket"`). */
   type: string;
+  /** A human-readable identifier for the connection, typically the remote IP or a session key. */
   identifier: string;
+  /** Unique connection ID (UUID by default). Used as the key in `api.connections`. */
   id: string;
+  /** The connection's session data, lazily loaded on first action invocation. */
   session?: SessionData<T>;
+  /** Set of channel names this connection is currently subscribed to. */
   subscriptions: Set<string>;
+  /** Whether the session has been loaded from Redis at least once. */
   sessionLoaded: boolean;
+  /** The underlying transport handle (e.g., Bun `ServerWebSocket`). */
   rawConnection?: any;
+  /** Rate-limit metadata populated by the rate-limit middleware. */
   rateLimitInfo?: RateLimitInfo;
+  /** Request correlation ID for distributed tracing. Propagated from the incoming `X-Request-Id` header when `config.server.web.correlationId.trustProxy` is enabled. */
   correlationId?: string;
 
+  /**
+   * Create a new connection and register it in `api.connections`.
+   *
+   * @param type - Transport type (e.g., `"web"`, `"websocket"`).
+   * @param identifier - Human-readable identifier, typically the remote IP address.
+   * @param id - Unique connection ID. Defaults to a random UUID.
+   * @param rawConnection - The underlying transport handle (e.g., Bun `ServerWebSocket`).
+   */
   constructor(
     type: string,
     identifier: string,
@@ -37,8 +59,18 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   }
 
   /**
-   * Runs an action for this connection, given FormData params.
-   *  Throws errors.
+   * Execute an action in the context of this connection. Handles the full lifecycle:
+   * session loading, param validation via the action's Zod schema, middleware execution
+   * (before/after), timeout enforcement, and structured logging.
+   *
+   * @param actionName - The name of the action to run. If not found, throws
+   *   `ErrorType.CONNECTION_ACTION_NOT_FOUND`.
+   * @param params - Raw `FormData` from the HTTP request or WebSocket message.
+   *   Validated and coerced against the action's `inputs` Zod schema.
+   * @param method - The HTTP method of the incoming request (used for logging).
+   * @param url - The request URL (used for logging).
+   * @returns The action response and optional error.
+   * @throws {TypedError} With the appropriate `ErrorType` for validation, timeout, or runtime failures.
    */
   async act(
     actionName: string | undefined,
@@ -153,6 +185,12 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     return { response, error };
   }
 
+  /**
+   * Merge new data into the connection's session. Loads the session first if not yet loaded.
+   *
+   * @param data - Partial session data to merge into the existing session.
+   * @throws {TypedError} With `ErrorType.CONNECTION_SESSION_NOT_FOUND` if no session exists.
+   */
   async updateSession(data: Partial<T>) {
     await this.loadSession();
 
@@ -166,14 +204,23 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     return api.session.update(this.session, data);
   }
 
+  /** Add a channel to this connection's subscription set. */
   subscribe(channel: string) {
     this.subscriptions.add(channel);
   }
 
+  /** Remove a channel from this connection's subscription set. */
   unsubscribe(channel: string) {
     this.subscriptions.delete(channel);
   }
 
+  /**
+   * Publish a message to a PubSub channel. The connection must already be subscribed.
+   *
+   * @param channel - The channel name to broadcast to.
+   * @param message - The message payload to send.
+   * @throws {TypedError} With `ErrorType.CONNECTION_NOT_SUBSCRIBED` if not subscribed.
+   */
   async broadcast(channel: string, message: string) {
     if (!this.subscriptions.has(channel)) {
       throw new TypedError({
@@ -185,16 +232,28 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     return api.pubsub.broadcast(channel, message, this.id);
   }
 
+  /**
+   * Called when a PubSub message arrives for a channel this connection is subscribed to.
+   * Must be overridden by transport-specific subclasses (e.g., WebSocket connections).
+   *
+   * @param _payload - The incoming PubSub message.
+   * @throws {Error} Always throws in the base class — subclasses must override.
+   */
   onBroadcastMessageReceived(_payload: PubSubMessage) {
     throw new Error(
       "unimplemented - this should be overwritten by connections that support it",
     );
   }
 
+  /** Remove this connection from the global connections map and clean up resources. */
   destroy() {
     return api.connections.destroy(this.type, this.identifier, this.id);
   }
 
+  /**
+   * Load the session from Redis (or create a new one if none exists).
+   * No-ops if the session is already loaded. Sets `sessionLoaded` to `true`.
+   */
   async loadSession() {
     if (this.session) return;
 
