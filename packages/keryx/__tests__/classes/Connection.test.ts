@@ -1,7 +1,34 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { z } from "zod";
 import { Connection, api, logger } from "../../api";
+import { Action } from "../../classes/Action";
 import { ErrorType } from "../../classes/TypedError";
+import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
+
+class SlowAction extends Action {
+  constructor(timeout?: number) {
+    super({
+      name: "test:slow",
+      description: "A test action that sleeps",
+      inputs: z.object({ sleepMs: z.coerce.number() }),
+      timeout,
+    });
+  }
+
+  async run(
+    params: { sleepMs: number },
+    _connection?: unknown,
+    abortSignal?: AbortSignal,
+  ) {
+    const start = Date.now();
+    while (Date.now() - start < params.sleepMs) {
+      if (abortSignal?.aborted) throw new Error("Aborted");
+      await Bun.sleep(Math.min(10, params.sleepMs - (Date.now() - start)));
+    }
+    return { slept: params.sleepMs };
+  }
+}
 
 beforeAll(async () => {
   await api.start();
@@ -217,5 +244,99 @@ describe("Connection class", () => {
     const conn = new Connection("test", "test-no-session");
 
     expect(conn.session).toBeUndefined();
+  });
+});
+
+describe("Action timeouts", () => {
+  let originalTimeout: number;
+
+  beforeAll(() => {
+    originalTimeout = config.actions.timeout;
+  });
+
+  afterAll(() => {
+    // restore original config and remove test action
+    config.actions.timeout = originalTimeout;
+    api.actions.actions = api.actions.actions.filter(
+      (a: Action) => a.name !== "test:slow",
+    );
+  });
+
+  test("action times out when exceeding global timeout", async () => {
+    config.actions.timeout = 50;
+    const slowAction = new SlowAction();
+    api.actions.actions.push(slowAction);
+
+    const conn = new Connection("test", "test-timeout");
+    const params = new FormData();
+    params.set("sleepMs", "500");
+
+    const { error } = await conn.act("test:slow", params);
+
+    expect(error).toBeDefined();
+    expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_TIMEOUT);
+    expect(error?.message).toContain("timed out after 50ms");
+
+    api.actions.actions = api.actions.actions.filter(
+      (a: Action) => a.name !== "test:slow",
+    );
+  });
+
+  test("per-action timeout overrides global timeout", async () => {
+    config.actions.timeout = 10_000; // high global
+    const slowAction = new SlowAction(50); // low per-action
+    api.actions.actions.push(slowAction);
+
+    const conn = new Connection("test", "test-per-action-timeout");
+    const params = new FormData();
+    params.set("sleepMs", "500");
+
+    const { error } = await conn.act("test:slow", params);
+
+    expect(error).toBeDefined();
+    expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_TIMEOUT);
+    expect(error?.message).toContain("timed out after 50ms");
+
+    api.actions.actions = api.actions.actions.filter(
+      (a: Action) => a.name !== "test:slow",
+    );
+  });
+
+  test("timeout of 0 disables the timeout", async () => {
+    config.actions.timeout = 0;
+    const slowAction = new SlowAction();
+    api.actions.actions.push(slowAction);
+
+    const conn = new Connection("test", "test-timeout-disabled");
+    const params = new FormData();
+    params.set("sleepMs", "50");
+
+    const { response, error } = await conn.act("test:slow", params);
+
+    expect(error).toBeUndefined();
+    expect(response).toEqual({ slept: 50 });
+
+    api.actions.actions = api.actions.actions.filter(
+      (a: Action) => a.name !== "test:slow",
+    );
+  });
+
+  test("fast action completes within timeout", async () => {
+    config.actions.timeout = 5_000;
+    const slowAction = new SlowAction();
+    api.actions.actions.push(slowAction);
+
+    const conn = new Connection("test", "test-fast-enough");
+    const params = new FormData();
+    params.set("sleepMs", "10");
+
+    const { response, error } = await conn.act("test:slow", params);
+
+    expect(error).toBeUndefined();
+    expect(response).toEqual({ slept: 10 });
+
+    api.actions.actions = api.actions.actions.filter(
+      (a: Action) => a.name !== "test:slow",
+    );
   });
 });

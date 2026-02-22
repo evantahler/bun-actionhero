@@ -50,6 +50,9 @@ export type ActionConstructorInputs = {
     method?: HTTP_METHOD;
   };
 
+  /** Per-action timeout in ms (overrides global `config.server.web.actionTimeout`; 0 disables) */
+  timeout?: number;
+
   /** Configure this action as a background task/job */
   task?: {
     /** Optional recurring frequency in milliseconds */
@@ -85,6 +88,7 @@ export abstract class Action {
     route: RegExp | string;
     method: HTTP_METHOD;
   };
+  timeout?: number;
   task?: {
     frequency?: number;
     queue: string;
@@ -95,6 +99,7 @@ export abstract class Action {
     this.description = args.description ?? `An Action: ${this.name}`;
     this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
+    this.timeout = args.timeout;
     this.mcp = { enabled: true, ...args.mcp };
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
@@ -111,11 +116,26 @@ export abstract class Action {
    * It can be `async`.
    * Usually the goal of this run method is to return the data that you want to be sent to API consumers.
    * If error is thrown in this method, it will be logged, caught, and returned to the client as `error`
+   *
+   * @param params - The validated and coerced action inputs. The type is inferred from the
+   *   action's `inputs` Zod schema (falls back to `Record<string, unknown>` when no schema is
+   *   defined). By the time `run` is called, all middleware `runBefore` hooks have already
+   *   executed and may have mutated the params.
+   * @param connection - The connection that initiated this action. Provides access to the
+   *   caller's session (`connection.session`), subscription state, and raw transport handle.
+   *   It is `undefined` when the action is invoked outside an HTTP/WebSocket request context
+   *   (e.g., as a background task via the Resque worker or via `api.actions.run()`).
+   * @param abortSignal - An `AbortSignal` tied to the action's timeout. The signal is aborted
+   *   when the per-action `timeout` (or the global `config.actions.timeout`, default 300 000 ms)
+   *   elapses. Long-running actions should check `abortSignal.aborted` or pass the signal to
+   *   cancellable APIs (e.g., `fetch`) to exit promptly. Not provided when timeouts are
+   *   disabled (`timeout: 0`).
    * @throws {TypedError} All errors thrown should be TypedError instances
    */
   abstract run(
     params: ActionParams<Action>,
     connection?: Connection,
+    abortSignal?: AbortSignal,
   ): Promise<any>;
 }
 

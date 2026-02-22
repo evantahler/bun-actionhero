@@ -13,6 +13,7 @@ Config is split into modules:
 ```
 backend/config/
 ├── index.ts        # Aggregates everything into one `config` object
+├── actions.ts      # Action timeout, fan-out batch size and TTL
 ├── database.ts     # Database connection string, auto-migrate flag
 ├── logger.ts       # Log level, timestamps, colors
 ├── process.ts      # Process name, shutdown timeout
@@ -60,6 +61,14 @@ This means you can set `DATABASE_URL_TEST=postgres://localhost/bun-test` and it'
 The helper is also type-aware — it parses `"true"`/`"false"` strings into booleans and numeric strings into numbers. So `DATABASE_AUTO_MIGRATE=false` does what you'd expect.
 
 ## Reference
+
+### Actions
+
+| Key               | Env Var                     | Default          | Description                                     |
+| ----------------- | --------------------------- | ---------------- | ----------------------------------------------- |
+| `timeout`         | `ACTION_TIMEOUT`            | `300000` (5 min) | Global action execution timeout in ms (0 = off) |
+| `fanOutBatchSize` | `ACTION_FAN_OUT_BATCH_SIZE` | `100`            | Max jobs enqueued per Redis round-trip          |
+| `fanOutResultTtl` | `ACTION_FAN_OUT_RESULT_TTL` | `600` (10 min)   | TTL in seconds for fan-out result keys in Redis |
 
 ### Database
 

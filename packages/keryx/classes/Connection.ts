@@ -76,7 +76,26 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
         }
       }
 
-      response = await action.run(formattedParams, this);
+      const timeoutMs = action.timeout ?? config.actions.timeout;
+      if (timeoutMs > 0) {
+        const controller = new AbortController();
+        const timeoutError = new TypedError({
+          message: `Action '${action.name}' timed out after ${timeoutMs}ms`,
+          type: ErrorType.CONNECTION_ACTION_TIMEOUT,
+        });
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => {
+            controller.abort();
+            reject(timeoutError);
+          }, timeoutMs);
+        });
+        response = await Promise.race([
+          action.run(formattedParams, this, controller.signal),
+          timeoutPromise,
+        ]);
+      } else {
+        response = await action.run(formattedParams, this);
+      }
 
       for (const middleware of action.middleware ?? []) {
         if (middleware.runAfter) {
