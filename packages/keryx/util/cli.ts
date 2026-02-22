@@ -1,5 +1,4 @@
 import { Command } from "commander";
-import { randomUUID } from "crypto";
 import os from "node:os";
 import { Action, api, Connection, RUN_MODE } from "../api";
 import { config } from "../config";
@@ -64,9 +63,6 @@ async function runActionViaCLI(options: Record<string, string>, command: any) {
 
   const id = "cli:" + os.userInfo().username;
   const connection = new Connection("cli", id);
-  if (config.server.web.requestId.header) {
-    connection.requestId = randomUUID();
-  }
   const params = new FormData();
   for (const [key, value] of Object.entries(options)) {
     params.append(key, value);

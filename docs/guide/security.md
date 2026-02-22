@@ -147,14 +147,12 @@ The web server default is based on `NODE_ENV` — when `NODE_ENV=production`, st
 
 ## Request IDs
 
-Every HTTP response includes a unique request ID for tracing and debugging. By default, the server generates a UUID v4 for each request and returns it in the `X-Request-Id` header. WebSocket messages and background tasks also get their own request IDs, which appear in log output.
+When a reverse proxy or load balancer sets a request ID header (e.g. `X-Request-Id`), the server can propagate it through the stack for distributed tracing. Enable this by setting `trustProxy` to `true` — the server will read the configured header from the incoming request and echo it back in the response. If the header is not present on a request, no request ID is set.
 
-| Config Key   | Env Var                      | Default          | Description                                                |
-| ------------ | ---------------------------- | ---------------- | ---------------------------------------------------------- |
-| `header`     | `WEB_REQUEST_ID_HEADER`      | `"X-Request-Id"` | Header name for request/response (empty string to disable) |
-| `trustProxy` | `WEB_REQUEST_ID_TRUST_PROXY` | `false`          | Accept incoming header value from proxies                  |
-
-When `trustProxy` is `true`, the server uses the value from the incoming request header instead of generating a new one. This is useful when a load balancer or reverse proxy upstream already assigns request IDs and you want to preserve them through the stack.
+| Config Key   | Env Var                      | Default          | Description                                               |
+| ------------ | ---------------------------- | ---------------- | --------------------------------------------------------- |
+| `header`     | `WEB_REQUEST_ID_HEADER`      | `"X-Request-Id"` | Header name to read/echo (empty string to disable)        |
+| `trustProxy` | `WEB_REQUEST_ID_TRUST_PROXY` | `false`          | Read and echo the incoming request ID header from proxies |
 
 Request IDs appear in action log lines as `[req:<id>]`:
 
