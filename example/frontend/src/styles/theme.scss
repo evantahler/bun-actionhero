@@ -1,0 +1,126 @@
+// Bootswatch Vapor theme
+@import "bootswatch/dist/vapor/variables";
+@import "bootstrap/scss/bootstrap";
+@import "bootswatch/dist/vapor/bootswatch";
+
+body {
+  min-height: 100vh;
+}
+
+.navbar-brand {
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+// Make swagger UI match the Vapor theme
+.swagger-ui {
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  font-size: 15px;
+  color: #e0e0e0;
+
+  // Disable Vapor's neon glow text-shadow inside swagger
+  * {
+    text-shadow: none !important;
+  }
+
+  .topbar {
+    display: none;
+  }
+
+  // Titles and headings
+  .info .title {
+    color: #fff;
+    font-size: 2rem;
+  }
+
+  .info .description,
+  .info .description p {
+    color: #ccd0d4;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  // Section tags (status, message, etc.)
+  .opblock-tag {
+    color: #fff;
+    font-size: 1.25rem;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+  }
+
+  // Endpoint summaries
+  .opblock-summary-description {
+    color: #d0d4da;
+    font-size: 14px;
+  }
+
+  .opblock-summary-path {
+    font-size: 15px;
+  }
+
+  // Parameters and responses
+  .parameter__name,
+  .parameter__type,
+  .response-col_status,
+  .response-col_description,
+  .model-title,
+  label,
+  .tab li,
+  .opblock-description-wrapper p,
+  .opblock-external-docs-wrapper p,
+  table thead tr th,
+  table thead tr td,
+  table tbody tr td {
+    color: #ccd0d4;
+    font-size: 14px;
+  }
+
+  .parameter__name.required::after {
+    color: #ea6a9a;
+  }
+
+  // Backgrounds
+  .scheme-container,
+  .opblock .opblock-section-header {
+    background: #170229;
+  }
+
+  .opblock-body pre.microlight,
+  .opblock-body pre {
+    color: #e0e0e0;
+    font-size: 13px;
+    background: #0d0117;
+    border-radius: 4px;
+  }
+
+  // Links
+  a {
+    color: #ea6a9a;
+  }
+
+  // Models
+  .model-container,
+  .model {
+    color: #ccd0d4;
+    font-size: 14px;
+  }
+
+  // Inputs and selects
+  select,
+  input[type="text"],
+  textarea {
+    color: #e0e0e0;
+    background: #1a0430;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  // Server dropdown
+  .servers > label select {
+    color: #e0e0e0;
+    background: #1a0430;
+  }
+}

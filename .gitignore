@@ -1,9 +1,8 @@
 .DS_Store
 node_modules
-.next
+example/frontend/dist
 *.bun-build
 actionhero
-next.sock
 packages/keryx/.env
 example/backend/.env
 example/frontend/.env

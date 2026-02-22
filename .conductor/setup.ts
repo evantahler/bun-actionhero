@@ -162,7 +162,7 @@ applyEnvOverrides(
   join(ROOT_DIR, "example/frontend/.env.example"),
   join(ROOT_DIR, "example/frontend/.env"),
   {
-    NEXT_PUBLIC_API_URL: `http://localhost:${backendPort}`,
+    VITE_API_URL: `http://localhost:${backendPort}`,
     PORT: String(frontendPort),
   },
 );
