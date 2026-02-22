@@ -7,6 +7,7 @@ import "./initializers/connections";
 import "./initializers/db";
 import "./initializers/mcp";
 import "./initializers/oauth";
+import "./initializers/observability";
 import "./initializers/process";
 import "./initializers/pubsub";
 import "./initializers/redis";

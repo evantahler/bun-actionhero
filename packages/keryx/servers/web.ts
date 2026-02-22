@@ -191,6 +191,20 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       }
     }
 
+    // Metrics endpoint
+    if (
+      config.observability.enabled &&
+      parsedUrl.pathname === config.observability.metricsRoute
+    ) {
+      const body = await api.observability.collectMetrics();
+      return new Response(body || "", {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+        },
+      });
+    }
+
     // Don't route .well-known paths to actions
     if (parsedUrl.pathname?.startsWith("/.well-known/")) {
       return new Response(null, { status: 404 });
@@ -206,6 +220,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     connection.onBroadcastMessageReceived = function (payload: PubSubMessage) {
       ws.send(JSON.stringify({ message: payload }));
     };
+    api.observability.ws.connections.add(1);
     logger.info(
       `New websocket connection from ${connection.identifier} (${connection.id})`,
     );
@@ -259,6 +274,8 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       }
     }
 
+    api.observability.ws.messagesTotal.add(1);
+
     try {
       const parsedMessage = JSON.parse(message.toString());
       if (parsedMessage["messageType"] === "action") {
@@ -298,6 +315,7 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
     if (!connection) return;
 
+    api.observability.ws.connections.add(-1);
     this.wsRateMap.delete(connection.id);
 
     try {
@@ -471,9 +489,11 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       });
     }
 
+    const httpStartTime = Date.now();
     let errorStatusCode = 500;
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
+    api.observability.http.activeConnections.add(1);
     const connection = new Connection("web", ip, id);
 
     if (
@@ -570,10 +590,23 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     );
 
     connection.destroy();
+    api.observability.http.activeConnections.add(-1);
 
     if (error && ErrorStatusCodes[error.type]) {
       errorStatusCode = ErrorStatusCodes[error.type];
     }
+
+    const statusCode = error ? errorStatusCode : 200;
+    api.observability.http.requestsTotal.add(1, {
+      method: httpMethod,
+      route: actionName ?? "unknown",
+      status: String(statusCode),
+    });
+    api.observability.http.requestDuration.record(Date.now() - httpStartTime, {
+      method: httpMethod,
+      route: actionName ?? "unknown",
+      status: String(statusCode),
+    });
 
     return error
       ? buildError(connection, error, errorStatusCode, requestOrigin)
