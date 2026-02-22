@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import colors from "colors";
 import { randomUUID } from "crypto";
-import { z } from "zod";
 import * as z4mini from "zod/v4-mini";
 import { api, logger } from "../api";
 import { Connection } from "../classes/Connection";
@@ -462,16 +461,16 @@ function sanitizeSchemaForMcp(schema: any): any {
     schema.shape as Record<string, any>,
   )) {
     try {
-      z4mini.toJSONSchema(z.object({ [key]: fieldSchema }), {
+      z4mini.toJSONSchema(z4mini.object({ [key]: fieldSchema }), {
         target: "draft-7",
         io: "input",
       });
       newShape[key] = fieldSchema;
     } catch {
       needsSanitization = true;
-      newShape[key] = z.string().describe(`${key}`);
+      newShape[key] = z4mini.string();
     }
   }
 
-  return needsSanitization ? z.object(newShape) : schema;
+  return needsSanitization ? z4mini.object(newShape) : schema;
 }
