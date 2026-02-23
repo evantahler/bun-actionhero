@@ -24,16 +24,17 @@ initialize()  →  start()  →  [running]  →  stop()
 
 Each initializer has three priority values. Lower numbers run first:
 
-| Initializer   | Load Priority | What it does                            |
-| ------------- | ------------- | --------------------------------------- |
-| `actions`     | 100           | Discovers and registers all actions     |
-| `db`          | 100           | Sets up Drizzle ORM + connection pool   |
-| `pubsub`      | 150           | Redis PubSub for real-time messaging    |
-| `swagger`     | 150           | Parses source code for OpenAPI schemas  |
-| `oauth`       | 175           | OAuth 2.1 provider for MCP auth         |
-| `mcp`         | 200           | MCP server — exposes actions as tools   |
-| `resque`      | 250           | Background task queue                   |
-| `application` | 1000          | App-specific setup (default user, etc.) |
+| Initializer     | Load Priority | What it does                                       |
+| --------------- | ------------- | -------------------------------------------------- |
+| `observability` | 50            | OpenTelemetry metrics + Prometheus scrape endpoint |
+| `actions`       | 100           | Discovers and registers all actions                |
+| `db`            | 100           | Sets up Drizzle ORM + connection pool              |
+| `pubsub`        | 150           | Redis PubSub for real-time messaging               |
+| `swagger`       | 150           | Parses source code for OpenAPI schemas             |
+| `oauth`         | 175           | OAuth 2.1 provider for MCP auth                    |
+| `mcp`           | 200           | MCP server — exposes actions as tools              |
+| `resque`        | 250           | Background task queue                              |
+| `application`   | 1000          | App-specific setup (default user, etc.)            |
 
 The defaults are `1000` for all three priorities (`loadPriority`, `startPriority`, `stopPriority`), so core framework initializers use lower values to ensure they run first.
 

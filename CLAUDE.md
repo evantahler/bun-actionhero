@@ -4,25 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with three workspaces: `packages/keryx/` (publishable framework), `example/backend/` (example API server), and `example/frontend/` (Next.js app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
+A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with three workspaces: `packages/keryx/` (publishable framework), `example/backend/` (example API server), and `example/frontend/` (Vite + React app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
 
 ## Monorepo Structure
 
 ```
-kingston/
+keryx/
   packages/keryx/          # Framework package (publishable as "keryx")
     classes/               # API, Action, Channel, Connection, Initializer, etc.
     initializers/          # Framework initializers (db, redis, actions, servers, etc.)
     servers/               # WebServer (Bun.serve)
     actions/               # Built-in actions (status, swagger)
-    config/                # Modular config with env overrides
+    config/                # Modular config with env overrides (logger, observability, server/web)
     middleware/             # Generic middleware (rateLimit)
-    util/                  # Helpers (glob, cli, config, zodMixins, oauth)
-    templates/             # OAuth HTML + SVG
+    util/                  # Helpers (glob, cli, config, zodMixins, oauth, generate, web*)
+    templates/             # OAuth HTML + SVG + CLI generator mustache templates
     lua/                   # Redis Lua scripts
     api.ts                 # Singleton + exports
     index.ts               # Package entry point (re-exports)
-    keryx.ts               # CLI entry
+    keryx.ts               # CLI entry (start, generate, upgrade)
     __tests__/             # Framework-level tests
   example/
     backend/               # Example app using keryx
@@ -37,7 +37,7 @@ kingston/
       index.ts             # Sets api.rootDir, re-exports from "keryx"
       keryx.ts             # App CLI entry
       __tests__/           # App-specific tests
-    frontend/              # Next.js frontend
+    frontend/              # Vite + React + Bootswatch frontend
   docs/                    # VitePress documentation site
 ```
 
@@ -105,7 +105,8 @@ Transport-agnostic controllers. Every action defines:
 - `web`: `{ route, method }` for HTTP routing (routes are regex or string with `:param` path params, defined on the action itself)
 - `task`: `{ queue, frequency }` for background job scheduling
 - `middleware`: Array of `ActionMiddleware` (e.g., `SessionMiddleware` for auth)
-- `run(params, connection)`: The handler. **Must throw `TypedError`** for errors.
+- `run(params, connection, abortSignal?)`: The handler. **Must throw `TypedError`** for errors. The `abortSignal` fires when the action exceeds its timeout.
+- `timeout`: Per-action timeout in ms (overrides global `config.actions.timeout`, default 300s). Set to `0` to disable.
 - `mcp`: `McpActionConfig` — `{ enabled, isLoginAction, isSignupAction }` (default `{ enabled: true }`)
 
 Type helpers: `ActionParams<A>` infers input types, `ActionResponse<A>` infers return types.
@@ -136,7 +137,7 @@ declare module "keryx" {
 }
 ```
 
-Key initializers and their priorities: `actions` (100), `db` (100), `redis` (default), `pubsub` (150), `swagger` (150), `oauth` (175), `mcp` (200/560/90), `resque` (250), `application` (1000).
+Key initializers and their priorities: `observability` (50), `actions` (100), `db` (100), `redis` (200), `pubsub` (150), `swagger` (150), `oauth` (175), `mcp` (200/560/90), `resque` (250), `application` (1000).
 
 ### Fan-Out Tasks (`packages/keryx/initializers/actionts.ts`)
 A parent action can distribute work across many child jobs using `api.actions.fanOut()`. Child results are automatically collected in Redis via `_fanOutId` injection.
@@ -161,8 +162,18 @@ Redis keys: `fanout:{id}` (hash), `fanout:{id}:results` (list), `fanout:{id}:err
 ### Channels (`packages/keryx/classes/Channel.ts`)
 PubSub channels for WebSocket real-time messaging. Channels define a `name` (string or RegExp pattern) and optional `middleware` (ChannelMiddleware) for authorization on subscribe and cleanup on unsubscribe.
 
+### Connection (`packages/keryx/classes/Connection.ts`)
+Represents a client connection across all transports. Key properties:
+- `sessionId`: Session ID for Redis session lookup (defaults to connection `id`; differs for WebSocket connections with cookie-based sessions)
+- `correlationId`: Request ID for distributed tracing (from `X-Request-Id` header or auto-generated UUID). Configured via `config.server.web.correlationId`.
+
 ### Servers (`packages/keryx/servers/web.ts`)
-WebServer uses `Bun.serve` for HTTP + WebSocket. Handles routing, static files, cookies, and session management.
+WebServer uses `Bun.serve` for HTTP + WebSocket. The server logic is split into utility modules in `packages/keryx/util/`:
+- `webRouting.ts` — route matching and HTTP request routing
+- `webSocket.ts` — WebSocket message handling and connection lifecycle
+- `webCompression.ts` — HTTP compression (Brotli, gzip) with configurable threshold
+- `webResponse.ts` — response formatting and header management
+- `webStaticFiles.ts` — static file serving with ETag/304 caching and Cache-Control headers
 
 ### MCP Server & OAuth (`packages/keryx/initializers/mcp.ts`, `packages/keryx/initializers/oauth.ts`)
 MCP (Model Context Protocol) server that exposes actions as tools for AI agents. Enabled via `MCP_SERVER_ENABLED=true`.
@@ -176,6 +187,15 @@ MCP (Model Context Protocol) server that exposes actions as tools for AI agents.
 
 ### Config (`packages/keryx/config/`)
 Modular config with per-environment overrides via `loadFromEnvIfSet()` — checks `ENV_VAR_NODEENV` first, then `ENV_VAR`, then falls back to the default value. Type-aware (auto-parses booleans and numbers).
+
+Key config files:
+- `config/server/web.ts` — port, host, CORS, `staticFiles` (cacheControl, etag), `websocket` (drainTimeout, maxPayloadSize), `compression` (enabled, threshold, encodings), `correlationId` (header, trustProxy), security headers
+- `config/logger.ts` — log level (trace→fatal), format (`text` or `json` for structured NDJSON), colorize, timestamps
+- `config/observability.ts` — `OTEL_METRICS_ENABLED`, `OTEL_METRICS_ROUTE` (`/metrics`), `OTEL_SERVICE_NAME`
+- `config/actions.ts` — global action `timeout` (default 300s)
+
+### CLI Generators (`packages/keryx/util/generate.ts`)
+`keryx generate <type> <name>` scaffolds new files from Mustache templates in `packages/keryx/templates/generate/`. Supported types: `action`, `initializer`, `middleware`, `channel`, `ops`. Each also generates a corresponding test file.
 
 ### Ops (`example/backend/ops/`)
 Business logic layer (e.g., `UserOps`, `MessageOps`) separating DB operations from actions.

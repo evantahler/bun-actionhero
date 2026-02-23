@@ -4,7 +4,7 @@ description: Deploying Keryx — Docker, production builds, reverse proxies, and
 
 # Deployment
 
-Keryx is a backend API server. The included Next.js frontend is a demo app — in production you'll bring your own client. This guide focuses on deploying the backend.
+Keryx is a backend API server. The included Vite + React frontend is a demo app — in production you'll bring your own client. This guide focuses on deploying the backend.
 
 ## Production Build
 
@@ -143,3 +143,34 @@ ws.onclose = (event) => {
 ```
 
 The drain period is configurable via `WS_DRAIN_TIMEOUT` (default: 5000 ms). After the timeout, any remaining connections are forcibly closed.
+
+## Monitoring & Observability
+
+Keryx includes built-in OpenTelemetry instrumentation. Enable it and point Prometheus at your instances:
+
+```bash
+OTEL_METRICS_ENABLED=true bun run start
+```
+
+Each Keryx process serves a `/metrics` endpoint in Prometheus exposition format. Add a scrape target to your `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: "keryx"
+    scrape_interval: 15s
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["localhost:8080"]
+```
+
+Because each process serves its own endpoint, **every node must be scraped individually** — metrics are not aggregated across instances. Use service discovery or list each target explicitly.
+
+For production log aggregation, switch to structured JSON logging:
+
+```bash
+LOG_FORMAT=json bun run start
+```
+
+This outputs NDJSON with correlated fields (timestamp, level, correlation ID) that can be ingested by Elasticsearch, Datadog, Loki, or any structured log system.
+
+See the [Observability guide](/guide/observability) for the full list of available metrics and custom exporter setup.
