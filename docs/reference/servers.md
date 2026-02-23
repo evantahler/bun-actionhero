@@ -62,6 +62,45 @@ Action messages include `action`, `params`, and an optional `messageId` that's e
 
 The web server can serve static files from a configured directory (default: `assets/`). This is useful for serving the frontend build output or other static assets alongside the API.
 
+### HTTP Compression
+
+The web server compresses responses using Brotli or gzip when the client supports it (via `Accept-Encoding`). Compression is enabled by default for responses larger than 1024 bytes. The server prefers Brotli when available, falling back to gzip.
+
+Configure via `config.server.web.compression`:
+
+| Key         | Env Var                     | Default         | What it does                              |
+| ----------- | --------------------------- | --------------- | ----------------------------------------- |
+| `enabled`   | `WEB_COMPRESSION_ENABLED`   | `true`          | Enable/disable HTTP compression           |
+| `threshold` | `WEB_COMPRESSION_THRESHOLD` | `1024`          | Minimum response size (bytes) to compress |
+| `encodings` | —                           | `["br","gzip"]` | Supported encodings (preference order)    |
+
+### Static File Caching
+
+When static file serving is enabled, the server supports ETag-based caching and `Cache-Control` headers. If a client sends `If-None-Match` with a matching ETag, the server returns `304 Not Modified` instead of the full file.
+
+| Key                        | Env Var                           | Default                  | What it does                          |
+| -------------------------- | --------------------------------- | ------------------------ | ------------------------------------- |
+| `staticFiles.cacheControl` | `WEB_SERVER_STATIC_CACHE_CONTROL` | `"public, max-age=3600"` | Cache-Control header for static files |
+| `staticFiles.etag`         | `WEB_SERVER_STATIC_ETAG`          | `true`                   | Enable ETag generation and 304s       |
+
+### Correlation IDs
+
+Every request is assigned a correlation ID (UUID) for distributed tracing. The ID is available on `connection.correlationId` and returned in the `X-Request-Id` response header. If a reverse proxy or upstream service sends an `X-Request-Id` header, the server can trust and propagate it instead of generating a new one.
+
+| Key                        | Env Var                          | Default          | What it does                          |
+| -------------------------- | -------------------------------- | ---------------- | ------------------------------------- |
+| `correlationId.header`     | `WEB_CORRELATION_ID_HEADER`      | `"X-Request-Id"` | Header name for correlation IDs       |
+| `correlationId.trustProxy` | `WEB_CORRELATION_ID_TRUST_PROXY` | `false`          | Trust incoming correlation ID headers |
+
+### WebSocket Configuration
+
+| Key                              | Env Var                      | Default | What it does                                    |
+| -------------------------------- | ---------------------------- | ------- | ----------------------------------------------- |
+| `websocket.maxPayloadSize`       | `WS_MAX_PAYLOAD_SIZE`        | `65536` | Max message size in bytes                       |
+| `websocket.maxMessagesPerSecond` | `WS_MAX_MESSAGES_PER_SECOND` | `20`    | Rate limit per connection                       |
+| `websocket.maxSubscriptions`     | `WS_MAX_SUBSCRIPTIONS`       | `100`   | Max channel subscriptions per connection        |
+| `websocket.drainTimeout`         | `WS_DRAIN_TIMEOUT`           | `5000`  | Ms to wait for pending messages during shutdown |
+
 ### Configuration
 
 All web server settings are in `config.server.web`:
