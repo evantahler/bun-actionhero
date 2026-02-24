@@ -131,19 +131,16 @@ describe("keryx upgrade (CLI integration)", () => {
   test("does not touch user-owned files", async () => {
     const helloPath = path.join(projectDir, "actions/hello.ts");
     const indexPath = path.join(projectDir, "index.ts");
-    const keryxPath = path.join(projectDir, "keryx.ts");
     const envPath = path.join(projectDir, ".env.example");
 
     const helloBefore = fs.readFileSync(helloPath, "utf-8");
     const indexBefore = fs.readFileSync(indexPath, "utf-8");
-    const keryxBefore = fs.readFileSync(keryxPath, "utf-8");
     const envBefore = fs.readFileSync(envPath, "utf-8");
 
     await runKeryx(["upgrade", "--force"], projectDir);
 
     expect(fs.readFileSync(helloPath, "utf-8")).toBe(helloBefore);
     expect(fs.readFileSync(indexPath, "utf-8")).toBe(indexBefore);
-    expect(fs.readFileSync(keryxPath, "utf-8")).toBe(keryxBefore);
     expect(fs.readFileSync(envPath, "utf-8")).toBe(envBefore);
   });
 
@@ -192,6 +189,6 @@ describe("keryx upgrade (CLI integration)", () => {
 
     expect(exitCode).toBe(0);
     expect(stdout).toContain("Updated 2 file(s)");
-    expect(stdout).toContain("19 already up to date");
+    expect(stdout).toContain("20 already up to date");
   });
 });

@@ -6,6 +6,7 @@ import pkg from "../package.json";
 import {
   generateBuiltinActionContents,
   generateConfigFileContents,
+  generateKeryxTsContents,
   generateOAuthTemplateContents,
   generateTsconfigContents,
 } from "./scaffold";
@@ -97,6 +98,7 @@ export async function upgradeProject(
   for (const [p, content] of actionFiles) files.set(p, content);
 
   files.set("tsconfig.json", generateTsconfigContents());
+  files.set("keryx.ts", await generateKeryxTsContents());
 
   const oauthTemplates = await generateOAuthTemplateContents();
   for (const [p, content] of oauthTemplates) files.set(p, content);
