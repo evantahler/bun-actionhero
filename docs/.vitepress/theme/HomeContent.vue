@@ -40,10 +40,10 @@
 }
 
 .container h2 {
-  font-family: "Inter", var(--vp-font-family-base);
+  font-family: "Space Grotesk", var(--vp-font-family-base);
   font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   text-align: center;
   margin-bottom: 8px;
 }
