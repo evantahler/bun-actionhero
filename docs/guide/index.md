@@ -6,7 +6,7 @@ description: Get up and running with Keryx — prerequisites, installation, and 
 
 Keryx is the fullstack TypeScript framework for MCP and APIs. It's the spiritual successor to [ActionHero](https://www.actionherojs.com), rebuilt from scratch on [Bun](https://bun.sh) with Zod for validation, Drizzle for the ORM, and a Vite + React frontend. The core ideas are the same — transport-agnostic actions, built-in background tasks, strong typing between frontend and backend — but the tooling and scope are different.
 
-Write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool — all at the same time.
+Write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool — all at the same time. Enable `MCP_SERVER_ENABLED=true` and AI agents can discover and call those same actions as MCP tools.
 
 The name **Keryx** (κῆρυξ) comes from ancient Greek, meaning "herald" or "messenger" — the person who carried proclamations between gods and mortals. It fits: your actions are the message, and Keryx delivers them across every transport.
 
@@ -93,3 +93,4 @@ This creates the component file and a matching test file. See the [CLI guide](/g
 - [Initializers](/guide/initializers) — how the server boots up and connects to services
 - [Tasks](/guide/tasks) — background jobs and the fan-out pattern
 - [Configuration](/guide/config) — environment-based config with per-env overrides
+- [Building for AI Agents](/guide/agents) — expose your actions as MCP tools for Claude, Cursor, and other AI clients

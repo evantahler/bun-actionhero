@@ -1,6 +1,6 @@
 # Keryx
 
-> The modern TypeScript API framework built on Bun.
+> The fullstack TypeScript framework for MCP and APIs.
 
 This file is auto-generated during build by vitepress-plugin-llms.
 Run `bun docs:build` to generate the full version.

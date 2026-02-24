@@ -4,7 +4,7 @@ description: The fullstack TypeScript framework for MCP and APIs — transport-a
 hero:
   name: Keryx
   text: The Fullstack TypeScript Framework for MCP and APIs
-  tagline: One action class. Five transports. Your API is automatically an MCP server, WebSocket handler, CLI tool, and background task runner. Built on Bun, powered by Zod.
+  tagline: One action class. Five transports. Your API is automatically an MCP server for AI agents, a WebSocket handler, a CLI tool, and a background task runner. Built on Bun, powered by Zod.
   image:
     src: /images/hearald.svg
     alt: Keryx herald
@@ -24,7 +24,7 @@ hero:
 features:
   - icon: "\U0001F916"
     title: MCP-Native
-    details: Every action is automatically an MCP tool. AI agents discover and call your API through the Model Context Protocol — with OAuth 2.1 auth and llms.txt support.
+    details: Every action is automatically an MCP tool. AI agents authenticate via built-in OAuth 2.1, get typed errors, and call the same validated endpoints your HTTP clients use — zero extra configuration.
   - icon: "\U0001F500"
     title: One Action, Every Transport
     details: Write your controller once — HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool. Same validation, same middleware, same response.
@@ -141,8 +141,26 @@ Keryx flips that: write your controller once, and the framework delivers it acro
 | Unified controller  | yes   | —       | —      | —        | —       | —        |
 | Type-safe responses | yes   | yes     | yes    | partial  | yes     | —        |
 | OAuth 2.1 built-in  | yes   | —       | —      | Passport | —       | allauth  |
+| Per-session agents  | yes   | —       | —      | —        | —       | —        |
 
 [See detailed comparisons →](/guide/comparisons)
+
+The MCP SDK gives you the protocol. Keryx gives you the framework — actions, validation, middleware, auth, database, and background tasks alongside your MCP tools.
+
+## Built for AI Agents
+
+Keryx is the only TypeScript framework where your API is automatically an MCP server. No separate tool definitions, no duplicated auth, no schema mapping.
+
+- **Zero-config tool registration** — write an action, it's an MCP tool. The Zod schema becomes the tool's input schema automatically.
+- **OAuth 2.1 + PKCE built-in** — agents authenticate the same way browser clients do. One auth layer, not two.
+- **Dynamic OAuth forms** — login and signup pages are generated from your Zod schemas. Change a field, the form updates.
+- **Per-session MCP servers** — each agent connection gets isolated state. No cross-session leaks.
+- **Typed errors** — agents get structured `ErrorType` values, not generic failure messages. They can distinguish validation errors from auth failures.
+- **Real-time notifications** — PubSub events are forwarded to connected agents as MCP logging messages.
+
+Claude Desktop, VS Code Copilot, Cursor, Windsurf, and any other MCP client can discover and call your actions out of the box.
+
+[Building for AI Agents →](/guide/agents)
 
 ## Why Bun?
 

@@ -61,6 +61,20 @@ Keryx is batteries-included for APIs and MCP. No template engine, no admin panel
 
 Different tools for different jobs. Django for server-rendered web apps with decades of stability. Keryx for API-first backends that need AI agent integration alongside traditional HTTP and WebSocket clients.
 
+## vs MCP SDK (Bare)
+
+If you're building for AI agents, you might consider using the `@modelcontextprotocol/sdk` directly. It's well-built — Keryx uses it internally. But the SDK gives you the protocol, not the framework.
+
+With the bare SDK, you write tool handlers, manage sessions, build an auth layer, validate inputs, and wire up a transport — all by hand. With Keryx, you write an action with a Zod schema and get an MCP tool with OAuth 2.1, typed errors, input validation, middleware, and per-session isolation out of the box. Your action also works as an HTTP endpoint, WebSocket handler, CLI command, and background task — no extra code.
+
+The SDK is the right choice if you need a standalone MCP server with no HTTP API alongside it. If your tools need a web API, a database, background tasks, or real-time channels too, that's Keryx.
+
+## Agent Readiness
+
+If you're evaluating frameworks for AI agent integration, here's what matters: Does it expose tools via MCP? Does auth work for non-browser clients? Can you control which endpoints agents see? Does each agent get isolated session state?
+
+Keryx is the only framework in this comparison where MCP, OAuth, tool control, and per-session isolation work out of the box — without additional libraries or configuration. See the [Building for AI Agents](/guide/agents) guide for a walkthrough.
+
 ## The Honest Answer
 
 If you're building an HTTP-only API, any of these frameworks will serve you well. Keryx shines when you need your API to also be a WebSocket server, a CLI tool, a background task runner, and an MCP server — without writing the same logic five times.

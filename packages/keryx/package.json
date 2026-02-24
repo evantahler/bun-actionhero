@@ -26,6 +26,11 @@
     "model-context-protocol",
     "cli",
     "ai",
+    "ai-agents",
+    "mcp-server",
+    "oauth2",
+    "tool-calling",
+    "llm",
     "fullstack",
     "transport-agnostic",
     "actionhero"

@@ -18,6 +18,17 @@ The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is the open 
 
 Most frameworks treat MCP as an afterthought: bolt on a separate MCP server, duplicate your route handlers as tool definitions, manage a second auth layer. Keryx treats MCP as a first-class transport. Every action you write is automatically available as an MCP tool — same validation, same [middleware](/guide/middleware), same auth — with built-in OAuth 2.1 so AI agents authenticate the same way browser clients do.
 
+What that means in practice:
+
+- **Zero-config tool registration** — write an action, it's an MCP tool. No separate definitions.
+- **OAuth 2.1 + PKCE** — agents authenticate like browser clients. One auth layer.
+- **Per-session MCP servers** — each agent gets isolated state.
+- **Typed errors** — agents get structured `ErrorType` values, not generic failures.
+- **Real-time notifications** — PubSub events forwarded as MCP logging messages.
+- **Dynamic OAuth forms** — login pages generated from your Zod schemas.
+
+Claude Desktop, VS Code Copilot, Cursor, Windsurf, and any other MCP client can discover and call your actions out of the box. See the [Building for AI Agents](/guide/agents) guide for a walkthrough.
+
 ## Brand Assets
 
 ### Images
