@@ -6,7 +6,21 @@ export default defineConfig({
   title: "Keryx",
   description:
     "The fullstack TypeScript framework for MCP and APIs — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
-  head: [["link", { rel: "icon", href: "/images/horn.svg" }]],
+  head: [
+    ["link", { rel: "icon", href: "/images/horn.svg" }],
+    [
+      "script",
+      {
+        async: "",
+        src: "https://www.googletagmanager.com/gtag/js?id=G-G4F5PLL4QD",
+      },
+    ],
+    [
+      "script",
+      {},
+      "window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', 'G-G4F5PLL4QD');",
+    ],
+  ],
 
   themeConfig: {
     logo: "/images/horn.svg",
