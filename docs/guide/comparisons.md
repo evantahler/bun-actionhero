@@ -25,7 +25,7 @@ Hono is excellent for edge HTTP. It runs everywhere — Cloudflare Workers, Deno
 
 Where Keryx diverges: Hono is an HTTP router. If you need WebSocket handling, CLI commands, background tasks, and Model Context Protocol (MCP) tools from the same codebase, you're stitching together separate libraries. Keryx gives you one [action](/guide/actions) class that serves all five transports with shared validation and middleware.
 
-Hono also doesn't have a built-in task runner or database layer. Keryx includes Resque-based [background tasks](/guide/tasks) with [fan-out](/guide/tasks#fan-out), Drizzle ORM with auto-migrations, and Redis PubSub [channels](/guide/channels) out of the box.
+Hono also doesn't have a built-in task runner or database layer. Keryx includes Resque-based [background tasks](/guide/tasks) with [fan-out](/guide/tasks#fan-out-pattern), Drizzle ORM with auto-migrations, and Redis PubSub [channels](/guide/channels) out of the box.
 
 ## vs Elysia
 

@@ -131,6 +131,12 @@ jobs:
 
   complete:
     runs-on: ubuntu-latest
+    if: always()
     needs: [compile, lint, test-package, test-example-backend, test-example-frontend, test-docs]
     steps:
-      - run: echo "Done!"
+      - run: |
+          if [[ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more jobs failed or were cancelled"
+            exit 1
+          fi
+          echo "All jobs passed!"
