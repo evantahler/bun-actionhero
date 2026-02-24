@@ -222,8 +222,9 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
       });
     }
 
-    // Don't route .well-known paths to actions
-    if (parsedUrl.pathname?.startsWith("/.well-known/")) {
+    // Don't route .well-known paths to actions (covers both root and
+    // sub-path variants like /mcp/.well-known/openid-configuration)
+    if (parsedUrl.pathname?.includes("/.well-known/")) {
       return new Response(null, { status: 404 });
     }
 
