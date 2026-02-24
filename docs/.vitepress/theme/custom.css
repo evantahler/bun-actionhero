@@ -1,3 +1,7 @@
+/* ── Font ─────────────────────────────────────────────────────────── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+
+/* ── Brand palette ────────────────────────────────────────────────── */
 :root {
   --vp-c-brand-1: #b8701e;
   --vp-c-brand-2: #cf8128;
@@ -9,13 +13,22 @@
   --vp-button-brand-active-bg: #9a5e18;
 
   --vp-home-hero-name-color: transparent;
-  --vp-home-hero-name-background: linear-gradient(135deg, #cf8128, #bb5533);
+  --vp-home-hero-name-background: linear-gradient(
+    120deg,
+    #eab56e 0%,
+    #cf8128 40%,
+    #bb5533 100%
+  );
   --vp-home-hero-image-background-image: linear-gradient(
     135deg,
     rgba(207, 129, 40, 0.3),
     rgba(187, 85, 51, 0.3)
   );
   --vp-home-hero-image-filter: blur(40px);
+
+  --keryx-glow-amber: rgba(207, 129, 40, 0.15);
+  --keryx-glow-terracotta: rgba(187, 85, 51, 0.12);
+  --keryx-glow-gold: rgba(234, 181, 110, 0.1);
 }
 
 .dark {
@@ -27,10 +40,163 @@
   --vp-button-brand-bg: #b8701e;
   --vp-button-brand-hover-bg: #cf8128;
   --vp-button-brand-active-bg: #9a5e18;
+
+  --keryx-glow-amber: rgba(207, 129, 40, 0.12);
+  --keryx-glow-terracotta: rgba(187, 85, 51, 0.1);
+  --keryx-glow-gold: rgba(234, 181, 110, 0.08);
 }
 
+/* ── Typography ───────────────────────────────────────────────────── */
+.VPHero .name {
+  font-family: "Inter", var(--vp-font-family-base);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+}
+
+.VPHero .text {
+  font-family: "Inter", var(--vp-font-family-base);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ── Sponsor button (LLMs.txt) ────────────────────────────────────── */
 .VPHero .actions .VPButton.sponsor {
   font-family:
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+}
+
+/* ── Hero glow orbs ───────────────────────────────────────────────── */
+.VPHero {
+  position: relative;
+  overflow: visible;
+}
+
+.VPHome {
+  overflow: hidden;
+}
+
+.VPHero::before,
+.VPHero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Large amber orb — top left */
+.VPHero::before {
+  width: 600px;
+  height: 600px;
+  top: -200px;
+  left: -100px;
+  background: radial-gradient(
+    circle,
+    var(--keryx-glow-amber) 0%,
+    transparent 70%
+  );
+  filter: blur(80px);
+  animation: orb-drift-1 12s ease-in-out infinite alternate;
+}
+
+/* Terracotta orb — bottom right */
+.VPHero::after {
+  width: 500px;
+  height: 500px;
+  bottom: -150px;
+  right: -80px;
+  background: radial-gradient(
+    circle,
+    var(--keryx-glow-terracotta) 0%,
+    transparent 70%
+  );
+  filter: blur(100px);
+  animation: orb-drift-2 15s ease-in-out infinite alternate;
+}
+
+@keyframes orb-drift-1 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(40px, 30px) scale(1.08);
+  }
+}
+
+@keyframes orb-drift-2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    transform: translate(-30px, -20px) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .VPHero::before,
+  .VPHero::after {
+    animation: none;
+  }
+}
+
+/* ── Glassmorphism feature cards ──────────────────────────────────── */
+.dark .VPFeature .box {
+  background-color: rgba(30, 30, 35, 0.8) !important;
+}
+
+.VPFeature {
+  border: 1px solid rgba(207, 129, 40, 0.12) !important;
+  border-radius: 12px !important;
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.VPFeature:hover {
+  transform: translateY(-4px);
+  border-color: rgba(207, 129, 40, 0.35) !important;
+  box-shadow: 0 8px 32px rgba(207, 129, 40, 0.08);
+}
+
+:not(.dark) .VPFeature:hover {
+  box-shadow: 0 8px 32px rgba(207, 129, 40, 0.12);
+}
+
+/* ── Gradient divider after hero ──────────────────────────────────── */
+.VPFeatures {
+  position: relative;
+}
+
+.VPFeatures::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(80%, 600px);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--vp-c-brand-2) 50%,
+    transparent 100%
+  );
+  opacity: 0.4;
+}
+
+/* ── Footer lion ──────────────────────────────────────────────────── */
+.footer-lion img {
+  width: 80px !important;
+  height: 80px !important;
+  opacity: 0.6 !important;
+  transition:
+    opacity 0.3s ease,
+    filter 0.3s ease;
+}
+
+.footer-lion img:hover {
+  opacity: 0.85;
+  filter: drop-shadow(0 0 12px rgba(207, 129, 40, 0.4));
 }
