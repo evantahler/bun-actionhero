@@ -88,8 +88,12 @@ beforeAll(async () => {
   }
 
   // 4. Create .env with test-safe overrides (reuse keryx-test DB, dedicated Redis DB, unique port)
+  //    In CI, DATABASE_URL_TEST is set with the correct credentials (e.g. postgres:postgres);
+  //    locally, fall back to the current OS user with no password.
   const username = os.userInfo().username;
-  const dbUrl = `postgres://${username}@localhost:5432/keryx-test`;
+  const dbUrl =
+    process.env.DATABASE_URL_TEST ??
+    `postgres://${username}@localhost:5432/keryx-test`;
   let envContent = fs.readFileSync(
     path.join(projectDir, ".env.example"),
     "utf-8",
