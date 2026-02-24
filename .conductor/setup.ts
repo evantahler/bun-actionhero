@@ -64,16 +64,33 @@ console.log(`Frontend port:   ${frontendPort}`);
 console.log(`Redis DB:        ${redisDb} (test: ${redisDbTest})`);
 console.log(`Postgres DB:     ${dbName} (test: ${dbNameTest})`);
 
+// Discover Postgres CLI tools (Homebrew keg-only installs aren't on PATH).
+// Bun's $ shell doesn't re-read process.env.PATH, so we resolve full paths.
+let pgBin = "";
+const brewPgPrefix =
+  await $`brew --prefix postgresql@17 2>/dev/null`.quiet().nothrow();
+if (brewPgPrefix.exitCode === 0) {
+  const candidate = join(brewPgPrefix.stdout.toString().trim(), "bin");
+  if (existsSync(candidate)) {
+    pgBin = candidate + "/";
+    console.log(`Using Postgres tools from ${candidate}`);
+  }
+}
+
+const pgIsReady = `${pgBin}pg_isready`;
+const psql = `${pgBin}psql`;
+const createdb = `${pgBin}createdb`;
+
 // Ensure Postgres is running
 try {
-  await $`pg_isready -q`.quiet();
+  await $`${{ raw: pgIsReady }} -q`.quiet();
   console.log("Postgres is running.");
 } catch {
   console.log("Postgres is not running. Starting via Homebrew...");
   await $`brew services start postgresql@17`.quiet().nothrow();
   for (let i = 0; i < 10; i++) {
     try {
-      await $`pg_isready -q`.quiet();
+      await $`${{ raw: pgIsReady }} -q`.quiet();
       break;
     } catch {
       await Bun.sleep(500);
@@ -85,12 +102,12 @@ try {
 // Create Postgres databases if they don't exist
 for (const db of [dbName, dbNameTest]) {
   const result =
-    await $`psql -lqt 2>/dev/null | cut -d'|' -f1 | grep -qw ${db}`.nothrow();
+    await $`${{ raw: psql }} -lqt 2>/dev/null | cut -d'|' -f1 | grep -qw ${db}`.nothrow();
   if (result.exitCode === 0) {
     console.log(`Database '${db}' already exists.`);
   } else {
     console.log(`Creating database '${db}'...`);
-    const createResult = await $`createdb ${db}`.nothrow();
+    const createResult = await $`${{ raw: createdb }} ${db}`.nothrow();
     if (createResult.exitCode !== 0) {
       console.log(
         `WARNING: Could not create database '${db}'. Create it manually: createdb ${db}`,

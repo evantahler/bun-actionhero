@@ -28,7 +28,9 @@ export async function buildProgram(opts: {
   version: string;
 }): Promise<Command> {
   const program = new Command();
-  program.name(opts.name).description(opts.description).version(opts.version);
+  program.name(opts.name);
+  program.description(opts.description ?? "");
+  program.version(opts.version);
 
   program
     .command("new [project-name]")
