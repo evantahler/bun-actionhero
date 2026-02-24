@@ -4,9 +4,9 @@ description: Get up and running with Keryx — prerequisites, installation, and 
 
 # Getting Started
 
-Keryx is a modern rewrite of [ActionHero](https://www.actionherojs.com), rebuilt from scratch on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — transport-agnostic actions, built-in background tasks, strong typing between frontend and backend — but the original framework was showing its age. This project takes those ideas and pairs them with modern tooling: Bun for the runtime, Zod for validation, Drizzle for the ORM, and Next.js for the frontend.
+Keryx is the fullstack TypeScript framework for MCP and APIs. It's the spiritual successor to [ActionHero](https://www.actionherojs.com), rebuilt from scratch on [Bun](https://bun.sh) with Zod for validation, Drizzle for the ORM, and a Vite + React frontend. The core ideas are the same — transport-agnostic actions, built-in background tasks, strong typing between frontend and backend — but the tooling and scope are different.
 
-The result is a full-stack monorepo template where you write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, and background task… all at the same time.
+Write your controller logic once, and it works as an HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool — all at the same time.
 
 The name **Keryx** (κῆρυξ) comes from ancient Greek, meaning "herald" or "messenger" — the person who carried proclamations between gods and mortals. It fits: your actions are the message, and Keryx delivers them across every transport.
 

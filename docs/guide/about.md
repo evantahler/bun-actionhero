@@ -8,9 +8,15 @@ description: The name, the brand, and the community behind Keryx.
 
 **Keryx** (κῆρυξ, pronounced "KEH-rüks") is ancient Greek for "herald" or "messenger" — the person who carried proclamations between gods and mortals, announced the start of games, and ensured safe passage for diplomats. In Athenian democracy, the keryx was essential: no assembly could begin without one.
 
-It fits: your actions are the message, and Keryx delivers them across every transport — HTTP, WebSocket, CLI, background tasks, and MCP.
+It fits: your [actions](/guide/actions) are the message, and Keryx delivers them across every transport — HTTP, WebSocket, CLI, background tasks, and MCP. Write your controller once, and Keryx heralds it to every client — whether that's a browser, a terminal, a background worker, or an AI agent.
 
 Read more on [Britannica](https://www.britannica.com/topic/keryx) or [Wikipedia (Kerykes)](https://en.wikipedia.org/wiki/Kerykes).
+
+## Why MCP?
+
+The [Model Context Protocol](https://modelcontextprotocol.io) (MCP) is the open standard for connecting AI agents to tools and data. Anthropic, OpenAI, and Google have all adopted it — it's becoming the universal interface between LLMs and backend services.
+
+Most frameworks treat MCP as an afterthought: bolt on a separate MCP server, duplicate your route handlers as tool definitions, manage a second auth layer. Keryx treats MCP as a first-class transport. Every action you write is automatically available as an MCP tool — same validation, same [middleware](/guide/middleware), same auth — with built-in OAuth 2.1 so AI agents authenticate the same way browser clients do.
 
 ## Brand Assets
 

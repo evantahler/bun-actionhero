@@ -1,6 +1,6 @@
 # Keryx
 
-<p align="center"><strong>Keryx is the messenger of the gods, and the greatest framework for building realtime AI, CLI, and web applications.</strong></p>
+<p align="center"><strong>The fullstack TypeScript framework for MCP and APIs.</strong></p>
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/evantahler/keryx/main/docs/public/images/horn.svg" alt="Keryx" width="200" />
@@ -10,7 +10,7 @@
 
 ## What is this Project?
 
-This is a modern rewrite of [ActionHero](https://www.actionherojs.com), built on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — it was an attempt to take the best ideas from Rails and Node.js and shove them together — but the original framework needed a fresh start with modern tooling.
+This is a ground-up rewrite of [ActionHero](https://www.actionherojs.com), built on [Bun](https://bun.sh). I still believe in the core ideas behind ActionHero — it was an attempt to take the best ideas from Rails and Node.js and shove them together — but the original framework needed a fresh start with Bun, Zod, Drizzle, and first-class MCP support.
 
 The big idea: **write your controller once, and it works everywhere**. A single action class handles HTTP requests, WebSocket messages, CLI commands, background tasks, and MCP tool calls — same inputs, same validation, same middleware, same response. No duplication.
 
@@ -82,7 +82,7 @@ Same validation, same middleware chain, same `run()` method, same response shape
 - **Built-in background tasks** via [node-resque](https://github.com/actionhero/node-resque), with a [fan-out pattern](#fan-out-tasks) for parallel job processing
 - **Strongly-typed frontend integration** — `ActionResponse<MyAction>` gives the frontend type-safe API responses, no code generation needed
 - **Drizzle ORM** with auto-migrations (replacing the old `ah-sequelize-plugin`)
-- **Companion Next.js frontend** as a separate application (replacing `ah-next-plugin`)
+- **Companion Vite + React frontend** as a separate application (replacing `ah-next-plugin`)
 
 ### Why Bun?
 
@@ -99,7 +99,7 @@ TypeScript is still the best language for web APIs. But Node.js has stalled — 
 - **root** — a slim `package.json` wrapping the workspaces. `bun install` and `bun dev` work here, but you need to `cd` into each workspace for tests.
 - **packages/keryx** — the framework package (publishable)
 - **example/backend** — the example backend application
-- **example/frontend** — the example Next.js frontend
+- **example/frontend** — the example Vite + React frontend
 - **docs** — the [documentation site](https://keryxjs.com)
 
 ## Quick Start
@@ -200,7 +200,7 @@ A parent task can distribute work across many child jobs using `api.actions.fanO
 
 ## Coming from ActionHero?
 
-Keryx keeps the core ideas but rewrites everything with modern tooling. The biggest changes: unified controllers (actions = tasks = CLI commands = MCP tools), separate frontend/backend applications, Drizzle ORM, and MCP as a first-class transport.
+Keryx keeps the core ideas but rewrites everything on Bun with first-class MCP support. The biggest changes: unified controllers (actions = tasks = CLI commands = MCP tools), separate frontend/backend applications, Drizzle ORM, and MCP as a first-class transport.
 
 See the full [migration guide](https://keryxjs.com/guide/from-actionhero) for details.
 

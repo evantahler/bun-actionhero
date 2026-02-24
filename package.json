@@ -5,7 +5,7 @@
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
-  "description": "Keryx - the messenger of the gods. The greatest framework for building realtime AI, CLI, and web applications, and other applications too!",
+  "description": "The fullstack TypeScript framework for MCP and APIs — write one action, serve HTTP, WebSocket, CLI, background tasks, and MCP tools.",
   "workspaces": [
     "packages/keryx",
     "example/backend",
