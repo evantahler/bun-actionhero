@@ -43,6 +43,10 @@ export default defineConfig({
           items: [
             { text: "CLI", link: "/guide/cli" },
             { text: "Authentication", link: "/guide/authentication" },
+            {
+              text: "Building for AI Agents",
+              link: "/guide/agents",
+            },
             { text: "Security", link: "/guide/security" },
             { text: "Observability", link: "/guide/observability" },
             { text: "Testing", link: "/guide/testing" },

@@ -14,6 +14,8 @@ This is a ground-up rewrite of [ActionHero](https://www.actionherojs.com), built
 
 The big idea: **write your controller once, and it works everywhere**. A single action class handles HTTP requests, WebSocket messages, CLI commands, background tasks, and MCP tool calls — same inputs, same validation, same middleware, same response. No duplication.
 
+That includes AI agents. Every action is automatically an MCP tool — agents authenticate via built-in OAuth 2.1, get typed errors, and call the same validated endpoints your HTTP clients use. No separate MCP server, no duplicated schemas.
+
 ### One Action, Every Transport
 
 Here's what that looks like in practice. This is one action:
@@ -75,8 +77,11 @@ await api.actions.enqueue("user:create", { name: "Evan", email: "evan@example.co
 
 Same validation, same middleware chain, same `run()` method, same response shape. The only thing that changes is how the request arrives and how the response is delivered.
 
+That's it. The agent can now discover all your actions as tools, authenticate via OAuth, and call them with full type validation.
+
 ### Key Components
 
+- **MCP-native** — every action is an MCP tool with OAuth 2.1 auth, typed errors, and per-session isolation
 - **Transport-agnostic Actions** — HTTP, WebSocket, CLI, background tasks, and MCP from one class
 - **Zod input validation** — type-safe params with automatic error responses and OpenAPI generation
 - **Built-in background tasks** via [node-resque](https://github.com/actionhero/node-resque), with a [fan-out pattern](#fan-out-tasks) for parallel job processing
