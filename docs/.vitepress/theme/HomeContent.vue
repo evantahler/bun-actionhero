@@ -40,8 +40,10 @@
 }
 
 .container h2 {
+  font-family: "Inter", var(--vp-font-family-base);
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: -0.01em;
   text-align: center;
   margin-bottom: 8px;
 }
@@ -63,7 +65,16 @@
 .code-example {
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid var(--vp-c-divider);
+  border: 1px solid rgba(207, 129, 40, 0.15);
+  background: rgba(207, 129, 40, 0.03);
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.code-example:hover {
+  border-color: rgba(207, 129, 40, 0.3);
+  box-shadow: 0 4px 24px rgba(207, 129, 40, 0.06);
 }
 
 .code-example pre {
