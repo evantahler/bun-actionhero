@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A modern TypeScript framework built on Bun, spiritual successor to ActionHero. Monorepo with three workspaces: `packages/keryx/` (publishable framework), `example/backend/` (example API server), and `example/frontend/` (Vite + React app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
+The fullstack TypeScript framework for MCP and APIs, built on Bun. Spiritual successor to ActionHero. Monorepo with three workspaces: `packages/keryx/` (publishable framework), `example/backend/` (example API server), and `example/frontend/` (Vite + React app). The core idea: **Actions are the universal controller** - they serve as HTTP endpoints, WebSocket handlers, CLI commands, background tasks, and MCP tools simultaneously.
 
 ## Monorepo Structure
 
@@ -271,9 +271,9 @@ bun docs:build                     # Generate reference data + build static site
 cd docs && bun run generate        # Regenerate reference JSON from backend source
 ```
 
-**Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
+**Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. When writing or editing documentation, follow the editorial style guide at `docs/guide/style-guide.md` — it covers voice, tone, capitalization, and formatting conventions. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
 
-The landing page includes `README.md` via VitePress markdown includes (`<!--@include: ../README.md-->`), so README changes automatically appear on the site.
+The landing page (`docs/index.md`) has its own content — it no longer includes the README.
 
 ## Pull Requests
 

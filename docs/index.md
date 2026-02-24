@@ -1,10 +1,10 @@
 ---
 layout: home
-description: A modern TypeScript API framework built on Bun — the spiritual successor to ActionHero.
+description: The fullstack TypeScript framework for MCP and APIs — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.
 hero:
   name: Keryx
-  text: The Modern TypeScript API Framework
-  tagline: Write one action. It handles HTTP, WebSocket, CLI, background tasks, and MCP tool calls. Built on Bun, powered by Zod, backed by Redis and Postgres.
+  text: The Fullstack TypeScript Framework for MCP and APIs
+  tagline: One action class. Five transports. Your API is automatically an MCP server, WebSocket handler, CLI tool, and background task runner. Built on Bun, powered by Zod.
   image:
     src: /images/hearald.svg
     alt: Keryx herald
@@ -22,24 +22,24 @@ hero:
       text: LLMs.txt
       link: /llms.txt
 features:
+  - icon: "\U0001F916"
+    title: MCP-Native
+    details: Every action is automatically an MCP tool. AI agents discover and call your API through the Model Context Protocol — with OAuth 2.1 auth and llms.txt support.
   - icon: "\U0001F500"
     title: One Action, Every Transport
-    details: Write your controller once — it works as an HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool simultaneously.
-  - icon: "\u26A1"
-    title: Built on Bun
-    details: Native TypeScript, fast startup, built-in test runner, no compilation step. Bun handles bundling, testing, and module resolution out of the box.
+    details: Write your controller once — HTTP endpoint, WebSocket handler, CLI command, background task, and MCP tool. Same validation, same middleware, same response.
   - icon: "\U0001F6E1\uFE0F"
     title: Zod Validation
     details: Type-safe inputs with automatic validation. Your Zod schemas generate OpenAPI docs, power CLI --help, and validate WebSocket params — all from one definition.
+  - icon: "\u26A1"
+    title: Built on Bun
+    details: Native TypeScript, fast startup, built-in test runner, no compilation step. Bun handles bundling, testing, and module resolution out of the box.
   - icon: "\U0001F4E1"
     title: Real-Time Channels
     details: PubSub over Redis with middleware-based authorization. Define channel patterns, control who can subscribe, and broadcast to WebSocket clients.
   - icon: "\u2699\uFE0F"
     title: Background Tasks & Fan-Out
     details: Built-in Resque workers with a fan-out pattern for distributing work across child jobs. Track progress and collect results automatically.
-  - icon: "\U0001F916"
-    title: MCP & llms.txt
-    details: Expose every action as an MCP tool for AI agents with OAuth 2.1 auth. This site also serves llms.txt and llms-full.txt so agents can read the full docs.
   - icon: "\U0001F5C4\uFE0F"
     title: Drizzle ORM
     details: First-class database support with auto-migrations and type-safe schemas. No separate ORM plugin needed — it's part of the stack.
@@ -48,4 +48,122 @@ features:
     details: Built-in OpenTelemetry metrics, plus structured logging for log aggregation. Correlation IDs trace requests across services.
 ---
 
-<!--@include: ../README.md-->
+## One Action, Every Transport
+
+This is one action:
+
+```ts
+export class UserCreate implements Action {
+  name = "user:create";
+  description = "Create a new user";
+  inputs = z.object({
+    name: z.string().min(3),
+    email: z.string().email(),
+    password: secret(z.string().min(8)),
+  });
+  web = { route: "/user", method: HTTP_METHOD.PUT };
+  task = { queue: "default" };
+
+  async run(params: ActionParams<UserCreate>) {
+    const user = await createUser(params);
+    return { user: serializeUser(user) };
+  }
+}
+```
+
+That one class gives you:
+
+**HTTP** — `PUT /api/user` with JSON body, query params, or form data:
+
+```bash
+curl -X PUT http://localhost:8080/api/user \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Evan","email":"evan@example.com","password":"secret123"}'
+```
+
+**WebSocket** — send a JSON message over an open connection:
+
+```json
+{
+  "messageType": "action",
+  "action": "user:create",
+  "params": {
+    "name": "Evan",
+    "email": "evan@example.com",
+    "password": "secret123"
+  }
+}
+```
+
+**CLI** — flags are generated from the Zod schema automatically:
+
+```bash
+./keryx.ts "user:create" --name Evan --email evan@example.com --password secret123 -q | jq
+```
+
+**Background Task** — enqueued to a Resque worker via Redis:
+
+```ts
+await api.actions.enqueue("user:create", {
+  name: "Evan",
+  email: "evan@example.com",
+  password: "secret123",
+});
+```
+
+**MCP** — exposed as a tool for AI agents automatically:
+
+```json
+{
+  "mcpServers": {
+    "my-app": {
+      "url": "http://localhost:8080/mcp"
+    }
+  }
+}
+```
+
+Same validation, same middleware chain, same `run()` method, same response shape. The only thing that changes is how the request arrives and how the response is delivered.
+
+## Why Keryx?
+
+Most backends start simple — an HTTP framework — then bolt on a WebSocket server, a CLI tool, a job queue, and now an MCP layer. Each one has its own handler, its own validation, its own auth. You end up maintaining five implementations of the same logic.
+
+Keryx flips that: write your controller once, and the framework delivers it across every transport.
+
+| Feature             | Keryx | Hono    | Elysia | NestJS   | FastAPI | Django   |
+| ------------------- | ----- | ------- | ------ | -------- | ------- | -------- |
+| HTTP                | yes   | yes     | yes    | yes      | yes     | yes      |
+| WebSocket           | yes   | adapter | yes    | yes      | yes     | channels |
+| CLI commands        | yes   | —       | —      | limited  | —       | yes      |
+| Background tasks    | yes   | —       | —      | Bull     | Celery  | Celery   |
+| MCP tools           | yes   | —       | —      | —        | —       | —        |
+| Unified controller  | yes   | —       | —      | —        | —       | —        |
+| Type-safe responses | yes   | yes     | yes    | partial  | yes     | —        |
+| OAuth 2.1 built-in  | yes   | —       | —      | Passport | —       | allauth  |
+
+[See detailed comparisons →](/guide/comparisons)
+
+## Why Bun?
+
+- **Native TypeScript** — no compilation step, no `tsconfig` gymnastics
+- **Built-in test runner** — `bun test` with watch mode, no extra dependencies
+- **Fast startup** — sub-second cold starts for dev and production
+- **Module resolution that works** — ESM, CommonJS, and `.ts` imports without configuration
+- **`fetch` included natively** — great for testing your own API
+
+## Quick Start
+
+```bash
+bunx keryx new my-app
+cd my-app
+cp .env.example .env
+bun install
+bun dev
+```
+
+Requires Bun, PostgreSQL, and Redis. See the [Getting Started guide](/guide/) for full setup instructions.
+
+## Built With
+
+[Bun](https://bun.sh) · [Zod](https://zod.dev) · [Drizzle](https://orm.drizzle.team) · [Redis](https://redis.io) · [PostgreSQL](https://www.postgresql.org) · [OpenTelemetry](https://opentelemetry.io)

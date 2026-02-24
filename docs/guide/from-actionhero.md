@@ -4,7 +4,7 @@ description: Key differences between Keryx and ActionHero, and what to expect wh
 
 # Coming from ActionHero
 
-Keryx is the spiritual successor to [ActionHero](https://www.actionherojs.com). It keeps the core ideas — transport-agnostic controllers, built-in background tasks, real-time channels — but rewrites everything with modern tooling. If you've used ActionHero before, here's what changed and why.
+Keryx is the spiritual successor to [ActionHero](https://www.actionherojs.com). It keeps the core ideas — transport-agnostic controllers, built-in background tasks, real-time channels — but rewrites everything on Bun with first-class MCP support, Zod validation, and Drizzle ORM. If you've used ActionHero before, here's what changed and why.
 
 ## Unified Controllers
 
@@ -12,7 +12,7 @@ The biggest structural change: actions, tasks, and CLI commands are the same thi
 
 ## Separate Applications
 
-The frontend and backend are separate Bun applications. No `ah-next-plugin` — the Next.js app is its own project in `frontend/`. Deploy them independently: frontend on Vercel, backend on a VPS, whatever works. They share types but not a process.
+The frontend and backend are separate Bun applications. No `ah-next-plugin` — the Vite + React app is its own project in `frontend/`. Deploy them independently: frontend on Vercel, backend on a VPS, whatever works. They share types but not a process.
 
 ## Routes on Actions
 
@@ -58,4 +58,4 @@ Cookie-based sessions stored in Redis are a first-class part of the framework. `
 
 - **No Pidfiles** — Process management is left to your deployment tooling (systemd, Docker, etc.)
 - **No Cache Layer** — The old ActionHero cache has been removed. Use Redis directly — it's already part of the stack.
-- **No `ah-*-plugin` pattern** — Functionality that was previously in plugins (Sequelize, Next.js) is built in or handled as a separate application.
+- **No `ah-*-plugin` pattern** — Functionality that was previously in plugins (Sequelize, Next.js) is built in or handled as a separate application (the example frontend is now Vite + React).

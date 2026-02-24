@@ -48,7 +48,7 @@ OTEL_METRICS_ENABLED=true bun run start
 | `keryx.action.executions` | Counter        | action, status | Total action executions   |
 | `keryx.action.duration`   | Histogram (ms) | action         | Action execution duration |
 
-Action metrics are recorded for all transports (HTTP, WebSocket, tasks, internal).
+Action metrics are recorded for all transports (HTTP, WebSocket, CLI, background tasks, and MCP).
 
 ### Background Tasks
 

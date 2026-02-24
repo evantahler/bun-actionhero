@@ -4,7 +4,7 @@ import llmstxt from "vitepress-plugin-llms";
 export default defineConfig({
   title: "Keryx",
   description:
-    "The modern TypeScript API framework — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
+    "The fullstack TypeScript framework for MCP and APIs — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
   head: [["link", { rel: "icon", href: "/images/horn.svg" }]],
 
   themeConfig: {
@@ -57,6 +57,19 @@ export default defineConfig({
               link: "/guide/from-actionhero",
             },
           ],
+        },
+        {
+          text: "Comparisons",
+          items: [
+            {
+              text: "Framework Comparisons",
+              link: "/guide/comparisons",
+            },
+          ],
+        },
+        {
+          text: "Contributing",
+          items: [{ text: "Style Guide", link: "/guide/style-guide" }],
         },
       ],
       "/reference/": [
