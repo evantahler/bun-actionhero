@@ -117,7 +117,7 @@ When a session closes, the transport and server instance are cleaned up automati
 
 ## OAuth Templates
 
-The authorization page (login/signup form) is rendered from [Mustache](https://mustache.github.io/) templates in `backend/templates/`:
+The authorization page (login/signup form) is rendered from [Mustache](https://mustache.github.io/) templates in your project's `templates/` directory:
 
 | File                   | Purpose                              |
 | ---------------------- | ------------------------------------ |
@@ -126,9 +126,37 @@ The authorization page (login/signup form) is rendered from [Mustache](https://m
 | `oauth-common.css`     | Shared styles for both pages         |
 | `lion.svg`             | Decorative SVG included in the pages |
 
-Templates receive Mustache variables for error messages, hidden OAuth state fields, and partials for shared CSS and decorative SVGs.
+These files are scaffolded into your project by `keryx new` and kept in sync by `keryx upgrade`.
 
-To customize the look and feel, edit these template files. The form fields (`email`, `password`, `name`, `mode`) and hidden OAuth fields must be preserved for the flow to work — but you can change all styling and layout.
+### Dynamic Form Fields
+
+Form fields on the login and signup tabs are **generated automatically** from the Zod `inputs` schema of your `isLoginAction` and `isSignupAction` actions. If you add, remove, or rename fields in those actions, the OAuth page updates to match — no template edits required.
+
+The framework uses your schema to determine:
+
+- **Field names** — from the keys of your `z.object({})` shape
+- **Labels** — from `.describe()` on each field, or the capitalized field name as a fallback
+- **Input types** — fields wrapped in `secret()` render as `type="password"`, fields with "email" in the name render as `type="email"`, everything else is `type="text"`
+- **Validation** — `minlength` and `maxlength` attributes are set from Zod `.min()` / `.max()` constraints
+
+### Mustache Variables
+
+The `oauth-authorize.html` template receives these variables:
+
+| Variable       | Type      | Description                                         |
+| -------------- | --------- | --------------------------------------------------- |
+| `signinFields` | `Array`   | Form field objects for the login action             |
+| `signupFields` | `Array`   | Form field objects for the signup action            |
+| `hasSignin`    | `boolean` | Whether a login action is configured                |
+| `hasSignup`    | `boolean` | Whether a signup action is configured               |
+| `errorHtml`    | `string`  | Pre-rendered error message HTML (empty if no error) |
+| `hiddenFields` | `string`  | Pre-rendered hidden inputs for OAuth state          |
+
+Each field object in `signinFields` / `signupFields` has: `name`, `label`, `type`, `required`, and optional `minlength` / `maxlength`.
+
+### Customization
+
+To customize the look and feel, edit the template files in your project's `templates/` directory. The Mustache loops and hidden OAuth fields must be preserved for the flow to work — but you can change all styling, layout, and field rendering.
 
 ## PubSub Notifications
 

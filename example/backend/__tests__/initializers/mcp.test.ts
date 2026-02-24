@@ -547,6 +547,74 @@ describe("mcp initializer (enabled)", () => {
       expect(html).toContain("Sign Up");
     });
 
+    test("OAuth authorize page form fields match login action inputs", async () => {
+      const loginAction = api.actions.actions.find((a) => a.mcp?.isLoginAction);
+      expect(loginAction).toBeTruthy();
+      const expectedFields = Object.keys(
+        (loginAction!.inputs as z.ZodObject<any>).shape,
+      );
+
+      const res = await fetch(
+        `${baseUrl()}/oauth/authorize?client_id=test&redirect_uri=http://localhost:3000/callback&code_challenge=abc&code_challenge_method=S256&response_type=code&state=xyz`,
+      );
+      const html = await res.text();
+
+      // Extract input names from the signin form section
+      const signinSection = html.match(/id="signin-form"[\s\S]*?<\/form>/)?.[0];
+      expect(signinSection).toBeTruthy();
+      const signinFields = [...signinSection!.matchAll(/name="([^"]+)"/g)]
+        .map((m) => m[1])
+        .filter(
+          (name) =>
+            ![
+              "mode",
+              "client_id",
+              "redirect_uri",
+              "code_challenge",
+              "code_challenge_method",
+              "response_type",
+              "state",
+            ].includes(name),
+        );
+
+      expect(signinFields.sort()).toEqual(expectedFields.sort());
+    });
+
+    test("OAuth authorize page form fields match signup action inputs", async () => {
+      const signupAction = api.actions.actions.find(
+        (a) => a.mcp?.isSignupAction,
+      );
+      expect(signupAction).toBeTruthy();
+      const expectedFields = Object.keys(
+        (signupAction!.inputs as z.ZodObject<any>).shape,
+      );
+
+      const res = await fetch(
+        `${baseUrl()}/oauth/authorize?client_id=test&redirect_uri=http://localhost:3000/callback&code_challenge=abc&code_challenge_method=S256&response_type=code&state=xyz`,
+      );
+      const html = await res.text();
+
+      // Extract input names from the signup form section
+      const signupSection = html.match(/id="signup-form"[\s\S]*?<\/form>/)?.[0];
+      expect(signupSection).toBeTruthy();
+      const signupFields = [...signupSection!.matchAll(/name="([^"]+)"/g)]
+        .map((m) => m[1])
+        .filter(
+          (name) =>
+            ![
+              "mode",
+              "client_id",
+              "redirect_uri",
+              "code_challenge",
+              "code_challenge_method",
+              "response_type",
+              "state",
+            ].includes(name),
+        );
+
+      expect(signupFields.sort()).toEqual(expectedFields.sort());
+    });
+
     test("full OAuth flow: register → authorize → token → authenticated tool call", async () => {
       const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const email = `oauth-test-${unique}@example.com`;

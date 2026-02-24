@@ -20,6 +20,8 @@ Options:
 - `--no-db` — skip database setup files
 - `--no-example` — skip the example action
 
+`keryx new` also scaffolds OAuth template files into `templates/` (login/signup page, success page, shared CSS, and the lion SVG). These are customizable — see the [MCP guide](/guide/mcp#oauth-templates) for details.
+
 ## `keryx generate`
 
 Generate a new component file with boilerplate. Aliased as `keryx g`.
@@ -97,7 +99,7 @@ export class UserDelete implements Action {
 
 ## `keryx upgrade`
 
-Update framework-owned files (like `keryx.ts`) to match the installed version of Keryx.
+Update framework-owned files (config, built-in actions, OAuth templates) to match the installed version of Keryx.
 
 ```bash
 bunx keryx upgrade
