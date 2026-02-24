@@ -69,5 +69,6 @@ Keryx is a project by **Evan Tahler** ([@evantahler](https://twitter.com/evantah
 
 Keryx is the spiritual successor to [ActionHero](https://www.actionherojs.com), and we share the same community. Join us on Slack to ask questions, share what you're building, or just say hello.
 
+- **Discussions** — [github.com/evantahler/keryx/discussions](https://github.com/evantahler/keryx/discussions)
 - **Slack** — [actionherojs.slack.com](https://slack.actionherojs.com)
 - **GitHub** — [github.com/evantahler/keryx](https://github.com/evantahler/keryx)
