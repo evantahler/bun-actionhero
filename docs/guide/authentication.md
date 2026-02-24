@@ -119,6 +119,8 @@ MCP clients authenticate through OAuth 2.1 with PKCE. The OAuth flow renders a b
 type OAuthActionResponse = { user: { id: number } };
 ```
 
+The OAuth page dynamically generates form fields from your action's Zod `inputs` schema — if you change the inputs on your login or signup action, the form updates automatically. Fields wrapped in `secret()` render as password inputs, and `.describe()` text is used for labels.
+
 See the [MCP guide](/guide/mcp#oauth-21-authentication) for the full OAuth flow and endpoint documentation.
 
 ## Session Configuration

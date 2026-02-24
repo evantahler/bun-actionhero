@@ -52,6 +52,30 @@ export async function interactiveScaffold(
 }
 
 /**
+ * Generate OAuth template file contents from the framework templates directory.
+ * Returns a Map of relativePath → content (e.g., "templates/oauth-authorize.html" → "...").
+ */
+export async function generateOAuthTemplateContents(): Promise<
+  Map<string, string>
+> {
+  const result = new Map<string, string>();
+  const oauthTemplates = [
+    "oauth-authorize.html",
+    "oauth-success.html",
+    "oauth-common.css",
+    "lion.svg",
+  ];
+  const sourceDir = path.join(import.meta.dir, "..", "templates");
+
+  for (const file of oauthTemplates) {
+    const content = await Bun.file(path.join(sourceDir, file)).text();
+    result.set(`templates/${file}`, content);
+  }
+
+  return result;
+}
+
+/**
  * Generate config file contents from the framework config directory,
  * with imports rewritten for user projects.
  * Returns a Map of relativePath → content (e.g., "config/index.ts" → "...").
@@ -265,6 +289,12 @@ export async function scaffoldProject(
   // --- Built-in actions (always included) ---
   const actionFiles = await generateBuiltinActionContents();
   for (const [filePath, content] of actionFiles) {
+    await write(filePath, content);
+  }
+
+  // --- OAuth templates (always included) ---
+  const oauthTemplates = await generateOAuthTemplateContents();
+  for (const [filePath, content] of oauthTemplates) {
     await write(filePath, content);
   }
 

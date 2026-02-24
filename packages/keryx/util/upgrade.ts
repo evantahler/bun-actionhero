@@ -6,6 +6,7 @@ import pkg from "../package.json";
 import {
   generateBuiltinActionContents,
   generateConfigFileContents,
+  generateOAuthTemplateContents,
   generateTsconfigContents,
 } from "./scaffold";
 
@@ -96,6 +97,9 @@ export async function upgradeProject(
   for (const [p, content] of actionFiles) files.set(p, content);
 
   files.set("tsconfig.json", generateTsconfigContents());
+
+  const oauthTemplates = await generateOAuthTemplateContents();
+  for (const [p, content] of oauthTemplates) files.set(p, content);
 
   const summary: UpgradeSummary = {
     updated: 0,
