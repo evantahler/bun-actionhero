@@ -234,6 +234,7 @@ export async function scaffoldProject(
       {
         name: projectName,
         version: "0.0.1",
+        description: `${projectName} — powered by Keryx`,
         module: "index.ts",
         type: "module",
         private: true,
