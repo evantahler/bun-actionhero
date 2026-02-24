@@ -189,6 +189,14 @@ export function generateTsconfigContents(): string {
   );
 }
 
+/**
+ * Generate the canonical project `keryx.ts` content from the scaffold template.
+ * Used by both `scaffoldProject()` and `upgradeProject()`.
+ */
+export async function generateKeryxTsContents(): Promise<string> {
+  return loadTemplate("keryx.ts.mustache");
+}
+
 export async function scaffoldProject(
   projectName: string,
   targetDir: string,
@@ -240,7 +248,6 @@ export async function scaffoldProject(
         },
         dependencies: {
           keryx: `^${keryxVersion}`,
-          commander: "^12.1.0",
           zod: "^4.3.6",
           ...(options.includeDb
             ? {
@@ -263,7 +270,7 @@ export async function scaffoldProject(
   await write("tsconfig.json", generateTsconfigContents());
 
   await writeTemplate("index.ts", "index.ts.mustache");
-  await writeTemplate("keryx.ts", "keryx.ts.mustache");
+  await write("keryx.ts", await generateKeryxTsContents());
   await writeTemplate(".env.example", "env.example.mustache");
   await writeTemplate(".gitignore", "gitignore.mustache");
 

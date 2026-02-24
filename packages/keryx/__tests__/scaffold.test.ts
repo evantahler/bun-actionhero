@@ -73,7 +73,6 @@ describe("scaffoldProject", () => {
     );
     expect(pkg.name).toBe("my-project");
     expect(pkg.dependencies.keryx).toMatch(/^\^/);
-    expect(pkg.dependencies.commander).toBeDefined();
     expect(pkg.dependencies.zod).toBeDefined();
     expect(pkg.dependencies["drizzle-orm"]).toBeDefined();
     expect(pkg.dependencies["drizzle-zod"]).toBeDefined();
@@ -94,7 +93,6 @@ describe("scaffoldProject", () => {
     const pkg = JSON.parse(
       fs.readFileSync(path.join(targetDir("no-db"), "package.json"), "utf-8"),
     );
-    expect(pkg.dependencies.commander).toBeDefined();
     expect(pkg.dependencies.zod).toBeDefined();
     expect(pkg.dependencies["drizzle-orm"]).toBeUndefined();
     expect(pkg.dependencies["drizzle-zod"]).toBeUndefined();
