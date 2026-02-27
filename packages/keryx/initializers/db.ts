@@ -70,7 +70,11 @@ export class DB extends Initializer {
     if (config.database.autoMigrate) {
       try {
         const migrationsFolder = path.join(api.rootDir, "drizzle");
-        const journalPath = path.join(migrationsFolder, "meta", "_journal.json");
+        const journalPath = path.join(
+          migrationsFolder,
+          "meta",
+          "_journal.json",
+        );
         if (!fs.existsSync(journalPath)) {
           fs.mkdirSync(path.dirname(journalPath), { recursive: true });
           fs.writeFileSync(journalPath, JSON.stringify({ entries: [] }));
