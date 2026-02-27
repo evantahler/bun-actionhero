@@ -115,10 +115,6 @@ beforeAll(async () => {
     `DATABASE_URL_TEST="${dbUrl}"`,
   );
   envContent = envContent.replace(
-    /^DATABASE_AUTO_MIGRATE=.*/m,
-    `DATABASE_AUTO_MIGRATE=false`,
-  );
-  envContent = envContent.replace(
     /^REDIS_URL=.*/m,
     `REDIS_URL="redis://localhost:6379/${REDIS_DB}"`,
   );

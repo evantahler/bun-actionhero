@@ -3,6 +3,7 @@ import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
+import fs from "node:fs";
 import { unlink } from "node:fs/promises";
 import path from "path";
 import { Pool } from "pg";
@@ -68,9 +69,18 @@ export class DB extends Initializer {
 
     if (config.database.autoMigrate) {
       try {
-        await migrate(api.db.db, {
-          migrationsFolder: path.join(api.rootDir, "drizzle"),
-        });
+        const migrationsFolder = path.join(api.rootDir, "drizzle");
+        const journalPath = path.join(
+          migrationsFolder,
+          "meta",
+          "_journal.json",
+        );
+        if (!fs.existsSync(journalPath)) {
+          fs.mkdirSync(path.dirname(journalPath), { recursive: true });
+          fs.writeFileSync(journalPath, JSON.stringify({ entries: [] }));
+          logger.info("created empty drizzle migrations journal");
+        }
+        await migrate(api.db.db, { migrationsFolder });
         logger.info("database migrated successfully");
       } catch (e) {
         throw new TypedError({

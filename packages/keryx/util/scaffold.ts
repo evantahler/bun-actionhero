@@ -291,7 +291,7 @@ export async function scaffoldProject(
   if (options.includeDb) {
     await writeTemplate("migrations.ts", "migrations.ts.mustache");
     await write("schema/.gitkeep", "");
-    await write("drizzle/.gitkeep", "");
+    await write("drizzle/meta/_journal.json", JSON.stringify({ entries: [] }));
   }
 
   // --- Built-in actions (always included) ---

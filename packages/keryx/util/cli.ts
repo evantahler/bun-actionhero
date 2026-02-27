@@ -67,7 +67,7 @@ Done! To get started:
 
   cd ${projectName}
   cp .env.example .env
-  bun install
+${options.includeDb ? `  createdb ${projectName}\n` : ""}  bun install
   bun dev
 `);
       process.exit(0);
