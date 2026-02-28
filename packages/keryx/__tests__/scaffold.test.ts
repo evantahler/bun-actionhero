@@ -48,7 +48,7 @@ describe("scaffoldProject", () => {
     expect(files).toContain("channels/.gitkeep");
     expect(files).toContain("migrations.ts");
     expect(files).toContain("schema/.gitkeep");
-    expect(files).toContain("drizzle/.gitkeep");
+    expect(files).toContain("drizzle/meta/_journal.json");
     expect(files).toContain("actions/status.ts");
     expect(files).toContain("actions/swagger.ts");
     expect(files).toContain("actions/hello.ts");
