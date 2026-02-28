@@ -278,6 +278,7 @@ The landing page (`docs/index.md`) has its own content — it no longer includes
 ## Pull Requests
 
 - **Never enable auto-merge** — Do not use `gh pr merge --auto` or enable auto-merge on PRs. PRs should always be merged manually after review.
+- **Always bump the package version** — Every PR must bump `"version"` in `packages/keryx/package.json`. Use patch for bug fixes, minor for new features.
 
 ## Gotcha: Stale Processes
 
