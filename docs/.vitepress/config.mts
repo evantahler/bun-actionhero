@@ -1,6 +1,68 @@
 import { defineConfig } from "vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
+export const LLM_LANDING_PAGE = `# Keryx
+
+> The fullstack TypeScript framework for MCP and APIs, built on Bun.
+
+This is the Keryx documentation site. Two LLM-friendly documentation formats are available:
+
+- [llms.txt](/llms.txt) — Table of contents with links to all documentation pages
+- [llms-full.txt](/llms-full.txt) — Complete documentation bundle (all pages in one file)
+
+## Per-Page Markdown
+
+Each documentation page is available in Markdown format by appending \`.md\` to the URL.
+For example: \`/guide/actions.md\`, \`/reference/config.md\`
+
+## Key Documentation
+
+- Getting Started: /guide/index.md
+- Actions: /guide/actions.md
+- Initializers: /guide/initializers.md
+- Channels: /guide/channels.md
+- Tasks: /guide/tasks.md
+- Middleware: /guide/middleware.md
+- MCP: /guide/mcp.md
+- Configuration: /guide/config.md
+- CLI: /guide/cli.md
+- Authentication: /guide/authentication.md
+- Building for AI Agents: /guide/agents.md
+- Deployment: /guide/deployment.md
+`;
+
+export function toMarkdownUrl(url: string): string {
+  const cleanUrl = url.split("?")[0].split("#")[0];
+  if (cleanUrl.endsWith(".md")) return cleanUrl;
+  if (cleanUrl.endsWith("/index.html"))
+    return cleanUrl.replace(/\/index\.html$/, "/index.md");
+  if (cleanUrl.endsWith(".html")) return cleanUrl.replace(/\.html$/, ".md");
+  if (cleanUrl.endsWith("/")) return cleanUrl + "index.md";
+  return cleanUrl + ".md";
+}
+
+function addLlmMiddleware(server: {
+  middlewares: {
+    use: (fn: (req: any, res: any, next: () => void) => void) => void;
+  };
+}) {
+  server.middlewares.use((req, res, next) => {
+    const accept = req.headers["accept"] ?? "";
+    if (!accept.includes("text/markdown")) return next();
+
+    const url = (req.url ?? "/").split("?")[0];
+
+    if (url === "/" || url === "/index.html") {
+      res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+      res.end(LLM_LANDING_PAGE);
+      return;
+    }
+
+    res.writeHead(302, { Location: toMarkdownUrl(url) });
+    res.end();
+  });
+}
+
 export default defineConfig({
   appearance: "dark",
   title: "Keryx",
@@ -143,6 +205,16 @@ export default defineConfig({
   sitemap: { hostname: "https://keryxjs.com" },
 
   vite: {
-    plugins: [llmstxt()],
+    plugins: [
+      llmstxt({
+        generateLLMFriendlyDocsForEachPage: true,
+        domain: "https://keryxjs.com",
+      }),
+      {
+        name: "llm-markdown-routing",
+        configureServer: addLlmMiddleware,
+        configurePreviewServer: addLlmMiddleware,
+      },
+    ],
   },
 });

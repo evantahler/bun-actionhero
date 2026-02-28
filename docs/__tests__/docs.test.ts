@@ -1,6 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { resolve, relative, dirname } from "path";
 import { existsSync, readFileSync, readdirSync } from "fs";
+import { toMarkdownUrl, LLM_LANDING_PAGE } from "../.vitepress/config.mts";
 
 const docsDir = resolve(import.meta.dir, "..");
 const publicDir = resolve(docsDir, "public");
@@ -308,6 +309,127 @@ describe("llms.txt", () => {
       }
     }
     expect(missing).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LLM markdown routing
+// ---------------------------------------------------------------------------
+
+describe("toMarkdownUrl", () => {
+  test("clean URL → .md", () => {
+    expect(toMarkdownUrl("/guide/actions")).toBe("/guide/actions.md");
+  });
+
+  test(".html → .md", () => {
+    expect(toMarkdownUrl("/guide/actions.html")).toBe("/guide/actions.md");
+  });
+
+  test("trailing slash → index.md", () => {
+    expect(toMarkdownUrl("/guide/")).toBe("/guide/index.md");
+  });
+
+  test("index.html → index.md", () => {
+    expect(toMarkdownUrl("/guide/index.html")).toBe("/guide/index.md");
+  });
+
+  test("already .md → unchanged", () => {
+    expect(toMarkdownUrl("/guide/actions.md")).toBe("/guide/actions.md");
+  });
+
+  test("strips query string before converting", () => {
+    expect(toMarkdownUrl("/guide/actions?foo=bar")).toBe("/guide/actions.md");
+  });
+
+  test("strips hash before converting", () => {
+    expect(toMarkdownUrl("/guide/actions#section")).toBe("/guide/actions.md");
+  });
+});
+
+describe("LLM markdown middleware (dev server)", () => {
+  const PORT = 5199;
+  const baseUrl = `http://localhost:${PORT}`;
+  let serverProcess: ReturnType<typeof Bun.spawn>;
+
+  beforeAll(async () => {
+    serverProcess = Bun.spawn(
+      ["bunx", "vitepress", "dev", "--port", String(PORT)],
+      {
+        cwd: docsDir,
+        stdout: "pipe",
+        stderr: "pipe",
+      },
+    );
+
+    // Wait for the dev server to be ready
+    const maxWait = 30_000;
+    const start = Date.now();
+    while (Date.now() - start < maxWait) {
+      try {
+        const res = await fetch(baseUrl);
+        if (res.ok) break;
+      } catch {
+        // Server not ready yet
+      }
+      await Bun.sleep(500);
+    }
+  }, 60_000);
+
+  afterAll(() => {
+    serverProcess?.kill();
+  });
+
+  test("root with Accept: text/markdown returns LLM landing page", async () => {
+    const res = await fetch(baseUrl, {
+      headers: { Accept: "text/markdown" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/markdown");
+    const body = await res.text();
+    expect(body).toBe(LLM_LANDING_PAGE);
+  });
+
+  test("root without Accept: text/markdown returns HTML", async () => {
+    const res = await fetch(baseUrl, {
+      headers: { Accept: "text/html" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
+  });
+
+  test("guide page with Accept: text/markdown redirects to .md", async () => {
+    const res = await fetch(`${baseUrl}/guide/actions`, {
+      headers: { Accept: "text/markdown" },
+      redirect: "manual",
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/guide/actions.md");
+  });
+
+  test("guide page with .html and Accept: text/markdown redirects to .md", async () => {
+    const res = await fetch(`${baseUrl}/guide/actions.html`, {
+      headers: { Accept: "text/markdown" },
+      redirect: "manual",
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/guide/actions.md");
+  });
+
+  test("trailing slash with Accept: text/markdown redirects to index.md", async () => {
+    const res = await fetch(`${baseUrl}/guide/`, {
+      headers: { Accept: "text/markdown" },
+      redirect: "manual",
+    });
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe("/guide/index.md");
+  });
+
+  test("guide page without Accept: text/markdown returns HTML", async () => {
+    const res = await fetch(`${baseUrl}/guide/actions`, {
+      headers: { Accept: "text/html" },
+    });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
   });
 });
 
