@@ -62,10 +62,7 @@ export async function buildProgram(opts: {
       const files = await scaffoldProject(projectName, targetDir, options);
       files.forEach((f) => console.log(`  ${f}`));
 
-      const steps = [
-        `  cd ${projectName}`,
-        `  cp .env.example .env`,
-      ];
+      const steps = [`  cd ${projectName}`, `  cp .env.example .env`];
       if (options.includeDb) {
         steps.push(`  createdb ${projectName}`);
         steps.push(`  createdb ${projectName}-test`);
