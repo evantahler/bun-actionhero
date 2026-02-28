@@ -101,7 +101,7 @@ export async function generateConfigFileContents(): Promise<
     );
     content = content.replace(
       /from ["']\.\.\/classes\/Logger["']/g,
-      'from "keryx/classes/Logger.ts"',
+      'from "keryx"',
     );
 
     // In index.ts, change `export const config` to `export default`
@@ -139,7 +139,7 @@ export async function generateBuiltinActionContents(): Promise<
     content = content.replace(/from ["']\.\.\/api["']/g, 'from "keryx"');
     content = content.replace(
       /from ["']\.\.\/classes\/Action["']/g,
-      'from "keryx/classes/Action.ts"',
+      'from "keryx"',
     );
     content = content.replace(
       /from ["']\.\.\/package\.json["']/g,

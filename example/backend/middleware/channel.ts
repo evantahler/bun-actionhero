@@ -1,5 +1,9 @@
-import { type Connection, ErrorType, TypedError } from "keryx";
-import type { ChannelMiddleware } from "keryx/classes/Channel.ts";
+import {
+  ErrorType,
+  TypedError,
+  type ChannelMiddleware,
+  type Connection,
+} from "keryx";
 import type { SessionImpl } from "../actions/session";
 
 /**

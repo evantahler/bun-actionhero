@@ -5,11 +5,11 @@ import {
   api,
   Connection,
   ErrorType,
+  HTTP_METHOD,
+  RateLimitMiddleware,
   secret,
   TypedError,
 } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
-import { RateLimitMiddleware } from "keryx/middleware/rateLimit.ts";
 import { z } from "zod";
 import { SessionMiddleware } from "../middleware/session";
 import {
