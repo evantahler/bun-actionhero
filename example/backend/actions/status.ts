@@ -1,5 +1,4 @@
-import { Action, api } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
+import { Action, api, HTTP_METHOD } from "keryx";
 import { z } from "zod";
 import pkg from "../package.json";
 

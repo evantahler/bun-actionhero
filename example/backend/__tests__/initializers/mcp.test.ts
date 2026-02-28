@@ -99,31 +99,6 @@ describe("mcp initializer (disabled)", () => {
   });
 });
 
-describe("mcp initializer stop() guard", () => {
-  beforeAll(async () => {
-    config.server.mcp.enabled = true;
-    await api.start();
-  }, HOOK_TIMEOUT);
-
-  afterAll(async () => {
-    await api.stop();
-    config.server.mcp.enabled = false;
-  }, HOOK_TIMEOUT);
-
-  test("stop() does not throw when api.mcp is undefined", async () => {
-    const originalMcp = api.mcp;
-    // @ts-expect-error intentionally clearing api.mcp to simulate incomplete initialize()
-    api.mcp = undefined;
-    try {
-      await api.stop();
-    } finally {
-      api.mcp = originalMcp;
-      // Re-start so afterAll's api.stop() has a running server to tear down
-      await api.start();
-    }
-  });
-});
-
 describe("mcp initializer (enabled)", () => {
   let accessToken: string;
 

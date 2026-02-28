@@ -1,6 +1,9 @@
-import { Action, type ActionParams } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
-import { RateLimitMiddleware } from "keryx/middleware/rateLimit.ts";
+import {
+  Action,
+  type ActionParams,
+  HTTP_METHOD,
+  RateLimitMiddleware,
+} from "keryx";
 import { z } from "zod";
 
 export class FileUpload implements Action {

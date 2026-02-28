@@ -1,7 +1,11 @@
-import { api, type Action, type ActionParams } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
-import { CHANNEL_NAME_PATTERN } from "keryx/classes/Channel.ts";
-import { RateLimitMiddleware } from "keryx/middleware/rateLimit.ts";
+import {
+  api,
+  CHANNEL_NAME_PATTERN,
+  HTTP_METHOD,
+  RateLimitMiddleware,
+  type Action,
+  type ActionParams,
+} from "keryx";
 import { z } from "zod";
 import { SessionMiddleware } from "../middleware/session";
 

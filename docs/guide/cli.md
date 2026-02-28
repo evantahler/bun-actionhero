@@ -81,8 +81,7 @@ The generated action file:
 
 ```ts
 import { z } from "zod";
-import { Action, type ActionParams } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
+import { Action, type ActionParams, HTTP_METHOD } from "keryx";
 
 export class UserDelete implements Action {
   name = "user:delete";

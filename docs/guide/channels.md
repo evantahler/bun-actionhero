@@ -11,7 +11,7 @@ Under the hood, channels use Redis PubSub, so messages are distributed across mu
 ## Defining a Channel
 
 ```ts
-import { Channel } from "../classes/Channel";
+import { Channel } from "keryx";
 
 export class MessagesChannel extends Channel {
   constructor() {
@@ -44,7 +44,7 @@ This is useful when you have per-resource channels — chat rooms, user-specific
 Channel middleware controls who can subscribe and handles cleanup on unsubscribe:
 
 ```ts
-import type { ChannelMiddleware } from "../classes/Channel";
+import type { ChannelMiddleware } from "keryx";
 
 const AuthMiddleware: ChannelMiddleware = {
   runBefore: async (channel, connection) => {

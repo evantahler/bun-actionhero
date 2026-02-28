@@ -1,7 +1,6 @@
 import { setMaxListeners } from "events";
 // Import from local index first to set api.rootDir before any framework code runs
-import { api } from "keryx";
-import type { WebServer } from "keryx/servers/web.ts";
+import { api, type WebServer } from "keryx";
 import "../index";
 
 // Set max listeners to prevent warnings in CI environments

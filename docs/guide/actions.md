@@ -12,8 +12,7 @@ An action is a class with a `name`, a Zod schema for `inputs`, and a `run()` met
 
 ```ts
 import { z } from "zod";
-import { Action, api } from "../api";
-import { HTTP_METHOD } from "../classes/Action";
+import { Action, api, HTTP_METHOD } from "keryx";
 
 export class Status implements Action {
   name = "status";
@@ -164,7 +163,7 @@ If the action doesn't check the signal, the timeout still works — `Promise.rac
 Actions should throw `TypedError` for errors — not generic `Error`. Each error type maps to an HTTP status code:
 
 ```ts
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError } from "keryx";
 
 throw new TypedError({
   message: "User not found",

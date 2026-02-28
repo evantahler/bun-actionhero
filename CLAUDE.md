@@ -222,12 +222,9 @@ import { Action } from "../classes/Action";
 ### In `example/backend/` (app code)
 Use `"keryx"` for framework imports, relative for app-local:
 ```typescript
-import { api, Action, type ActionParams } from "keryx";
-import { HTTP_METHOD } from "keryx/classes/Action.ts";
+import { api, Action, type ActionParams, HTTP_METHOD } from "keryx";
 import { SessionMiddleware } from "../middleware/session";
 ```
-
-**Important**: Bun subpath imports (e.g., `keryx/classes/Action.ts`) require the `.ts` extension.
 
 ## Coding Conventions
 

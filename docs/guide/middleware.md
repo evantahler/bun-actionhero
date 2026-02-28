@@ -11,8 +11,7 @@ Middleware lets you run logic before and after an action executes — authentica
 Here's the session middleware we use for authenticated endpoints. It's about as simple as middleware gets:
 
 ```ts
-import type { ActionMiddleware } from "../classes/Action";
-import { ErrorType, TypedError } from "../classes/TypedError";
+import { ErrorType, TypedError, type ActionMiddleware } from "keryx";
 
 export const SessionMiddleware: ActionMiddleware = {
   runBefore: async (_params, connection) => {
@@ -109,7 +108,7 @@ That said, you can also handle this in the Zod schema with `.transform()` — so
 The built-in `RateLimitMiddleware` uses a Redis-backed sliding window to limit request rates per client. It identifies users by user ID (authenticated) or IP address (unauthenticated):
 
 ```ts
-import { RateLimitMiddleware } from "../middleware/rateLimit";
+import { RateLimitMiddleware } from "keryx";
 
 export class ApiEndpoint implements Action {
   name = "api:endpoint";

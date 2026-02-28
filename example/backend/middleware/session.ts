@@ -1,5 +1,9 @@
-import { Connection, ErrorType, TypedError } from "keryx";
-import type { ActionMiddleware } from "keryx/classes/Action.ts";
+import {
+  Connection,
+  ErrorType,
+  TypedError,
+  type ActionMiddleware,
+} from "keryx";
 import type { SessionImpl } from "../actions/session";
 
 export const SessionMiddleware: ActionMiddleware = {

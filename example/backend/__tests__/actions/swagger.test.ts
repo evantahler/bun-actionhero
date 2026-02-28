@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { api, type ActionResponse } from "keryx";
-import type { Swagger } from "keryx/actions/swagger.ts";
+import type { Swagger } from "../../actions/swagger";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
 let url: string;
