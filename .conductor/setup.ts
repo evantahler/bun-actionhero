@@ -48,10 +48,7 @@ if (!workspaceName || !conductorPort) {
   frontendPort = conductorPort + 1;
 
   // Derive Redis DB offset from workspace name hash
-  const hash = Buffer.from(workspaceName).reduce(
-    (acc, byte) => acc + byte,
-    0,
-  );
+  const hash = Buffer.from(workspaceName).reduce((acc, byte) => acc + byte, 0);
   const offset = hash % 50;
   redisDb = (offset * 2) % 16;
   redisDbTest = (offset * 2 + 1) % 16;
@@ -67,8 +64,9 @@ console.log(`Postgres DB:     ${dbName} (test: ${dbNameTest})`);
 // Discover Postgres CLI tools (Homebrew keg-only installs aren't on PATH).
 // Bun's $ shell doesn't re-read process.env.PATH, so we resolve full paths.
 let pgBin = "";
-const brewPgPrefix =
-  await $`brew --prefix postgresql@17 2>/dev/null`.quiet().nothrow();
+const brewPgPrefix = await $`brew --prefix postgresql@17 2>/dev/null`
+  .quiet()
+  .nothrow();
 if (brewPgPrefix.exitCode === 0) {
   const candidate = join(brewPgPrefix.stdout.toString().trim(), "bin");
   if (existsSync(candidate)) {
@@ -165,6 +163,9 @@ applyEnvOverrides(
   envOverrides,
 );
 console.log("Wrote packages/keryx/.env");
+for (const [key, val] of Object.entries(envOverrides)) {
+  console.log(`  ${key}=${val}`);
+}
 
 // Write example/backend/.env
 applyEnvOverrides(
@@ -173,16 +174,23 @@ applyEnvOverrides(
   envOverrides,
 );
 console.log("Wrote example/backend/.env");
+for (const [key, val] of Object.entries(envOverrides)) {
+  console.log(`  ${key}=${val}`);
+}
 
 // Write example/frontend/.env
+const frontendOverrides = {
+  VITE_API_URL: `http://localhost:${backendPort}`,
+  PORT: String(frontendPort),
+};
 applyEnvOverrides(
   join(ROOT_DIR, "example/frontend/.env.example"),
   join(ROOT_DIR, "example/frontend/.env"),
-  {
-    VITE_API_URL: `http://localhost:${backendPort}`,
-    PORT: String(frontendPort),
-  },
+  frontendOverrides,
 );
 console.log("Wrote example/frontend/.env");
+for (const [key, val] of Object.entries(frontendOverrides)) {
+  console.log(`  ${key}=${val}`);
+}
 
 console.log("\nSetup complete! Run 'bun dev' to start both servers.");

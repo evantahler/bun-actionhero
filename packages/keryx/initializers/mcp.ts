@@ -321,6 +321,7 @@ export class McpInitializer extends Initializer {
 
   async stop() {
     if (!config.server.mcp.enabled) return;
+    if (!api.mcp) return;
 
     // Close all transports
     for (const transport of api.mcp.transports.values()) {
