@@ -23,12 +23,34 @@ export async function globLoader<T>(searchDir: string) {
       if (file.startsWith(".")) continue;
 
       const fullPath = path.join(dir, file);
-      const modules = (await import(fullPath)) as {
-        [key: string]: new () => T;
-      };
-      for (const [name, klass] of Object.entries(modules)) {
+      const modules = (await import(fullPath)) as Record<string, unknown>;
+
+      // Object.entries() can throw ReferenceError if an export is still in
+      // TDZ (temporal dead zone) due to circular imports. Fall back to
+      // per-key access so one TDZ export doesn't block the entire module.
+      let entries: [string, unknown][];
+      try {
+        entries = Object.entries(modules);
+      } catch {
+        const keys = Object.getOwnPropertyNames(modules);
+        entries = [];
+        for (const key of keys) {
+          try {
+            entries.push([key, modules[key]]);
+          } catch {
+            // Skip TDZ exports — they'll be loaded by their own initializer
+          }
+        }
+      }
+
+      for (const [name, klass] of entries) {
+        // Skip non-class exports (constants, functions, type remnants)
+        if (typeof klass !== "function" || klass.prototype === undefined) {
+          continue;
+        }
+
         try {
-          const instance = new klass();
+          const instance = new (klass as new () => T)();
           results.push(instance);
         } catch (error) {
           throw new TypedError({
