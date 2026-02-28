@@ -15,7 +15,7 @@ Rate limiting uses a sliding window algorithm backed by Redis. It's implemented 
 Add `RateLimitMiddleware` to any action:
 
 ```ts
-import { RateLimitMiddleware } from "../middleware/rateLimit";
+import { RateLimitMiddleware } from "keryx";
 
 export class UserCreate implements Action {
   name = "user:create";
@@ -41,7 +41,7 @@ When a client exceeds the limit, the action returns a `429` with a message indic
 The `checkRateLimit()` function is exported for use outside of action middleware — for example, the OAuth registration endpoint uses it with a stricter limit:
 
 ```ts
-import { checkRateLimit } from "../middleware/rateLimit";
+import { checkRateLimit } from "keryx";
 
 const info = await checkRateLimit(`oauth-register:${ip}`, false, {
   limit: config.rateLimit.oauthRegisterLimit, // default: 5
