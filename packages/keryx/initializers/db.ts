@@ -46,6 +46,7 @@ export class DB extends Initializer {
   async start() {
     api.db.pool = new Pool({
       connectionString: config.database.connectionString,
+      ...config.database.pool,
     });
 
     class DrizzleLogger implements LogWriter {

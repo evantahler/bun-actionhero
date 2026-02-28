@@ -77,6 +77,27 @@ The helper is also type-aware — it parses `"true"`/`"false"` strings into bool
 | `connectionString` | `DATABASE_URL`          | `"x"`   |
 | `autoMigrate`      | `DATABASE_AUTO_MIGRATE` | `true`  |
 
+#### Advanced: Pool Tuning
+
+The database connection pool defaults are suitable for development and most production workloads. If you need to tune pool behavior — for example, to match your database's `max_connections` limit or to reduce idle resource usage — you can override these settings via environment variables.
+
+| Key                            | Env Var                         | Default | Description                                                           |
+| ------------------------------ | ------------------------------- | ------- | --------------------------------------------------------------------- |
+| `pool.max`                     | `DATABASE_POOL_MAX`             | `10`    | Maximum number of connections in the pool                             |
+| `pool.min`                     | `DATABASE_POOL_MIN`             | `0`     | Minimum number of idle connections to maintain                        |
+| `pool.idleTimeoutMillis`       | `DATABASE_POOL_IDLE_TIMEOUT`    | `10000` | How long (ms) a connection can sit idle before being closed           |
+| `pool.connectionTimeoutMillis` | `DATABASE_POOL_CONNECT_TIMEOUT` | `0`     | Max time (ms) to wait for a connection from the pool (0 = no timeout) |
+| `pool.allowExitOnIdle`         | `DATABASE_POOL_EXIT_ON_IDLE`    | `false` | Allow the Node.js process to exit while idle connections remain open  |
+
+All defaults match `pg.Pool`'s built-in defaults, so existing deployments are unaffected. A common production override:
+
+```bash
+DATABASE_POOL_MAX=25
+DATABASE_POOL_MIN=5
+DATABASE_POOL_IDLE_TIMEOUT=30000
+DATABASE_POOL_CONNECT_TIMEOUT=5000
+```
+
 ### Logger
 
 | Key                 | Env Var                  | Default  | Description                                                                |
