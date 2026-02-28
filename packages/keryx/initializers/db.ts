@@ -111,14 +111,14 @@ export class DB extends Initializer {
    * Learn more @ https://orm.drizzle.team/kit-docs/overview
    */
   async generateMigrations() {
-    const migrationConfig = {
-      dialect: "postgresql",
+    const migrationConfig: DrizzleMigrateConfig = {
+      dialect: "postgresql" as const,
       schema: path.join("schema", "*"),
       dbCredentials: {
         url: config.database.connectionString,
       },
       out: path.join("drizzle"),
-    } satisfies DrizzleMigrateConfig;
+    };
 
     const fileContent = `export default ${JSON.stringify(migrationConfig, null, 2)}`;
     const tmpfilePath = path.join(api.rootDir, "drizzle", "config.tmp.ts");
