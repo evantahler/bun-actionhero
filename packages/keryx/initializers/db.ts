@@ -67,16 +67,22 @@ export class DB extends Initializer {
     }
 
     if (config.database.autoMigrate) {
-      try {
-        await migrate(api.db.db, {
-          migrationsFolder: path.join(api.rootDir, "drizzle"),
-        });
-        logger.info("database migrated successfully");
-      } catch (e) {
-        throw new TypedError({
-          type: ErrorType.SERVER_INITIALIZATION,
-          message: `Cannot migrate database (${formatConnectionStringForLogging(config.database.connectionString)}): ${e}`,
-        });
+      const migrationsFolder = path.join(api.rootDir, "drizzle");
+      const journalPath = path.join(migrationsFolder, "meta", "_journal.json");
+      const journalExists = await Bun.file(journalPath).exists();
+
+      if (journalExists) {
+        try {
+          await migrate(api.db.db, { migrationsFolder });
+          logger.info("database migrated successfully");
+        } catch (e) {
+          throw new TypedError({
+            type: ErrorType.SERVER_INITIALIZATION,
+            message: `Cannot migrate database (${formatConnectionStringForLogging(config.database.connectionString)}): ${e}`,
+          });
+        }
+      } else {
+        logger.debug("no migrations found, skipping auto-migrate");
       }
     }
 
@@ -103,7 +109,7 @@ export class DB extends Initializer {
   async generateMigrations() {
     const migrationConfig = {
       dialect: "postgresql",
-      schema: path.join("models", "*"),
+      schema: path.join("schema", "*"),
       dbCredentials: {
         url: config.database.connectionString,
       },
