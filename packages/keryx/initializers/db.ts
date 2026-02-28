@@ -113,7 +113,7 @@ export class DB extends Initializer {
   async generateMigrations() {
     const migrationConfig = {
       dialect: "postgresql",
-      schema: path.join("models", "*"),
+      schema: path.join("schema", "*"),
       dbCredentials: {
         url: config.database.connectionString,
       },
