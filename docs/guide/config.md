@@ -37,6 +37,42 @@ config.server.web.port; // 8080
 config.logger.level; // "info"
 ```
 
+## Custom Config
+
+You can add your own config modules alongside the built-in ones. Create a new file in your `config/` directory, then aggregate it in `config/index.ts`:
+
+```ts
+// config/audit.ts
+import { loadFromEnvIfSet } from "keryx";
+
+export const configAudit = {
+  retentionDays: await loadFromEnvIfSet("AUDIT_RETENTION_DAYS", 30),
+  enabled: await loadFromEnvIfSet("AUDIT_ENABLED", true),
+};
+```
+
+```ts
+// config/index.ts
+import { configAudit } from "./audit";
+
+export default {
+  audit: configAudit,
+};
+```
+
+At boot, Keryx deep-merges your config into the framework's `config` object, so `config.audit.retentionDays` works at runtime. To get full type safety, augment the `KeryxConfig` interface:
+
+```ts
+// config/audit.ts (add at the bottom)
+declare module "keryx" {
+  interface KeryxConfig {
+    audit: typeof configAudit;
+  }
+}
+```
+
+Now `config.audit.retentionDays` is fully typed everywhere you import `config` from `"keryx"` — no casts needed.
+
 ## Environment Overrides
 
 The `loadFromEnvIfSet()` helper is where the magic happens:
