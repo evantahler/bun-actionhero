@@ -1,5 +1,6 @@
 import { API } from "./classes/API";
 import type { Logger } from "./classes/Logger";
+import type { KeryxConfig } from "./config";
 import { config as Config } from "./config";
 
 export {
@@ -30,7 +31,7 @@ export type {
 declare namespace globalThis {
   let api: API;
   let logger: Logger;
-  let config: typeof Config;
+  let config: KeryxConfig;
 }
 
 if (!globalThis.api) {

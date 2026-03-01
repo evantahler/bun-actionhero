@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import type { KeryxConfig } from "../config";
 import { config } from "../config";
 import { deepMerge, loadFromEnvIfSet } from "../util/config";
 import "./setup";
@@ -47,6 +48,26 @@ describe("deepMerge", () => {
     deepMerge(target, { server: { web: { port: 3000 } } });
     expect(target.server.web.port).toBe(3000);
     expect(target.server.web.host).toBe("localhost");
+  });
+});
+
+describe("KeryxConfig interface", () => {
+  test("KeryxConfig is an interface that can be augmented", () => {
+    // Verify KeryxConfig is structurally compatible with the config object
+    const typed: KeryxConfig = config;
+    expect(typed.server.web.port).toBe(config.server.web.port);
+  });
+
+  test("augmented properties are accessible after deepMerge", () => {
+    deepMerge(config, { custom: { enabled: true, name: "test" } });
+    // Access via cast since the augmentation is only for this test
+    const augmented = config as KeryxConfig & {
+      custom: { enabled: boolean; name: string };
+    };
+    expect(augmented.custom.enabled).toBe(true);
+    expect(augmented.custom.name).toBe("test");
+    // Clean up
+    delete (config as Record<string, unknown>).custom;
   });
 });
 
