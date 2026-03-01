@@ -13,9 +13,15 @@ import { ErrorType, TypedError } from "./TypedError";
 /**
  * Represents a client connection to the server — HTTP request, WebSocket, or internal caller.
  * Each connection tracks its own session, channel subscriptions, and rate-limit state.
- * The generic `T` allows typing the session data shape for your application.
+ *
+ * @typeParam T - Shape of the session data stored in Redis (persists across requests).
+ * @typeParam TMeta - Shape of request-scoped metadata that middleware and actions can
+ *   read/write during a single `act()` call. Reset to `{}` at the start of each invocation.
  */
-export class Connection<T extends Record<string, any> = Record<string, any>> {
+export class Connection<
+  T extends Record<string, any> = Record<string, any>,
+  TMeta extends Record<string, any> = Record<string, any>,
+> {
   /** Transport type identifier (e.g., `"web"`, `"websocket"`). */
   type: string;
   /** A human-readable identifier for the connection, typically the remote IP or a session key. */
@@ -36,6 +42,8 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
   rateLimitInfo?: RateLimitInfo;
   /** Request correlation ID for distributed tracing. Propagated from the incoming `X-Request-Id` header when `config.server.web.correlationId.trustProxy` is enabled. */
   correlationId?: string;
+  /** App-defined request-scoped metadata. Reset to `{}` at the start of each `act()` call so that long-lived connections (e.g., WebSockets) don't leak state between actions. */
+  metadata: Partial<TMeta>;
 
   /**
    * Create a new connection and register it in `api.connections`.
@@ -60,6 +68,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     this.sessionLoaded = false;
     this.subscriptions = new Set();
     this.rawConnection = rawConnection;
+    this.metadata = {};
 
     api.connections.connections.set(this.id, this);
   }
@@ -84,6 +93,7 @@ export class Connection<T extends Record<string, any> = Record<string, any>> {
     method: Request["method"] = "",
     url: string = "",
   ): Promise<{ response: Object; error?: TypedError }> {
+    this.metadata = {};
     const reqStartTime = new Date().getTime();
     let loggerResponsePrefix: "OK" | "ERROR" = "OK";
     let response: Object = {};

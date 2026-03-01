@@ -22,6 +22,7 @@ export { HTTP_METHOD } from "./classes/Action";
 export type { ActionMiddleware } from "./classes/Action";
 export { CHANNEL_NAME_PATTERN } from "./classes/Channel";
 export type { ChannelMiddleware } from "./classes/Channel";
+export { Connection } from "./classes/Connection";
 export { LogLevel } from "./classes/Logger";
 export { ErrorStatusCodes, ErrorType, TypedError } from "./classes/TypedError";
 export type { KeryxConfig } from "./config";
