@@ -229,6 +229,17 @@ export default defineConfig({
       llmstxt({
         generateLLMFriendlyDocsForEachPage: true,
         domain: "https://keryxjs.com",
+        customLLMsTxtTemplate: `# {title}
+
+> {description}
+
+{details}
+
+For the complete documentation in a single file, see [llms-full.txt](/llms-full.txt).
+
+## Table of Contents
+
+{toc}`,
       }),
       {
         name: "llm-markdown-routing",
