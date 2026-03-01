@@ -121,6 +121,57 @@ When a client exceeds the limit, the middleware throws a `CONNECTION_RATE_LIMITE
 
 See the [Security guide](/guide/security) for configuration options and custom limit overrides.
 
+### Passing Data Between Middleware and Actions
+
+Use `connection.metadata` to pass request-scoped data from middleware to actions (or between `runBefore` and `runAfter`). Metadata is reset to `{}` at the start of each `act()` call, so long-lived connections like WebSockets won't leak state between requests.
+
+First, declare your metadata shape:
+
+```ts
+// types.ts
+import type { Membership, Project } from "./models";
+
+export type AppConnectionMeta = {
+  membership?: Membership;
+  project?: Project;
+  auditBefore?: Record<string, unknown>;
+  auditAfter?: Record<string, unknown>;
+};
+```
+
+Then use it in middleware and actions with the second generic on `Connection`:
+
+```ts
+import type { Connection } from "keryx";
+import type { AppConnectionMeta } from "../types";
+
+export const RbacMiddleware: ActionMiddleware = {
+  runBefore: async (
+    _params,
+    connection: Connection<any, AppConnectionMeta>,
+  ) => {
+    const membership = await resolveMembership(connection.session!.data.userId);
+    connection.metadata.membership = membership; // type-safe write
+  },
+};
+```
+
+```ts
+export class OrgView extends Action {
+  middleware = [SessionMiddleware, RbacMiddleware];
+
+  async run(
+    params: ActionParams<OrgView>,
+    connection: Connection<any, AppConnectionMeta>,
+  ) {
+    const membership = connection.metadata.membership; // type-safe read
+    // ...
+  }
+}
+```
+
+This replaces the old pattern of casting through `unknown` to attach properties to the connection.
+
 ### Response Enrichment
 
 `runAfter` can add data to the response. This runs after the action's `run()` method completes:

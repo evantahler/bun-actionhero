@@ -50,7 +50,10 @@ Source: `backend/classes/Connection.ts`
 Represents a client connection — HTTP request, WebSocket, or CLI invocation. The connection handles action execution, session management, and channel subscriptions.
 
 ```ts
-class Connection<T extends Record<string, any> = Record<string, any>> {
+class Connection<
+  T extends Record<string, any> = Record<string, any>,
+  TMeta extends Record<string, any> = Record<string, any>,
+> {
   /** Connection type: "web", "websocket", "cli" */
   type: string;
 
@@ -60,6 +63,9 @@ class Connection<T extends Record<string, any> = Record<string, any>> {
   /** Unique connection ID (UUID) */
   id: string;
 
+  /** Session ID for Redis lookup (defaults to `id`) */
+  sessionId: string;
+
   /** Session data, typed with your session shape */
   session?: SessionData<T>;
 
@@ -68,6 +74,12 @@ class Connection<T extends Record<string, any> = Record<string, any>> {
 
   /** The underlying transport object (Bun Request, WebSocket, etc.) */
   rawConnection?: any;
+
+  /** Request correlation ID for distributed tracing */
+  correlationId?: string;
+
+  /** App-defined request-scoped metadata. Reset on each act() call. */
+  metadata: Partial<TMeta>;
 
   /** Execute an action with the given params */
   async act(
@@ -95,6 +107,8 @@ class Connection<T extends Record<string, any> = Record<string, any>> {
 ```
 
 The generic `T` parameter types your session data. For example, `Connection<{ userId: number }>` gives you typed access to `connection.session.data.userId`.
+
+The generic `TMeta` parameter types request-scoped metadata that middleware and actions share within a single `act()` call. It's reset to `{}` at the start of each invocation, so long-lived connections (like WebSockets) don't leak state between actions. See the [Middleware guide](/guide/middleware#passing-data-between-middleware-and-actions) for usage examples.
 
 ## Channel
 

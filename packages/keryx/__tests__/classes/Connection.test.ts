@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { z } from "zod";
 import { Connection, api, logger } from "../../api";
-import { Action } from "../../classes/Action";
+import { Action, type ActionMiddleware } from "../../classes/Action";
 import { LogFormat, LogLevel } from "../../classes/Logger";
 import { ErrorType } from "../../classes/TypedError";
 import { config } from "../../config";
@@ -349,6 +349,86 @@ describe("Connection class", () => {
     const conn = new Connection("test", "test-no-session");
 
     expect(conn.session).toBeUndefined();
+  });
+});
+
+describe("Connection metadata", () => {
+  test("metadata initializes as empty object", () => {
+    const conn = new Connection("test", "test-meta-init");
+    expect(conn.metadata).toEqual({});
+  });
+
+  test("metadata resets on each act() call", async () => {
+    const conn = new Connection("test", "test-meta-reset");
+    (conn.metadata as Record<string, unknown>).foo = "bar";
+
+    const params = new FormData();
+    await conn.act("status", params);
+
+    expect(conn.metadata).toEqual({});
+  });
+
+  test("metadata persists within a single act() lifecycle (middleware to action)", async () => {
+    const capturedValues: { before?: string; after?: string } = {};
+
+    const metadataMiddleware: ActionMiddleware = {
+      runBefore: async (_params, connection) => {
+        (connection.metadata as Record<string, unknown>).testKey =
+          "middleware-value";
+      },
+      runAfter: async (_params, connection) => {
+        capturedValues.after = (connection.metadata as Record<string, unknown>)
+          .testKey as string;
+      },
+    };
+
+    class MetadataTestAction extends Action {
+      constructor() {
+        super({
+          name: "test:metadata",
+          description: "Tests metadata flow",
+          middleware: [metadataMiddleware],
+        });
+      }
+
+      async run(_params: Record<string, unknown>, connection?: Connection) {
+        capturedValues.before = (
+          connection!.metadata as Record<string, unknown>
+        ).testKey as string;
+        return { ok: true };
+      }
+    }
+
+    const testAction = new MetadataTestAction();
+    api.actions.actions.push(testAction);
+
+    try {
+      const conn = new Connection("test", "test-meta-lifecycle");
+      const params = new FormData();
+      const { error } = await conn.act("test:metadata", params);
+
+      expect(error).toBeUndefined();
+      expect(capturedValues.before).toBe("middleware-value");
+      expect(capturedValues.after).toBe("middleware-value");
+    } finally {
+      api.actions.actions = api.actions.actions.filter(
+        (a: Action) => a.name !== "test:metadata",
+      );
+    }
+  });
+
+  test("metadata is typed via generic parameter", () => {
+    type AppMeta = { membership: string; auditBefore: Record<string, unknown> };
+    const conn = new Connection<Record<string, any>, AppMeta>(
+      "test",
+      "test-meta-typed",
+    );
+
+    conn.metadata.membership = "admin";
+    conn.metadata.auditBefore = { name: "old" };
+
+    expect(conn.metadata.membership).toBe("admin");
+    expect(conn.metadata.auditBefore).toEqual({ name: "old" });
   });
 });
 
