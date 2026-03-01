@@ -1,36 +1,25 @@
-import { Card, Col, Row } from "react-bootstrap";
-import SwaggerUI from "swagger-ui-react";
-import "swagger-ui-react/swagger-ui.css";
+import { ApiReferenceReact } from "@scalar/api-reference-react";
+import "@scalar/api-reference-react/style.css";
 
-import { useAuth } from "../hooks/useAuth";
 import { API_URL } from "../utils/client";
 
-const requestInterceptor = (req: Record<string, unknown>) => {
-  req.credentials = "include";
-  return req;
-};
-
 export default function SwaggerPage() {
-  const { user } = useAuth();
-
   return (
-    <Row className="justify-content-center mt-2">
-      <Col lg={12}>
-        <Card>
-          <Card.Header className="d-flex justify-content-between align-items-center">
-            <h4 className="mb-0">API Documentation</h4>
-            {user && (
-              <small className="text-muted">Authenticated as {user.name}</small>
-            )}
-          </Card.Header>
-          <Card.Body className="p-0">
-            <SwaggerUI
-              url={`${API_URL}/api/swagger`}
-              requestInterceptor={requestInterceptor}
-            />
-          </Card.Body>
-        </Card>
-      </Col>
-    </Row>
+    <div className="scalar-wrapper" style={{ height: "calc(100vh - 72px)" }}>
+      <ApiReferenceReact
+        configuration={{
+          url: `${API_URL}/api/swagger`,
+          darkMode: true,
+          hideClientButton: true,
+          hideDownloadButton: true,
+          hiddenClients: true,
+          withDefaultFonts: false,
+          agent: { disabled: true },
+          customCss: `.scalar-api-references-footer { display: none !important; }`,
+          fetch: (input, init) =>
+            fetch(input, { ...init, credentials: "include" }),
+        }}
+      />
+    </div>
   );
 }

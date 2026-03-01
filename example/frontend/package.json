@@ -14,12 +14,12 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@scalar/api-reference-react": "^0.8.66",
     "keryx": "workspace:*",
     "react": "^19.0.0",
     "react-bootstrap": "^2.10.4",
     "react-dom": "^19.0.0",
-    "react-router-dom": "^7.0.0",
-    "swagger-ui-react": "^5.31.2"
+    "react-router-dom": "^7.0.0"
   },
   "devDependencies": {
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
