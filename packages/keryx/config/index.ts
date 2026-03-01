@@ -26,4 +26,32 @@ export const config = {
   tasks: configTasks,
 };
 
-export type KeryxConfig = typeof config;
+/**
+ * The type of the merged configuration object. Applications can extend this
+ * via module augmentation to add custom config sections:
+ *
+ * ```typescript
+ * declare module "keryx" {
+ *   interface KeryxConfig {
+ *     audit: { retentionDays: number };
+ *   }
+ * }
+ * ```
+ */
+export interface KeryxConfig {
+  actions: typeof configActions;
+  channels: typeof configChannels;
+  process: typeof configProcess;
+  logger: typeof configLogger;
+  database: typeof configDatabase;
+  observability: typeof configObservability;
+  redis: typeof configRedis;
+  rateLimit: typeof configRateLimit;
+  session: typeof configSession;
+  server: {
+    cli: typeof configServerCli;
+    web: typeof configServerWeb;
+    mcp: typeof configServerMcp;
+  };
+  tasks: typeof configTasks;
+}

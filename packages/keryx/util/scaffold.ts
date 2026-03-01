@@ -105,11 +105,11 @@ export async function generateConfigFileContents(): Promise<
     );
 
     // In index.ts, change `export const config` to `export default`
-    // and remove the KeryxConfig type export (it comes from the package)
+    // and remove the KeryxConfig interface export (it comes from the package)
     if (file === "index.ts") {
       content = content.replace("export const config =", "export default");
       content = content.replace(
-        /\nexport type KeryxConfig = typeof config;\n/,
+        /\nexport interface KeryxConfig \{[\s\S]*?\}\n/,
         "\n",
       );
     }
