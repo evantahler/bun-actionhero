@@ -1,5 +1,17 @@
 import { defineConfig } from "vitepress";
+import { readFileSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 import llmstxt from "vitepress-plugin-llms";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+  readFileSync(
+    resolve(__dirname, "../../packages/keryx/package.json"),
+    "utf-8",
+  ),
+);
+const version: string = pkg.version;
 
 export const LLM_LANDING_PAGE = `# Keryx
 
@@ -89,6 +101,14 @@ export default defineConfig({
     nav: [
       { text: "Guide", link: "/guide/" },
       { text: "Reference", link: "/reference/actions" },
+      { text: "Changelog", link: "/changelog" },
+      {
+        text: `v${version}`,
+        items: [
+          { text: "Changelog", link: "/changelog" },
+          { text: "npm", link: "https://www.npmjs.com/package/keryx" },
+        ],
+      },
       {
         text: "GitHub",
         link: "https://github.com/evantahler/keryx",
