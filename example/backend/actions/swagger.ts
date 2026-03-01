@@ -75,7 +75,9 @@ export class Swagger implements Action {
       );
       const method = action.web.method.toLowerCase();
       const tag = action.name.split(":")[0];
-      const summary = action.description || action.name;
+      const operationId = action.name;
+      const summary = action.name;
+      const description = action.description;
 
       // Extract path parameters from the original route
       const pathParams: any[] = [];
@@ -139,7 +141,9 @@ export class Swagger implements Action {
       // Add path/method
       if (!paths[path]) paths[path] = {};
       paths[path][method] = {
+        operationId,
         summary,
+        ...(description ? { description } : {}),
         ...(pathParams.length > 0 ? { parameters: pathParams } : {}),
         ...(requestBody ? { requestBody } : {}),
         responses,

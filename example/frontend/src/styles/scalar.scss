@@ -1,0 +1,25 @@
+// ── Scalar API Reference ────────────────────────────────
+// Override Scalar's CSS custom properties to match the Keryx dark theme
+
+.scalar-wrapper {
+  --scalar-background-1: #{$gray-900};
+  --scalar-background-2: #{$gray-800};
+  --scalar-background-3: #{$gray-700};
+  --scalar-border-color: #{$gray-700};
+
+  --scalar-color-1: #e8e0d8;
+  --scalar-color-2: #ccd0d4;
+  --scalar-color-3: #9a938b;
+
+  --scalar-color-accent: #{$keryx-brand-2};
+
+  --scalar-sidebar-background-1: #{$gray-900};
+  --scalar-sidebar-color-1: #e8e0d8;
+  --scalar-sidebar-color-2: #9a938b;
+  --scalar-sidebar-color-active: #{$keryx-gold};
+  --scalar-sidebar-border-color: #{$gray-700};
+
+  --scalar-button-1: #{$keryx-brand-1};
+  --scalar-button-1-hover: #{$keryx-brand-2};
+  --scalar-button-1-color: #fff;
+}
