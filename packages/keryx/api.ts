@@ -38,7 +38,7 @@ if (!globalThis.api) {
   // @ts-ignore — augmented API properties (db, redis, etc.) are set later by initializers at runtime
   globalThis.api = new API();
   globalThis.logger = globalThis.api.logger;
-  globalThis.config = Config;
+  globalThis.config = Config as KeryxConfig;
 }
 
 /** The global API singleton. All framework state (actions, db, redis, etc.) is accessed through this object. */
