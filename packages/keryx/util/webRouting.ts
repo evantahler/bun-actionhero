@@ -64,25 +64,30 @@ export async function determineActionName(
 
 /**
  * Parse request parameters from path params, request body (JSON or form-data),
- * and query string into a single `FormData` instance.
+ * and query string into a single plain object.
+ *
+ * JSON bodies are preserved with full type fidelity (nested objects, arrays,
+ * booleans, numbers). FormData bodies (multipart/form-data and
+ * application/x-www-form-urlencoded) are converted to a plain object where
+ * repeated keys become arrays and `File` values are preserved.
  *
  * @param req - The incoming HTTP request.
  * @param url - The parsed URL (for query string).
  * @param pathParams - Path parameters extracted by route matching.
- * @returns A `FormData` containing all merged parameters.
+ * @returns A plain object containing all merged parameters.
  */
 export async function parseRequestParams(
   req: Request,
   url: ReturnType<typeof parse>,
   pathParams?: Record<string, string>,
-): Promise<FormData> {
-  // param load order: path params -> url params -> body params -> query params
-  let params = new FormData();
+): Promise<Record<string, unknown>> {
+  // param load order: path params -> body params -> query params
+  const params: Record<string, unknown> = {};
 
-  // Add path parameters
+  // Add path parameters (always strings from URL segments)
   if (pathParams) {
     for (const [key, value] of Object.entries(pathParams)) {
-      params.set(key, String(value));
+      params[key] = String(value);
     }
   }
 
@@ -92,20 +97,9 @@ export async function parseRequestParams(
   ) {
     try {
       const bodyContent = (await req.json()) as Record<string, unknown>;
+      // Merge JSON body directly — preserves types (objects, arrays, booleans, numbers)
       for (const [key, value] of Object.entries(bodyContent)) {
-        if (Array.isArray(value)) {
-          // Handle arrays by appending each element
-          if (value.length === 0) {
-            // For empty arrays, set an empty string to indicate the field exists
-            params.set(key, "");
-          } else {
-            for (const item of value) {
-              params.append(key, item);
-            }
-          }
-        } else {
-          params.set(key, value as any);
-        }
+        params[key] = value;
       }
     } catch (e) {
       throw new TypedError({
@@ -123,7 +117,15 @@ export async function parseRequestParams(
   ) {
     const f = await req.formData();
     f.forEach((value, key) => {
-      params.append(key, value);
+      if (params[key] !== undefined) {
+        if (Array.isArray(params[key])) {
+          (params[key] as unknown[]).push(value);
+        } else {
+          params[key] = [params[key], value];
+        }
+      } else {
+        params[key] = value;
+      }
     });
   }
 
@@ -131,9 +133,25 @@ export async function parseRequestParams(
     for (const [key, values] of Object.entries(url.query)) {
       if (values !== undefined) {
         if (Array.isArray(values)) {
-          for (const v of values) params.append(key, v);
+          if (params[key] !== undefined) {
+            if (Array.isArray(params[key])) {
+              (params[key] as unknown[]).push(...values);
+            } else {
+              params[key] = [params[key], ...values];
+            }
+          } else {
+            params[key] = values;
+          }
         } else {
-          params.append(key, values);
+          if (params[key] !== undefined) {
+            if (Array.isArray(params[key])) {
+              (params[key] as unknown[]).push(values);
+            } else {
+              params[key] = [params[key], values];
+            }
+          } else {
+            params[key] = values;
+          }
         }
       }
     }

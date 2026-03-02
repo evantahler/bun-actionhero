@@ -157,9 +157,8 @@ describe("Connection class", () => {
 
   test("act executes status action successfully", async () => {
     const conn = new Connection("test", "test-act-status");
-    const params = new FormData();
 
-    const { response, error } = await conn.act("status", params);
+    const { response, error } = await conn.act("status", {});
 
     expect(error).toBeUndefined();
     expect(response).toBeDefined();
@@ -170,11 +169,10 @@ describe("Connection class", () => {
 
   test("act returns error for non-existent action", async () => {
     const conn = new Connection("test", "test-act-notfound");
-    const params = new FormData();
 
     const { response: _response, error } = await conn.act(
       "nonexistent-action",
-      params,
+      {},
     );
 
     expect(error).toBeDefined();
@@ -184,9 +182,8 @@ describe("Connection class", () => {
 
   test("act returns error for undefined action name", async () => {
     const conn = new Connection("test", "test-act-undefined");
-    const params = new FormData();
 
-    const { response: _response, error } = await conn.act(undefined, params);
+    const { response: _response, error } = await conn.act(undefined, {});
 
     expect(error).toBeDefined();
     expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_NOT_FOUND);
@@ -194,13 +191,9 @@ describe("Connection class", () => {
 
   test("act handles action with invalid parameters", async () => {
     const conn = new Connection("test", "test-act-invalid-params");
-    const params = new FormData();
     // user:create requires name, email, password - we're not providing them
 
-    const { response: _response, error } = await conn.act(
-      "user:create",
-      params,
-    );
+    const { response: _response, error } = await conn.act("user:create", {});
 
     expect(error).toBeDefined();
     // Should be a validation error
@@ -218,8 +211,7 @@ describe("Connection class", () => {
       for (const type of ["web", "cli", "resque", "websocket"]) {
         logMessages.length = 0;
         const conn = new Connection(type, `test-${type}`);
-        const params = new FormData();
-        await conn.act("status", params);
+        await conn.act("status", {});
 
         const actionLog = logMessages.find(
           (msg) => msg.includes("[ACTION:") && msg.includes("status"),
@@ -247,8 +239,7 @@ describe("Connection class", () => {
 
     try {
       const conn = new Connection("web", "test-json-log");
-      const params = new FormData();
-      await conn.act("status", params);
+      await conn.act("status", {});
 
       const actionLog = logMessages.find((msg) => {
         try {
@@ -282,8 +273,7 @@ describe("Connection class", () => {
     await api.session.create(conn, { userId: 999 });
 
     // Act should load the session
-    const params = new FormData();
-    await conn.act("status", params);
+    await conn.act("status", {});
 
     // Session should be loaded
     expect(conn.session).toBeDefined();
@@ -362,8 +352,7 @@ describe("Connection metadata", () => {
     const conn = new Connection("test", "test-meta-reset");
     (conn.metadata as Record<string, unknown>).foo = "bar";
 
-    const params = new FormData();
-    await conn.act("status", params);
+    await conn.act("status", {});
 
     expect(conn.metadata).toEqual({});
   });
@@ -404,8 +393,7 @@ describe("Connection metadata", () => {
 
     try {
       const conn = new Connection("test", "test-meta-lifecycle");
-      const params = new FormData();
-      const { error } = await conn.act("test:metadata", params);
+      const { error } = await conn.act("test:metadata", {});
 
       expect(error).toBeUndefined();
       expect(capturedValues.before).toBe("middleware-value");
@@ -453,10 +441,8 @@ describe("Action timeouts", () => {
     api.actions.actions.push(slowAction);
 
     const conn = new Connection("test", "test-timeout");
-    const params = new FormData();
-    params.set("sleepMs", "500");
 
-    const { error } = await conn.act("test:slow", params);
+    const { error } = await conn.act("test:slow", { sleepMs: "500" });
 
     expect(error).toBeDefined();
     expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_TIMEOUT);
@@ -473,10 +459,8 @@ describe("Action timeouts", () => {
     api.actions.actions.push(slowAction);
 
     const conn = new Connection("test", "test-per-action-timeout");
-    const params = new FormData();
-    params.set("sleepMs", "500");
 
-    const { error } = await conn.act("test:slow", params);
+    const { error } = await conn.act("test:slow", { sleepMs: "500" });
 
     expect(error).toBeDefined();
     expect(error?.type).toBe(ErrorType.CONNECTION_ACTION_TIMEOUT);
@@ -493,10 +477,8 @@ describe("Action timeouts", () => {
     api.actions.actions.push(slowAction);
 
     const conn = new Connection("test", "test-timeout-disabled");
-    const params = new FormData();
-    params.set("sleepMs", "50");
 
-    const { response, error } = await conn.act("test:slow", params);
+    const { response, error } = await conn.act("test:slow", { sleepMs: "50" });
 
     expect(error).toBeUndefined();
     expect(response).toEqual({ slept: 50 });
@@ -512,10 +494,8 @@ describe("Action timeouts", () => {
     api.actions.actions.push(slowAction);
 
     const conn = new Connection("test", "test-fast-enough");
-    const params = new FormData();
-    params.set("sleepMs", "10");
 
-    const { response, error } = await conn.act("test:slow", params);
+    const { response, error } = await conn.act("test:slow", { sleepMs: "10" });
 
     expect(error).toBeUndefined();
     expect(response).toEqual({ slept: 10 });

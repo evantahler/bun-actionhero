@@ -25,10 +25,7 @@ export async function handleWebsocketAction(
   ws: ServerWebSocket,
   formattedMessage: ActionParams<any>,
 ) {
-  const params = new FormData();
-  for (const [key, value] of Object.entries(formattedMessage.params)) {
-    params.append(key, value as string);
-  }
+  const params = (formattedMessage.params ?? {}) as Record<string, unknown>;
 
   const { response, error } = await connection.act(
     formattedMessage.action,

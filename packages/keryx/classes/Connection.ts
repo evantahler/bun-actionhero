@@ -80,8 +80,8 @@ export class Connection<
    *
    * @param actionName - The name of the action to run. If not found, throws
    *   `ErrorType.CONNECTION_ACTION_NOT_FOUND`.
-   * @param params - Raw `FormData` from the HTTP request or WebSocket message.
-   *   Validated and coerced against the action's `inputs` Zod schema.
+   * @param params - Raw parameters as a plain object. Validated and coerced
+   *   against the action's `inputs` Zod schema.
    * @param method - The HTTP method of the incoming request (used for logging).
    * @param url - The request URL (used for logging).
    * @returns The action response and optional error.
@@ -89,7 +89,7 @@ export class Connection<
    */
   async act(
     actionName: string | undefined,
-    params: FormData, // note: params are not constant for all connections - some are long-lived, like websockets
+    params: Record<string, unknown>,
     method: Request["method"] = "",
     url: string = "",
   ): Promise<{ response: Object; error?: TypedError }> {
@@ -279,23 +279,8 @@ export class Connection<
     return api.actions.actions.find((a: Action) => a.name === actionName);
   }
 
-  private async formatParams(params: FormData, action: Action) {
+  private async formatParams(params: Record<string, unknown>, action: Action) {
     if (!action.inputs) return {} as ActionParams<Action>;
-
-    // Convert FormData to a plain object for processing
-    const rawParams: Record<string, any> = {};
-    params.forEach((value, key) => {
-      if (rawParams[key] !== undefined) {
-        // If the key already exists, convert to array
-        if (Array.isArray(rawParams[key])) {
-          rawParams[key].push(value);
-        } else {
-          rawParams[key] = [rawParams[key], value];
-        }
-      } else {
-        rawParams[key] = value;
-      }
-    });
 
     // Handle zod schema inputs
     if (
@@ -305,12 +290,12 @@ export class Connection<
     ) {
       // This is a zod schema - use safeParseAsync to support both sync and async transforms
       try {
-        const result = await (action.inputs as any).safeParseAsync(rawParams);
+        const result = await (action.inputs as any).safeParseAsync(params);
         if (!result.success) {
           // Get the first validation error (Zod v4 uses .issues instead of .errors)
           const firstError = result.error.issues[0];
           const key = firstError.path[0];
-          const value = rawParams[key];
+          const value = params[key];
           let message = firstError.message;
           // Zod v4: detect missing required param (code: "invalid_type" with undefined input)
           const isMissingRequired =
@@ -405,7 +390,10 @@ function logAction(opts: {
 
 const REDACTED = "[[secret]]" as const;
 
-const sanitizeParams = (params: FormData, action: Action | undefined) => {
+const sanitizeParams = (
+  params: Record<string, unknown>,
+  action: Action | undefined,
+) => {
   const sanitizedParams: Record<string, any> = {};
 
   // Get secret fields from the action's zod schema if it exists
@@ -422,13 +410,13 @@ const sanitizeParams = (params: FormData, action: Action | undefined) => {
     }
   }
 
-  params.forEach((v, k) => {
+  for (const [k, v] of Object.entries(params)) {
     if (secretFields.has(k)) {
       sanitizedParams[k] = REDACTED;
     } else {
       sanitizedParams[k] = v;
     }
-  });
+  }
 
   return sanitizedParams;
 };

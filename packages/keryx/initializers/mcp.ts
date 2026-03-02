@@ -391,20 +391,10 @@ function createMcpServer(): McpServer {
             await connection.updateSession({ userId: authInfo.extra.userId });
           }
 
-          const params = new FormData();
-          if (args && typeof args === "object") {
-            for (const [key, value] of Object.entries(
-              args as Record<string, unknown>,
-            )) {
-              if (Array.isArray(value)) {
-                for (const item of value) {
-                  params.append(key, String(item));
-                }
-              } else if (value !== undefined && value !== null) {
-                params.set(key, String(value));
-              }
-            }
-          }
+          const params =
+            args && typeof args === "object"
+              ? (args as Record<string, unknown>)
+              : {};
 
           const { response, error } = await connection.act(
             action.name,

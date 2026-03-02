@@ -279,7 +279,7 @@ export class Resque extends Initializer {
 
   /**
    * Wrap an action as a node-resque job. Creates a temporary `Connection` with type `"resque"`,
-   * converts inputs to `FormData`, and runs the action via `connection.act()`. Handles
+   * converts inputs to a plain object, and runs the action via `connection.act()`. Handles
    * fan-out result/error collection and recurring task re-enqueue.
    */
   wrapActionAsJob = (
@@ -302,26 +302,21 @@ export class Resque extends Initializer {
           connection.correlationId = propagatedCorrelationId;
         }
 
-        const paramsAsFormData = new FormData();
+        const plainParams: Record<string, unknown> =
+          typeof params === "object" && params !== null
+            ? Object.fromEntries(
+                typeof params.entries === "function"
+                  ? params.entries()
+                  : Object.entries(params),
+              )
+            : {};
 
-        if (typeof params.entries === "function") {
-          for (const [key, value] of params.entries()) {
-            paramsAsFormData.append(key, value);
-          }
-        } else if (typeof params === "object" && params !== null) {
-          for (const [key, value] of Object.entries(params)) {
-            if (value !== undefined && value !== null) {
-              paramsAsFormData.append(key, String(value));
-            }
-          }
-        }
-
-        const fanOutId = params._fanOutId as string | undefined;
+        const fanOutId = plainParams._fanOutId as string | undefined;
 
         let response: Awaited<ReturnType<(typeof action)["run"]>>;
         let error: TypedError | undefined;
         try {
-          const payload = await connection.act(action.name, paramsAsFormData);
+          const payload = await connection.act(action.name, plainParams);
           response = payload.response;
           error = payload.error;
 
