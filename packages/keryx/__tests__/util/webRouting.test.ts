@@ -32,14 +32,14 @@ describe("parseRequestParams", () => {
         id: "42",
         slug: "hello-world",
       });
-      expect(params.get("id")).toBe("42");
-      expect(params.get("slug")).toBe("hello-world");
+      expect(params.id).toBe("42");
+      expect(params.slug).toBe("hello-world");
     });
 
     test("works with no path params", async () => {
       const req = new Request("http://localhost/test", { method: "GET" });
       const params = await parseRequestParams(req, parsedUrl());
-      expect([...params.entries()]).toHaveLength(0);
+      expect(Object.keys(params)).toHaveLength(0);
     });
   });
 
@@ -49,25 +49,85 @@ describe("parseRequestParams", () => {
         jsonRequest({ name: "Alice", age: 30 }),
         parsedUrl(),
       );
-      expect(params.get("name")).toBe("Alice");
-      expect(params.get("age")).toBe("30");
+      expect(params.name).toBe("Alice");
+      expect(params.age).toBe(30);
     });
 
-    test("handles array values by appending each element", async () => {
+    test("handles array values", async () => {
       const params = await parseRequestParams(
         jsonRequest({ tags: ["a", "b", "c"] }),
         parsedUrl(),
       );
-      expect(params.getAll("tags")).toEqual(["a", "b", "c"]);
+      expect(params.tags).toEqual(["a", "b", "c"]);
     });
 
-    test("handles empty array by setting empty string sentinel", async () => {
+    test("handles empty arrays", async () => {
       const params = await parseRequestParams(
         jsonRequest({ tags: [] }),
         parsedUrl(),
       );
-      expect(params.get("tags")).toBe("");
-      expect(params.getAll("tags")).toEqual([""]);
+      expect(params.tags).toEqual([]);
+    });
+
+    test("preserves nested objects", async () => {
+      const nested = { street: "123 Main St", city: "Springfield" };
+      const params = await parseRequestParams(
+        jsonRequest({ address: nested }),
+        parsedUrl(),
+      );
+      expect(params.address).toEqual(nested);
+    });
+
+    test("preserves arrays of objects", async () => {
+      const patches = [
+        { startLine: 2, originalLines: ["old"], newLines: ["new"] },
+        { startLine: 5, originalLines: ["a", "b"], newLines: ["c"] },
+      ];
+      const params = await parseRequestParams(
+        jsonRequest({ patches }),
+        parsedUrl(),
+      );
+      expect(params.patches).toEqual(patches);
+    });
+
+    test("preserves booleans", async () => {
+      const params = await parseRequestParams(
+        jsonRequest({ active: true, deleted: false }),
+        parsedUrl(),
+      );
+      expect(params.active).toBe(true);
+      expect(params.deleted).toBe(false);
+    });
+
+    test("preserves numbers", async () => {
+      const params = await parseRequestParams(
+        jsonRequest({ count: 42, ratio: 3.14 }),
+        parsedUrl(),
+      );
+      expect(params.count).toBe(42);
+      expect(params.ratio).toBe(3.14);
+    });
+
+    test("preserves null values", async () => {
+      const params = await parseRequestParams(
+        jsonRequest({ name: "Alice", deletedAt: null }),
+        parsedUrl(),
+      );
+      expect(params.deletedAt).toBeNull();
+    });
+
+    test("preserves mixed types in a single body", async () => {
+      const body = {
+        name: "Alice",
+        age: 30,
+        active: true,
+        tags: ["a", "b"],
+        address: { city: "NYC" },
+        scores: [1, 2, 3],
+        deletedAt: null,
+      };
+      const params = await parseRequestParams(jsonRequest(body), parsedUrl());
+      expect(params).toEqual(body);
     });
 
     test("throws TypedError for malformed JSON body", async () => {
@@ -92,7 +152,7 @@ describe("parseRequestParams", () => {
       });
       const params = await parseRequestParams(req, parsedUrl("foo=bar"));
       // Should only have the query param, not try to parse body
-      expect(params.get("foo")).toBe("bar");
+      expect(params.foo).toBe("bar");
     });
   });
 
@@ -102,8 +162,8 @@ describe("parseRequestParams", () => {
         formUrlencodedRequest("name=Alice&color=blue"),
         parsedUrl(),
       );
-      expect(params.get("name")).toBe("Alice");
-      expect(params.get("color")).toBe("blue");
+      expect(params.name).toBe("Alice");
+      expect(params.color).toBe("blue");
     });
 
     test("handles repeated keys in urlencoded body", async () => {
@@ -111,7 +171,7 @@ describe("parseRequestParams", () => {
         formUrlencodedRequest("tag=a&tag=b&tag=c"),
         parsedUrl(),
       );
-      expect(params.getAll("tag")).toEqual(["a", "b", "c"]);
+      expect(params.tag).toEqual(["a", "b", "c"]);
     });
   });
 
@@ -124,8 +184,8 @@ describe("parseRequestParams", () => {
         req,
         parsedUrl("limit=10&offset=5"),
       );
-      expect(params.get("limit")).toBe("10");
-      expect(params.get("offset")).toBe("5");
+      expect(params.limit).toBe("10");
+      expect(params.offset).toBe("5");
     });
 
     test("handles repeated query params as array", async () => {
@@ -133,7 +193,7 @@ describe("parseRequestParams", () => {
         method: "GET",
       });
       const params = await parseRequestParams(req, parsedUrl("id=1&id=2&id=3"));
-      expect(params.getAll("id")).toEqual(["1", "2", "3"]);
+      expect(params.id).toEqual(["1", "2", "3"]);
     });
   });
 
@@ -144,9 +204,9 @@ describe("parseRequestParams", () => {
         parsedUrl("extra=query-val"),
         { name: "from-path" },
       );
-      // path params set first, then body overwrites via set
-      expect(params.get("name")).toBe("from-body");
-      expect(params.get("extra")).toBe("query-val");
+      // path params set first, then body overwrites
+      expect(params.name).toBe("from-body");
+      expect(params.extra).toBe("query-val");
     });
   });
 });

@@ -252,11 +252,11 @@ export async function handleAuthorizePost(
     return renderAuthPage(oauthParams, templates, authActions);
   }
 
-  // Build action FormData from all non-OAuth fields
-  const actionParams = new FormData();
+  // Build action params from all non-OAuth fields
+  const actionParams: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
     if (!OAUTH_FIELDS.has(key)) {
-      actionParams.set(key, value);
+      actionParams[key] = value;
     }
   }
 

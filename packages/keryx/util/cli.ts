@@ -241,10 +241,7 @@ async function runActionViaCLI(options: Record<string, string>, command: any) {
 
   const id = "cli:" + os.userInfo().username;
   const connection = new Connection("cli", id);
-  const params = new FormData();
-  for (const [key, value] of Object.entries(options)) {
-    params.append(key, value);
-  }
+  const params: Record<string, unknown> = { ...options };
 
   const { response, error } = await connection.act(actionName, params);
   const payload: { response: any; error?: any } = { response };
