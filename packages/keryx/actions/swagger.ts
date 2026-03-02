@@ -63,7 +63,20 @@ export class Swagger implements Action {
 
   async run() {
     const paths: Record<string, any> = {};
-    const components: { schemas: Record<string, any> } = { schemas: {} };
+    const components: {
+      schemas: Record<string, any>;
+      securitySchemes?: Record<string, any>;
+    } = {
+      schemas: {},
+      securitySchemes: {
+        sessionCookie: {
+          type: "apiKey",
+          in: "cookie",
+          name: config.session.cookieName,
+          description: "Session cookie set by session:create",
+        },
+      },
+    };
 
     for (const action of api.actions.actions) {
       if (!action.web?.route || !action.web?.method) continue;
@@ -81,17 +94,61 @@ export class Swagger implements Action {
       const description = action.description;
 
       // Extract path parameters from the original route
-      const pathParams: any[] = [];
+      const parameters: any[] = [];
       const pathParamMatches = action.web.route.match(/:\w+/g) || [];
+      const pathParamNames = new Set<string>();
+
+      // Pre-compute Zod JSON Schema for enriching path param types
+      let zodProperties: Record<string, any> = {};
+      let zodDescriptions: Record<string, string> = {};
+      if (action.inputs && typeof action.inputs.parse === "function") {
+        const jsonSchema = z.toJSONSchema(action.inputs, {
+          io: "input",
+          unrepresentable: "any",
+        }) as any;
+        zodProperties = jsonSchema.properties ?? {};
+        for (const [name, propSchema] of Object.entries<any>(zodProperties)) {
+          if (propSchema.description) {
+            zodDescriptions[name] = propSchema.description;
+          }
+        }
+      }
+
       for (const paramMatch of pathParamMatches) {
         const paramName = paramMatch.slice(1); // Remove the colon
-        pathParams.push({
+        pathParamNames.add(paramName);
+        parameters.push({
           name: paramName,
           in: "path",
           required: true,
           schema: { type: "string" },
-          description: `The ${paramName} parameter`,
+          description:
+            zodDescriptions[paramName] ?? `The ${paramName} parameter`,
         });
+      }
+
+      // For GET/HEAD, convert remaining Zod inputs into query parameters
+      if (
+        (method === "get" || method === "head") &&
+        Object.keys(zodProperties).length > 0
+      ) {
+        const fullSchema = z.toJSONSchema(action.inputs!, {
+          io: "input",
+          unrepresentable: "any",
+        }) as any;
+        const requiredFields = new Set<string>(fullSchema.required ?? []);
+        for (const [name, propSchema] of Object.entries<any>(zodProperties)) {
+          if (pathParamNames.has(name)) continue; // already a path param
+          parameters.push({
+            name,
+            in: "query",
+            required: requiredFields.has(name),
+            schema: propSchema,
+            ...(propSchema.description
+              ? { description: propSchema.description }
+              : {}),
+          });
+        }
       }
 
       // Build requestBody if Zod inputs exist and method supports body
@@ -145,7 +202,7 @@ export class Swagger implements Action {
         operationId,
         summary,
         ...(description ? { description } : {}),
-        ...(pathParams.length > 0 ? { parameters: pathParams } : {}),
+        ...(parameters.length > 0 ? { parameters } : {}),
         ...(requestBody ? { requestBody } : {}),
         responses,
         tags: [tag],
@@ -168,6 +225,7 @@ export class Swagger implements Action {
       ],
       paths,
       components,
+      security: [{ sessionCookie: [] }],
     };
     return document;
   }

@@ -109,7 +109,6 @@ export abstract class Action {
     frequency?: number;
     queue: string;
   };
-
   constructor(args: ActionConstructorInputs) {
     this.name = args.name;
     this.description = args.description ?? `An Action: ${this.name}`;

@@ -148,6 +148,66 @@ describe("swagger", () => {
     }
   });
 
+  test("swagger documents query parameters for GET actions", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    // messages:list is GET /messages/list with limit and offset inputs
+    const messagesListOp = response.paths["/messages/list"]!.get!;
+    expect(messagesListOp.parameters).toBeDefined();
+
+    const limitParam = messagesListOp.parameters!.find(
+      (p: any) => p.name === "limit",
+    );
+    expect(limitParam).toBeDefined();
+    expect(limitParam!.in).toBe("query");
+
+    const offsetParam = messagesListOp.parameters!.find(
+      (p: any) => p.name === "offset",
+    );
+    expect(offsetParam).toBeDefined();
+    expect(offsetParam!.in).toBe("query");
+
+    // GET actions should not have requestBody
+    expect(messagesListOp.requestBody).toBeUndefined();
+  });
+
+  test("swagger does not duplicate path params as query params", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    // user:view is GET /user/:user — "user" is a path param and a Zod input
+    const userViewOp = response.paths["/user/{user}"]!.get!;
+    expect(userViewOp.parameters).toBeDefined();
+
+    const userParams = userViewOp.parameters!.filter(
+      (p: any) => p.name === "user",
+    );
+    // Should only appear once (as path param), not duplicated as query param
+    expect(userParams.length).toBe(1);
+    expect(userParams[0].in).toBe("path");
+  });
+
+  test("swagger includes securitySchemes for session cookie", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    expect(response.components.securitySchemes).toBeDefined();
+    const scheme = response.components.securitySchemes!.sessionCookie;
+    expect(scheme).toBeDefined();
+    expect(scheme.type).toBe("apiKey");
+    expect(scheme.in).toBe("cookie");
+    expect(scheme.name).toBe("__session");
+  });
+
+  test("swagger includes document-level security requirement", async () => {
+    const res = await fetch(url + "/api/swagger");
+    const response = (await res.json()) as ActionResponse<Swagger>;
+
+    expect(response.security).toBeDefined();
+    expect(response.security).toEqual([{ sessionCookie: [] }]);
+  });
+
   test("swagger endpoint itself is documented", async () => {
     const res = await fetch(url + "/api/swagger");
     const response = (await res.json()) as ActionResponse<Swagger>;
