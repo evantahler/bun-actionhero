@@ -197,6 +197,60 @@ export async function generateKeryxTsContents(): Promise<string> {
   return loadTemplate("keryx.ts.mustache");
 }
 
+/**
+ * Generate auth scaffold file contents: schema, ops, middleware, and actions
+ * for a working sign-up / sign-in / sign-out / me flow.
+ * Returns a Map of relativePath → content.
+ */
+export async function generateAuthScaffoldContents(): Promise<
+  Map<string, string>
+> {
+  const result = new Map<string, string>();
+
+  const files: [string, string][] = [
+    ["schema/users.ts", "schema-users.ts.mustache"],
+    ["ops/UserOps.ts", "ops-user.ts.mustache"],
+    ["middleware/session.ts", "middleware-session.ts.mustache"],
+    ["actions/user.ts", "actions-user.ts.mustache"],
+    ["actions/session.ts", "actions-session.ts.mustache"],
+    ["actions/me.ts", "actions-me.ts.mustache"],
+  ];
+
+  for (const [filePath, templateName] of files) {
+    const content = await loadTemplate(templateName);
+    result.set(filePath, content);
+  }
+
+  // Pre-generated migration for the users table so the project works out of the box
+  result.set(
+    "drizzle/0000_users.sql",
+    `CREATE TABLE IF NOT EXISTS "users" (\n\t"id" serial PRIMARY KEY NOT NULL,\n\t"name" varchar(256) NOT NULL,\n\t"email" text NOT NULL,\n\t"password_hash" text NOT NULL,\n\t"created_at" timestamp DEFAULT now() NOT NULL,\n\t"updated_at" timestamp DEFAULT now() NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "users" ("name");--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "users" ("email");\n`,
+  );
+
+  result.set(
+    "drizzle/meta/_journal.json",
+    JSON.stringify(
+      {
+        version: "5",
+        dialect: "pg",
+        entries: [
+          {
+            idx: 0,
+            version: "5",
+            when: 1711324460394,
+            tag: "0000_users",
+            breakpoints: true,
+          },
+        ],
+      },
+      null,
+      2,
+    ) + "\n",
+  );
+
+  return result;
+}
+
 export async function scaffoldProject(
   projectName: string,
   targetDir: string,
@@ -290,8 +344,13 @@ export async function scaffoldProject(
 
   if (options.includeDb) {
     await writeTemplate("migrations.ts", "migrations.ts.mustache");
-    await write("schema/.gitkeep", "");
-    await write("drizzle/meta/_journal.json", JSON.stringify({ entries: [] }));
+
+    // Auth example replaces the .gitkeep placeholders with real files below;
+    // only write placeholders when not including auth.
+    if (!options.includeExample) {
+      await write("schema/.gitkeep", "");
+      await write("drizzle/meta/_journal.json", JSON.stringify({ entries: [] }));
+    }
   }
 
   // --- Built-in actions (always included) ---
@@ -306,10 +365,19 @@ export async function scaffoldProject(
     await write(filePath, content);
   }
 
-  // --- Example action ---
+  // --- Example: auth actions (when db) or hello action (when no db) ---
 
   if (options.includeExample) {
-    await writeTemplate("actions/hello.ts", "hello-action.ts.mustache");
+    if (options.includeDb) {
+      // Full auth starter: sign up, sign in, sign out, and a protected /me endpoint
+      const authFiles = await generateAuthScaffoldContents();
+      for (const [filePath, content] of authFiles) {
+        await write(filePath, content);
+      }
+    } else {
+      // No DB — fall back to the simple hello action
+      await writeTemplate("actions/hello.ts", "hello-action.ts.mustache");
+    }
   }
 
   return createdFiles;
