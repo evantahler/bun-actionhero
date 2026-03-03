@@ -165,19 +165,50 @@ describe("keryx new — end-to-end quickstart", () => {
     expect(body).toHaveProperty("pid");
   });
 
-  test("GET /api/hello returns default greeting", async () => {
-    const res = await fetch(`http://localhost:${SERVER_PORT}/api/hello`);
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { message: string };
-    expect(body.message).toBe("Hello, World!");
+  test("sign up, sign in, and call authenticated endpoint", async () => {
+    const uniqueSuffix = Date.now();
+    const uniqueEmail = `e2e-${uniqueSuffix}@example.com`;
+    const uniqueName = `E2E User ${uniqueSuffix}`;
+    const password = "password123";
+
+    // Sign up
+    const signUpBody = new FormData();
+    signUpBody.append("name", uniqueName);
+    signUpBody.append("email", uniqueEmail);
+    signUpBody.append("password", password);
+    const signUpRes = await fetch(`http://localhost:${SERVER_PORT}/api/user`, {
+      method: "PUT",
+      body: signUpBody,
+    });
+    expect(signUpRes.status).toBe(200);
+    const signUpData = (await signUpRes.json()) as {
+      user: { id: number; email: string };
+    };
+    expect(signUpData.user.email).toBe(uniqueEmail);
+
+    // Sign in
+    const signInBody = new FormData();
+    signInBody.append("email", uniqueEmail);
+    signInBody.append("password", password);
+    const signInRes = await fetch(
+      `http://localhost:${SERVER_PORT}/api/session`,
+      { method: "PUT", body: signInBody },
+    );
+    expect(signInRes.status).toBe(200);
+    const cookie = signInRes.headers.get("set-cookie") ?? "";
+    expect(cookie).toBeTruthy();
+
+    // Call authenticated /me endpoint
+    const meRes = await fetch(`http://localhost:${SERVER_PORT}/api/me`, {
+      headers: { Cookie: cookie },
+    });
+    expect(meRes.status).toBe(200);
+    const meData = (await meRes.json()) as { user: { email: string } };
+    expect(meData.user.email).toBe(uniqueEmail);
   });
 
-  test("GET /api/hello?name=Keryx returns personalized greeting", async () => {
-    const res = await fetch(
-      `http://localhost:${SERVER_PORT}/api/hello?name=Keryx`,
-    );
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { message: string };
-    expect(body.message).toBe("Hello, Keryx!");
+  test("GET /api/me without session returns 401", async () => {
+    const res = await fetch(`http://localhost:${SERVER_PORT}/api/me`);
+    expect(res.status).toBe(401);
   });
 });

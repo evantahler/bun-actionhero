@@ -1,0 +1,58 @@
+import { eq } from "drizzle-orm";
+import { Action, api, ErrorType, secret, TypedError, type ActionParams } from "keryx";
+import { HTTP_METHOD } from "keryx/classes/Action.ts";
+import { RateLimitMiddleware } from "keryx/middleware/rateLimit.ts";
+import { z } from "zod";
+import { hashPassword, serializeUser } from "../ops/UserOps";
+import { users } from "../schema/users";
+
+export class UserCreate implements Action {
+  name = "user:create";
+  description =
+    "Register a new user account with a name, email, and password. The email must be unique (case-insensitive). Password must be at least 8 characters. Returns the created user's profile.";
+  mcp = { enabled: false, isSignupAction: true };
+  middleware = [RateLimitMiddleware];
+  web = { route: "/user", method: HTTP_METHOD.PUT };
+  inputs = z.object({
+    name: z
+      .string()
+      .min(3, "Name must be at least 3 characters")
+      .max(256, "Name must be less than 256 characters"),
+    email: z
+      .string()
+      .refine(
+        (val) => val.includes("@") && val.includes("."),
+        "Must be a valid email address",
+      )
+      .transform((val) => val.toLowerCase()),
+    password: secret(
+      z.string().min(8, "Password must be at least 8 characters"),
+    ),
+  });
+
+  async run(params: ActionParams<UserCreate>) {
+    const [existingUser] = await api.db.db
+      .select()
+      .from(users)
+      .where(eq(users.email, params.email))
+      .limit(1);
+
+    if (existingUser) {
+      throw new TypedError({
+        message: "A user with that email already exists",
+        type: ErrorType.ACTION_VALIDATION,
+      });
+    }
+
+    const [user] = await api.db.db
+      .insert(users)
+      .values({
+        name: params.name,
+        email: params.email,
+        password_hash: await hashPassword(params.password),
+      })
+      .returning();
+
+    return { user: serializeUser(user) };
+  }
+}

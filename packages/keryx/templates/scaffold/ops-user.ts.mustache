@@ -1,0 +1,19 @@
+import { type User } from "../schema/users";
+
+export async function hashPassword(password: string) {
+  return Bun.password.hash(password);
+}
+
+export async function checkPassword(user: User, password: string) {
+  return Bun.password.verify(password, user.password_hash);
+}
+
+export function serializeUser(user: User) {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    createdAt: user.createdAt.getTime(),
+    updatedAt: user.updatedAt.getTime(),
+  };
+}

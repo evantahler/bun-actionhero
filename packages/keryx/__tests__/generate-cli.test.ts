@@ -133,15 +133,17 @@ describe("keryx generate channel", () => {
 
 describe("keryx generate ops", () => {
   test("generates an ops file", async () => {
-    const proc = runGenerate("ops", "UserOps");
+    const proc = runGenerate("ops", "MessageOps");
     expect(await proc.exited).toBe(0);
-    expect(fs.existsSync(path.join(projectDir, "ops/UserOps.ts"))).toBe(true);
+    expect(fs.existsSync(path.join(projectDir, "ops/MessageOps.ts"))).toBe(
+      true,
+    );
 
     const content = fs.readFileSync(
-      path.join(projectDir, "ops/UserOps.ts"),
+      path.join(projectDir, "ops/MessageOps.ts"),
       "utf-8",
     );
-    expect(content).toContain("UserOps");
+    expect(content).toContain("MessageOps");
   });
 });
 

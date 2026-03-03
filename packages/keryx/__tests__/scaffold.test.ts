@@ -19,7 +19,7 @@ function targetDir(name: string) {
 }
 
 describe("scaffoldProject", () => {
-  test("creates all default files with db and example", async () => {
+  test("creates all default files with db and example (auth starter)", async () => {
     const files = await scaffoldProject("test-app", targetDir("test-app"), {
       includeDb: true,
       includeExample: true,
@@ -47,11 +47,19 @@ describe("scaffoldProject", () => {
     expect(files).toContain("middleware/.gitkeep");
     expect(files).toContain("channels/.gitkeep");
     expect(files).toContain("migrations.ts");
-    expect(files).toContain("schema/.gitkeep");
-    expect(files).toContain("drizzle/meta/_journal.json");
     expect(files).toContain("actions/status.ts");
     expect(files).toContain("actions/swagger.ts");
-    expect(files).toContain("actions/hello.ts");
+    // Auth starter files replace hello.ts when DB is included
+    expect(files).toContain("schema/users.ts");
+    expect(files).toContain("ops/UserOps.ts");
+    expect(files).toContain("middleware/session.ts");
+    expect(files).toContain("actions/user.ts");
+    expect(files).toContain("actions/session.ts");
+    expect(files).toContain("actions/me.ts");
+    expect(files).toContain("drizzle/0000_users.sql");
+    expect(files).toContain("drizzle/meta/_journal.json");
+    expect(files).not.toContain("actions/hello.ts");
+    expect(files).not.toContain("schema/.gitkeep");
 
     // Verify files actually exist on disk
     for (const f of files) {
@@ -107,8 +115,31 @@ describe("scaffoldProject", () => {
     });
 
     expect(files).not.toContain("actions/hello.ts");
+    expect(files).not.toContain("actions/user.ts");
+    expect(files).not.toContain("actions/session.ts");
+    expect(files).not.toContain("actions/me.ts");
     expect(files).toContain("actions/status.ts");
     expect(files).toContain("actions/swagger.ts");
+    // schema and drizzle placeholders written when db included but no example
+    expect(files).toContain("schema/.gitkeep");
+    expect(files).toContain("drizzle/meta/_journal.json");
+  });
+
+  test("uses hello action when includeDb is false and includeExample is true", async () => {
+    const files = await scaffoldProject(
+      "no-db-example",
+      targetDir("no-db-example"),
+      {
+        includeDb: false,
+        includeExample: true,
+      },
+    );
+
+    expect(files).toContain("actions/hello.ts");
+    expect(files).not.toContain("actions/user.ts");
+    expect(files).not.toContain("actions/session.ts");
+    expect(files).not.toContain("actions/me.ts");
+    expect(files).not.toContain("schema/users.ts");
   });
 
   test("index.ts sets rootDir", async () => {

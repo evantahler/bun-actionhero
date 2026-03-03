@@ -49,7 +49,12 @@ describe("keryx new (CLI integration)", () => {
     ".gitignore",
     "migrations.ts",
     "config/index.ts",
-    "actions/hello.ts",
+    "schema/users.ts",
+    "ops/UserOps.ts",
+    "middleware/session.ts",
+    "actions/user.ts",
+    "actions/session.ts",
+    "actions/me.ts",
   ];
 
   for (const file of expectedFiles) {
@@ -118,8 +123,15 @@ describe("keryx new (CLI integration)", () => {
       expect(fs.existsSync(yProjectDir)).toBe(true);
       expect(fs.existsSync(path.join(yProjectDir, "package.json"))).toBe(true);
       expect(fs.existsSync(path.join(yProjectDir, "migrations.ts"))).toBe(true);
-      expect(fs.existsSync(path.join(yProjectDir, "actions/hello.ts"))).toBe(
+      expect(fs.existsSync(path.join(yProjectDir, "actions/user.ts"))).toBe(
         true,
+      );
+      expect(fs.existsSync(path.join(yProjectDir, "actions/session.ts"))).toBe(
+        true,
+      );
+      expect(fs.existsSync(path.join(yProjectDir, "actions/me.ts"))).toBe(true);
+      expect(fs.existsSync(path.join(yProjectDir, "actions/hello.ts"))).toBe(
+        false,
       );
     } finally {
       fs.rmSync(yTmpDir, { recursive: true, force: true });

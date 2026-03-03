@@ -1,0 +1,43 @@
+import { eq } from "drizzle-orm";
+import {
+  api,
+  Connection,
+  ErrorType,
+  TypedError,
+  type Action,
+  type ActionParams,
+} from "keryx";
+import { HTTP_METHOD } from "keryx/classes/Action.ts";
+import { z } from "zod";
+import { SessionMiddleware } from "../middleware/session";
+import { serializeUser } from "../ops/UserOps";
+import { users } from "../schema/users";
+
+export class MeView implements Action {
+  name = "me:view";
+  description =
+    "Get the currently authenticated user's profile. Requires an active session.";
+  web = { route: "/me", method: HTTP_METHOD.GET };
+  middleware = [SessionMiddleware];
+  inputs = z.object({});
+
+  async run(
+    _params: ActionParams<MeView>,
+    connection: Connection<{ userId?: number }>,
+  ) {
+    const [user] = await api.db.db
+      .select()
+      .from(users)
+      .where(eq(users.id, connection.session!.data.userId!))
+      .limit(1);
+
+    if (!user) {
+      throw new TypedError({
+        message: "User not found",
+        type: ErrorType.CONNECTION_ACTION_NOT_FOUND,
+      });
+    }
+
+    return { user: serializeUser(user) };
+  }
+}
