@@ -126,10 +126,14 @@ describe("scaffoldProject", () => {
   });
 
   test("uses hello action when includeDb is false and includeExample is true", async () => {
-    const files = await scaffoldProject("no-db-example", targetDir("no-db-example"), {
-      includeDb: false,
-      includeExample: true,
-    });
+    const files = await scaffoldProject(
+      "no-db-example",
+      targetDir("no-db-example"),
+      {
+        includeDb: false,
+        includeExample: true,
+      },
+    );
 
     expect(files).toContain("actions/hello.ts");
     expect(files).not.toContain("actions/user.ts");

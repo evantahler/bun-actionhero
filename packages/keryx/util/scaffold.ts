@@ -349,7 +349,10 @@ export async function scaffoldProject(
     // only write placeholders when not including auth.
     if (!options.includeExample) {
       await write("schema/.gitkeep", "");
-      await write("drizzle/meta/_journal.json", JSON.stringify({ entries: [] }));
+      await write(
+        "drizzle/meta/_journal.json",
+        JSON.stringify({ entries: [] }),
+      );
     }
   }
 

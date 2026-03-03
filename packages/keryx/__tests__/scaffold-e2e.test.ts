@@ -181,7 +181,9 @@ describe("keryx new — end-to-end quickstart", () => {
       body: signUpBody,
     });
     expect(signUpRes.status).toBe(200);
-    const signUpData = (await signUpRes.json()) as { user: { id: number; email: string } };
+    const signUpData = (await signUpRes.json()) as {
+      user: { id: number; email: string };
+    };
     expect(signUpData.user.email).toBe(uniqueEmail);
 
     // Sign in
