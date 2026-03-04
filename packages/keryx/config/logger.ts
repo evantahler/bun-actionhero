@@ -6,4 +6,6 @@ export const configLogger = {
   includeTimestamps: await loadFromEnvIfSet("LOG_INCLUDE_TIMESTAMPS", true),
   colorize: await loadFromEnvIfSet("LOG_COLORIZE", true),
   format: await loadFromEnvIfSet<LogFormat>("LOG_FORMAT", LogFormat.text),
+  /** Maximum length of individual param values in action logs before truncation. Set to 0 to disable truncation. */
+  maxParamLength: await loadFromEnvIfSet("LOG_MAX_PARAM_LENGTH", 100),
 };
