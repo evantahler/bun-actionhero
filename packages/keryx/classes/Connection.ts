@@ -410,9 +410,20 @@ const sanitizeParams = (
     }
   }
 
+  const maxParamLength = config.logger.maxParamLength;
+
   for (const [k, v] of Object.entries(params)) {
     if (secretFields.has(k)) {
       sanitizedParams[k] = REDACTED;
+    } else if (maxParamLength > 0) {
+      const stringified = typeof v === "string" ? v : JSON.stringify(v);
+      if (stringified && stringified.length > maxParamLength) {
+        sanitizedParams[k] =
+          stringified.slice(0, maxParamLength) +
+          `... (truncated, original length: ${stringified.length})`;
+      } else {
+        sanitizedParams[k] = v;
+      }
     } else {
       sanitizedParams[k] = v;
     }

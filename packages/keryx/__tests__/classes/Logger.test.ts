@@ -7,6 +7,7 @@ function createLogger(
     includeTimestamps: boolean;
     colorize: boolean;
     format: LogFormat;
+    maxParamLength: number;
   }> = {},
 ) {
   return new Logger({
@@ -14,6 +15,7 @@ function createLogger(
     includeTimestamps: true,
     colorize: false,
     format: LogFormat.text,
+    maxParamLength: 100,
     ...overrides,
   });
 }
