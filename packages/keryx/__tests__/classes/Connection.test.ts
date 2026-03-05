@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Connection, api, logger } from "../../api";
 import { Action, type ActionMiddleware } from "../../classes/Action";
 import { LogFormat, LogLevel } from "../../classes/Logger";
-import { ErrorType } from "../../classes/TypedError";
+import { ErrorType, TypedError } from "../../classes/TypedError";
 import { config } from "../../config";
 import { HOOK_TIMEOUT } from "./../setup";
 
@@ -401,6 +401,49 @@ describe("Connection metadata", () => {
     } finally {
       api.actions.actions = api.actions.actions.filter(
         (a: Action) => a.name !== "test:metadata",
+      );
+    }
+  });
+
+  test("runAfter middleware is called even when action throws", async () => {
+    let runAfterCalled = false;
+
+    const cleanupMiddleware: ActionMiddleware = {
+      runAfter: async () => {
+        runAfterCalled = true;
+      },
+    };
+
+    class ThrowingAction extends Action {
+      constructor() {
+        super({
+          name: "test:throwing",
+          description: "An action that always throws",
+          middleware: [cleanupMiddleware],
+        });
+      }
+
+      async run() {
+        throw new TypedError({
+          message: "intentional failure",
+          type: ErrorType.CONNECTION_ACTION_RUN,
+        });
+      }
+    }
+
+    const testAction = new ThrowingAction();
+    api.actions.actions.push(testAction);
+
+    try {
+      const conn = new Connection("test", "test-runafter-on-throw");
+      const { error } = await conn.act("test:throwing", {});
+
+      expect(error).toBeDefined();
+      expect(error!.message).toBe("intentional failure");
+      expect(runAfterCalled).toBe(true);
+    } finally {
+      api.actions.actions = api.actions.actions.filter(
+        (a: Action) => a.name !== "test:throwing",
       );
     }
   });

@@ -100,6 +100,7 @@ export class Connection<
     let error: TypedError | undefined;
 
     let action: Action | undefined;
+    let formattedParams: Record<string, unknown> | undefined;
     try {
       action = this.findAction(actionName);
       if (!action) {
@@ -112,7 +113,7 @@ export class Connection<
       // load the session once, if it hasn't been loaded yet
       if (!this.sessionLoaded) await this.loadSession();
 
-      let formattedParams = await this.formatParams(params, action);
+      formattedParams = await this.formatParams(params, action);
 
       for (const middleware of action.middleware ?? []) {
         if (middleware.runBefore) {
@@ -145,17 +146,6 @@ export class Connection<
       } else {
         response = await action.run(formattedParams, this);
       }
-
-      for (const middleware of action.middleware ?? []) {
-        if (middleware.runAfter) {
-          const middlewareResponse = await middleware.runAfter(
-            formattedParams,
-            this,
-          );
-          if (middlewareResponse && middlewareResponse?.updatedResponse)
-            response = middlewareResponse.updatedResponse;
-        }
-      }
     } catch (e) {
       loggerResponsePrefix = "ERROR";
       error =
@@ -166,6 +156,19 @@ export class Connection<
               type: ErrorType.CONNECTION_ACTION_RUN,
               originalError: e,
             });
+    } finally {
+      if (action && formattedParams) {
+        for (const middleware of action.middleware ?? []) {
+          if (middleware.runAfter) {
+            const middlewareResponse = await middleware.runAfter(
+              formattedParams,
+              this,
+            );
+            if (middlewareResponse && middlewareResponse?.updatedResponse)
+              response = middlewareResponse.updatedResponse;
+          }
+        }
+      }
     }
 
     const duration = new Date().getTime() - reqStartTime;
