@@ -382,7 +382,13 @@ function createMcpServer(): McpServer {
 
         const clientIp = (authInfo?.extra?.ip as string) || "unknown";
         const mcpSessionId = extra.sessionId || "";
-        const connection = new Connection("mcp", clientIp, randomUUID());
+        const connection = new Connection(
+          "mcp",
+          clientIp,
+          randomUUID(),
+          undefined,
+          authInfo?.token,
+        );
 
         try {
           // If Bearer token was verified, set up authenticated session
