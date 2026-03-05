@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
+import { z } from "zod";
 import type { Status } from "../../actions/status";
 import { api, config, type ActionResponse } from "../../api";
+import { HTTP_METHOD, type Action } from "../../classes/Action";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
 let url: string;
@@ -412,6 +414,73 @@ describe("rate limit response headers", () => {
     expect(headers["X-RateLimit-Reset"]).toBeUndefined();
     expect(headers["Retry-After"]).toBeUndefined();
     connection.destroy();
+  });
+});
+
+describe("raw Response passthrough", () => {
+  beforeAll(() => {
+    const rawAction = {
+      name: "test:rawResponse",
+      inputs: z.object({}),
+      web: { route: "/test/raw-response", method: HTTP_METHOD.GET },
+      run: async () =>
+        new Response("raw binary data", {
+          status: 200,
+          headers: { "Content-Type": "application/octet-stream" },
+        }),
+    } as unknown as Action;
+
+    const rawAction201 = {
+      name: "test:rawResponse201",
+      inputs: z.object({}),
+      web: { route: "/test/raw-response-201", method: HTTP_METHOD.POST },
+      run: async () =>
+        new Response(JSON.stringify({ created: true }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        }),
+    } as unknown as Action;
+
+    const rawAction204 = {
+      name: "test:rawResponse204",
+      inputs: z.object({}),
+      web: { route: "/test/raw-response-204", method: HTTP_METHOD.DELETE },
+      run: async () => new Response(null, { status: 204 }),
+    } as unknown as Action;
+
+    api.actions.actions.push(rawAction, rawAction201, rawAction204);
+  });
+
+  test("returns the raw Response body and Content-Type", async () => {
+    const res = await fetch(url + "/api/test/raw-response");
+    expect(res.status).toBe(200);
+    expect(res.headers.get("Content-Type")).toBe("application/octet-stream");
+    expect(await res.text()).toBe("raw binary data");
+  });
+
+  test("does not include Keryx standard headers", async () => {
+    const res = await fetch(url + "/api/test/raw-response");
+    expect(res.headers.get("Set-Cookie")).toBeNull();
+    expect(res.headers.get("X-SERVER-NAME")).toBeNull();
+    expect(res.headers.get("X-Content-Type-Options")).toBeNull();
+    expect(res.headers.get("Content-Security-Policy")).toBeNull();
+  });
+
+  test("preserves custom status codes", async () => {
+    const res = await fetch(url + "/api/test/raw-response-201", {
+      method: "POST",
+    });
+    expect(res.status).toBe(201);
+    const body = (await res.json()) as { created: boolean };
+    expect(body.created).toBe(true);
+  });
+
+  test("handles empty body with 204 status", async () => {
+    const res = await fetch(url + "/api/test/raw-response-204", {
+      method: "DELETE",
+    });
+    expect(res.status).toBe(204);
+    expect(await res.text()).toBe("");
   });
 });
 
