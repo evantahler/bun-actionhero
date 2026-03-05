@@ -280,6 +280,31 @@ describe("mcp initializer (enabled)", () => {
       expect(parsed).toHaveProperty("uptime");
     });
 
+    test("session persists across tool calls using OAuth token as sessionId", async () => {
+      // Verify the Redis session key is based on the access token, not a random UUID.
+      // After a tool call, session:{accessToken} should exist in Redis.
+      const sessionKey = `session:${accessToken}`;
+
+      // Make a tool call to trigger session creation
+      await client.callTool({ name: "status", arguments: {} });
+
+      // The session should be stored under the OAuth token key
+      const sessionData = await api.redis.redis.get(sessionKey);
+      expect(sessionData).toBeTruthy();
+      const parsed = JSON.parse(sessionData!);
+      expect(parsed.id).toBe(accessToken);
+      expect(parsed.data.userId).toBeGreaterThan(0);
+      const userId = parsed.data.userId;
+
+      // Make a second tool call — should reuse the same session, not create a new one
+      await client.callTool({ name: "status", arguments: {} });
+      const sessionData2 = await api.redis.redis.get(sessionKey);
+      expect(sessionData2).toBeTruthy();
+      const parsed2 = JSON.parse(sessionData2!);
+      expect(parsed2.id).toBe(accessToken);
+      expect(parsed2.data.userId).toBe(userId);
+    });
+
     test("tool invocation with missing required param returns isError", async () => {
       // user:edit requires authentication (SessionMiddleware) — tool name is "user-edit"
       const result = await client.callTool({
