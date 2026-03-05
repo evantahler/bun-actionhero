@@ -77,6 +77,10 @@ export function buildResponse(
   status = 200,
   requestOrigin?: string,
 ) {
+  if (response instanceof Response) {
+    return response;
+  }
+
   return new Response(JSON.stringify(response, null, 2) + EOL, {
     status,
     headers: buildHeaders(connection, requestOrigin),

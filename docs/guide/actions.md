@@ -98,6 +98,33 @@ Routes support `:param` path parameters (like Express) and can also be RegExp pa
 
 Available methods: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`.
 
+## Raw Response Passthrough
+
+Sometimes you need full control over the HTTP response — file downloads, image serving, streaming, redirects. For those cases, return a `Response` object directly from `run()` and the framework passes it through unchanged, skipping JSON serialization entirely.
+
+```ts
+export class FileDownload implements Action {
+  name = "file:download";
+  middleware = [SessionMiddleware];
+  web = { route: "/file/:id/download", method: HTTP_METHOD.GET };
+  inputs = z.object({ id: z.string() });
+
+  async run(params: ActionParams<FileDownload>) {
+    const file = await getFileContent(params.id);
+    return new Response(file.buffer, {
+      headers: {
+        "Content-Type": file.mimeType,
+        "Content-Disposition": `attachment; filename="${file.name}"`,
+      },
+    });
+  }
+}
+```
+
+Your action still benefits from Keryx's routing, [middleware](/guide/middleware), session handling, and observability — all of that runs before `run()` is called. But the response itself is yours. Keryx's standard headers (CORS, security headers, session cookie) are **not** added to raw responses — you set your own headers on the `Response` you return.
+
+This only applies to HTTP. WebSocket, CLI, and background task transports still expect JSON-serializable return values from `run()`.
+
 ## CLI Commands
 
 Every action is automatically available as a CLI command. No extra configuration needed:

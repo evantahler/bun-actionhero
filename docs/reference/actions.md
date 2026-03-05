@@ -41,6 +41,7 @@ abstract class Action {
 
   /**
    * The handler. Return data to send to the client.
+   * Return a Response object for raw HTTP passthrough (skips JSON serialization).
    * Throw TypedError for error responses.
    * abortSignal is fired when the action timeout elapses.
    */
@@ -87,6 +88,8 @@ curl -X PUT http://localhost:8080/api/user \
 ```
 
 Params are loaded in this order (later sources override earlier ones): path params → URL query params → request body. Routes support `:param` path parameters (`/user/:id`) and RegExp patterns.
+
+If `run()` returns a `Response` object, the framework passes it through directly — no JSON serialization, no Keryx headers. See [Raw Response Passthrough](/guide/actions#raw-response-passthrough) for details and examples.
 
 ### WebSocket
 
