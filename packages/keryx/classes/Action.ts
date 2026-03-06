@@ -19,11 +19,33 @@ export type OAuthActionResponse = {
 
 export type McpActionConfig = {
   /** Expose this action as an MCP tool (default true) */
-  enabled?: boolean;
+  tool?: boolean;
   /** Tag as the OAuth login action */
   isLoginAction?: boolean;
   /** Tag as the OAuth signup action */
   isSignupAction?: boolean;
+  /**
+   * Register this action as an MCP resource.
+   * The action's `run()` must return `{ text: string; mimeType?: string }` or `{ blob: string; mimeType?: string }` (base64).
+   * URI template variables (e.g., `{userId}` in `keryx://users/{userId}`) are passed as action params.
+   */
+  resource?: {
+    /** Static URI, e.g. `"keryx://status"`. Mutually exclusive with `uriTemplate`. */
+    uri?: string;
+    /** URI template (RFC 6570), e.g. `"keryx://users/{userId}"`. Variables become action params. */
+    uriTemplate?: string;
+    /** MIME type of the resource content (e.g., `"application/json"`, `"text/plain"`) */
+    mimeType?: string;
+  };
+  /**
+   * Register this action as an MCP prompt.
+   * The action's `inputs` schema becomes the prompt's argument schema.
+   * The action's `run()` must return `{ description?: string; messages: PromptMessage[] }`.
+   */
+  prompt?: {
+    /** Human-readable display title for the prompt */
+    title?: string;
+  };
 };
 
 export type ActionConstructorInputs = {
@@ -39,7 +61,7 @@ export type ActionConstructorInputs = {
   /** Middleware hooks to run before/after `run()` */
   middleware?: ActionMiddleware[];
 
-  /** Expose this action via the MCP server (defaults to `{ enabled: true }`) */
+  /** Expose this action via the MCP server (defaults to `{ tool: true }`) */
   mcp?: McpActionConfig;
 
   /** Expose this action via HTTP (defaults: route `/${name}`, method `GET`) */
@@ -115,7 +137,7 @@ export abstract class Action {
     this.inputs = args.inputs;
     this.middleware = args.middleware ?? [];
     this.timeout = args.timeout;
-    this.mcp = { enabled: true, ...args.mcp };
+    this.mcp = { tool: true, ...args.mcp };
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
       method: args.web?.method ?? HTTP_METHOD.GET,

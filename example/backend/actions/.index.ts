@@ -2,6 +2,7 @@
 
 export * from "./channel";
 export * from "./files";
+export * from "./mcp";
 export * from "./message";
 export * from "./session";
 export * from "./status";

@@ -24,7 +24,7 @@ export class UserCreate implements Action {
   name = "user:create";
   description =
     "Register a new user account with a name, email, and password. The email must be unique across all users (case-insensitive). Password must be at least 8 characters and is stored securely as a hash. Returns the created user's profile (ID, name, email, timestamps). Does not require an existing session.";
-  mcp = { enabled: false, isSignupAction: true };
+  mcp = { tool: false, isSignupAction: true };
   middleware = [RateLimitMiddleware];
   web = { route: "/user", method: HTTP_METHOD.PUT };
   inputs = z.object({

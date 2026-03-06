@@ -187,14 +187,24 @@ task = { queue: "default", frequency: 1000 * 60 * 60 }; // every hour
 
 ### MCP Actions
 
-When the MCP server is enabled (`MCP_SERVER_ENABLED=true`), every action is automatically registered as an [MCP](https://modelcontextprotocol.io) tool. AI agents and LLM clients (Claude Desktop, VS Code, etc.) can discover and call your actions through the standard Model Context Protocol.
+When the MCP server is enabled (`MCP_SERVER_ENABLED=true`), every action is automatically registered as an [MCP](https://modelcontextprotocol.io) tool. AI agents and LLM clients (Claude Desktop, VS Code, etc.) can discover and call your actions through the standard Model Context Protocol. Actions can also be exposed as MCP **resources** (URI-addressed data) and **prompts** (named templates) via `mcp.resource` and `mcp.prompt`.
 
-Action names are converted to valid MCP tool names by replacing `:` with `-` (e.g., `user:create` becomes `user-create`). The action's Zod schema is converted to JSON Schema for tool parameter definitions.
+Action names are converted to valid MCP tool names by replacing `:` with `-` (e.g., `user:create` becomes `user-create`). The action's Zod schema is converted to JSON Schema for tool and prompt parameter definitions.
 
-To exclude an action from MCP:
+To exclude an action from MCP tools:
 
 ```ts
-mcp = { enabled: false };
+mcp = { tool: false };
+```
+
+To expose an action as an MCP resource or prompt:
+
+```ts
+// Resource — clients fetch this by URI
+mcp = { tool: false, resource: { uri: "myapp://status", mimeType: "application/json" } };
+
+// Prompt — clients invoke this as a named template
+mcp = { tool: false, prompt: { title: "Greeting" } };
 ```
 
 OAuth 2.1 with PKCE is used for authentication — MCP clients go through a browser-based login flow, and subsequent tool calls carry a Bearer token tied to the authenticated user's session.

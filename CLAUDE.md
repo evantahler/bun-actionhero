@@ -107,7 +107,7 @@ Transport-agnostic controllers. Every action defines:
 - `middleware`: Array of `ActionMiddleware` (e.g., `SessionMiddleware` for auth)
 - `run(params, connection, abortSignal?)`: The handler. **Must throw `TypedError`** for errors. The `abortSignal` fires when the action exceeds its timeout.
 - `timeout`: Per-action timeout in ms (overrides global `config.actions.timeout`, default 300s). Set to `0` to disable.
-- `mcp`: `McpActionConfig` — `{ enabled, isLoginAction, isSignupAction }` (default `{ enabled: true }`)
+- `mcp`: `McpActionConfig` — `{ tool, isLoginAction, isSignupAction, resource?, prompt? }` (default `{ tool: true }`)
 
 Type helpers: `ActionParams<A>` infers input types, `ActionResponse<A>` infers return types.
 
@@ -178,7 +178,7 @@ WebServer uses `Bun.serve` for HTTP + WebSocket. The server logic is split into 
 ### MCP Server & OAuth (`packages/keryx/initializers/mcp.ts`, `packages/keryx/initializers/oauth.ts`)
 MCP (Model Context Protocol) server that exposes actions as tools for AI agents. Enabled via `MCP_SERVER_ENABLED=true`.
 
-- **Tool registration**: All actions with `mcp.enabled !== false` are registered. Names convert `:` → `-`. Zod schemas are sanitized for `zod/v4-mini` compatibility before JSON Schema conversion.
+- **Tool registration**: All actions with `mcp.tool !== false` are registered as tools. Actions with `mcp.resource` are registered as MCP resources (static URI or URI template). Actions with `mcp.prompt` are registered as MCP prompts. Names convert `:` → `-`. Zod schemas are sanitized for `zod/v4-mini` compatibility before JSON Schema conversion.
 - **OAuth 2.1 endpoints**: `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`, `/oauth/register`, `/oauth/authorize` (GET/POST), `/oauth/token`
 - **Login/signup markers**: Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` are invoked during the OAuth authorization flow. Must return `OAuthActionResponse` (`{ user: { id: number } }`).
 - **Redis keys**: `oauth:client:{id}` (TTL 30d), `oauth:code:{code}` (TTL 5m), `oauth:token:{token}` (TTL = session TTL)

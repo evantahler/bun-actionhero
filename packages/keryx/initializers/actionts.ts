@@ -638,7 +638,7 @@ export class Actions extends Initializer {
 
     for (const a of actions) {
       if (!a.description) a.description = `An Action: ${a.name}`;
-      a.mcp = { enabled: true, ...a.mcp };
+      a.mcp = { tool: true, ...a.mcp };
     }
 
     logger.info(`loaded ${Object.keys(actions).length} actions`);

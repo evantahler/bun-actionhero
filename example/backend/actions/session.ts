@@ -22,7 +22,7 @@ export class SessionCreate implements Action {
   name = "session:create";
   description =
     "Sign in by providing an email and password. If credentials are valid, creates an authenticated session and returns the user's profile along with session details. This is the login action — call this before using any endpoints that require authentication.";
-  mcp = { enabled: false, isLoginAction: true };
+  mcp = { tool: false, isLoginAction: true };
   middleware = [RateLimitMiddleware];
   web = { route: "/session", method: HTTP_METHOD.PUT };
   inputs = z.object({
@@ -80,6 +80,7 @@ export class SessionDestroy implements Action {
   description =
     "Sign out by destroying the current authenticated session. After calling this, the session token is invalidated and subsequent requests will be unauthenticated. Requires an active session. Returns {success: true} on success.";
   web = { route: "/session", method: HTTP_METHOD.DELETE };
+  mcp = { tool: false };
   middleware = [RateLimitMiddleware, SessionMiddleware];
 
   async run(
