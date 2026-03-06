@@ -41,7 +41,7 @@ That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hi
 | `web`         | `{ route, method }`     | HTTP routing. Routes are strings with `:param` placeholders or RegExp patterns |
 | `task`        | `{ queue, frequency? }` | Makes this action schedulable as a background job                              |
 | `middleware`  | `ActionMiddleware[]`    | Runs before/after the action (auth, logging, etc.)                             |
-| `mcp`         | `McpActionConfig`       | Controls MCP tool exposure (default: enabled)                                  |
+| `mcp`         | `McpActionConfig`       | Controls MCP exposure: tool, resource, and/or prompt (tool enabled by default) |
 | `timeout`     | `number`                | Per-action timeout in ms (overrides `config.actions.timeout`; `0` disables)    |
 
 ## Input Validation
@@ -139,7 +139,7 @@ The `-q` flag suppresses server logs so you can pipe the JSON output cleanly. Us
 
 When the MCP server is enabled, every action is automatically exposed as an [MCP](https://modelcontextprotocol.io) tool. AI agents can discover and call your actions through the Model Context Protocol — no extra configuration needed.
 
-To exclude an action from MCP, set `mcp = { enabled: false }`. See the [MCP guide](/guide/mcp) for full details on authentication, schema conversion, and configuration.
+To exclude an action from MCP tools, set `mcp = { tool: false }`. Actions can also be registered as MCP resources or prompts via `mcp.resource` and `mcp.prompt`. See the [MCP guide](/guide/mcp) for full details.
 
 ## Task Scheduling
 

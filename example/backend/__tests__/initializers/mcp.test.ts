@@ -240,21 +240,115 @@ describe("mcp initializer (enabled)", () => {
       }
     });
 
-    test("tools/list returns actions as tools (excluding mcp=false)", async () => {
+    test("tools/list returns actions as tools (excluding mcp.tool=false)", async () => {
       const result = await client.listTools();
       expect(result.tools.length).toBeGreaterThan(0);
 
       const toolNames = result.tools.map((t) => t.name);
       expect(toolNames).toContain("status");
 
-      // Actions with mcp=false should NOT be listed
+      // Actions with mcp.tool=false should NOT be listed
       expect(toolNames).not.toContain("session-create");
       expect(toolNames).not.toContain("user-create");
+      // Resource/prompt example actions should NOT be tools
+      expect(toolNames).not.toContain("status-resource");
+      expect(toolNames).not.toContain("greeting-prompt");
 
-      // All registered actions with mcp !== false should be tools
+      // All registered actions with mcp.tool !== false should be tools
       for (const action of api.actions.actions) {
-        if (!action.mcp?.enabled) continue;
+        if (action.mcp?.tool === false) continue;
         expect(toolNames).toContain(api.mcp.formatToolName(action.name));
+      }
+    });
+
+    test("resources/list returns actions registered as MCP resources", async () => {
+      const result = await client.listResources();
+      const resourceUris = result.resources.map((r) => r.uri);
+      expect(resourceUris).toContain("keryx://status");
+    });
+
+    test("resources/read on static URI returns action response as content", async () => {
+      const result = await client.readResource({ uri: "keryx://status" });
+      expect(result.contents).toBeArray();
+      expect(result.contents.length).toBeGreaterThan(0);
+      const content = result.contents[0];
+      expect(content.uri).toBe("keryx://status");
+      expect(content.mimeType).toBe("application/json");
+      expect("text" in content).toBe(true);
+      const text = (content as { text: string }).text;
+      const parsed = JSON.parse(text);
+      expect(parsed).toHaveProperty("name");
+      expect(parsed).toHaveProperty("uptime");
+    });
+
+    test("prompts/list returns actions registered as MCP prompts", async () => {
+      const result = await client.listPrompts();
+      const promptNames = result.prompts.map((p) => p.name);
+      expect(promptNames).toContain("greeting-prompt");
+    });
+
+    test("prompts/get returns messages array", async () => {
+      const result = await client.getPrompt({
+        name: "greeting-prompt",
+        arguments: { name: "Evan" },
+      });
+      expect(result.messages).toBeArray();
+      expect(result.messages.length).toBeGreaterThan(0);
+      const msg = result.messages[0];
+      expect(msg.role).toBe("user");
+      expect(msg.content.type).toBe("text");
+      expect((msg.content as { type: string; text: string }).text).toContain(
+        "Evan",
+      );
+    });
+
+    test("prompts/get without arguments uses defaults", async () => {
+      const result = await client.getPrompt({
+        name: "greeting-prompt",
+        arguments: {},
+      });
+      expect(result.messages).toBeArray();
+      const msg = result.messages[0];
+      expect((msg.content as { type: string; text: string }).text).toContain(
+        "world",
+      );
+    });
+
+    test("resource action is not in tools/list", async () => {
+      const toolsResult = await client.listTools();
+      const toolNames = toolsResult.tools.map((t) => t.name);
+      expect(toolNames).not.toContain("status-resource");
+    });
+
+    test("server instructions are returned from MCP_SERVER_INSTRUCTIONS config", async () => {
+      const originalInstructions = config.server.mcp.instructions;
+
+      // Override instructions and create a new session to pick up the change
+      (config.server.mcp as any).instructions = "custom test instructions";
+
+      const instrTransport = new StreamableHTTPClientTransport(
+        new URL(mcpUrl()),
+        {
+          requestInit: {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          },
+        },
+      );
+      const instrClient = new Client({
+        name: "instructions-test-client",
+        version: "1.0.0",
+      });
+
+      try {
+        await instrClient.connect(instrTransport);
+        expect(instrClient.getInstructions()).toBe("custom test instructions");
+      } finally {
+        (config.server.mcp as any).instructions = originalInstructions;
+        try {
+          await instrTransport.close();
+        } catch {
+          // ignore
+        }
       }
     });
 

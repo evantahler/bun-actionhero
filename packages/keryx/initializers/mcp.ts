@@ -1,4 +1,7 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import {
+  McpServer,
+  ResourceTemplate,
+} from "@modelcontextprotocol/sdk/server/mcp.js";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import colors from "colors";
 import { randomUUID } from "crypto";
@@ -347,18 +350,18 @@ export class McpInitializer extends Initializer {
 }
 
 /**
- * Create a new McpServer instance with all actions registered as tools.
+ * Create a new McpServer instance with all actions registered as tools, resources, and prompts.
  * Each MCP session gets its own McpServer (the SDK requires 1:1 mapping).
- * Actions with `mcp === false` are excluded from tool registration.
+ * Actions with `mcp.tool === false` are excluded from tool registration.
  */
 function createMcpServer(): McpServer {
   const mcpServer = new McpServer(
     { name: pkg.name, version: pkg.version },
-    { instructions: pkg.description },
+    { instructions: config.server.mcp.instructions },
   );
 
   for (const action of api.actions.actions) {
-    if (!action.mcp?.enabled) continue;
+    if (action.mcp?.tool === false) continue;
 
     const toolName = formatToolName(action.name);
     const toolConfig: {
@@ -429,6 +432,154 @@ function createMcpServer(): McpServer {
               { type: "text" as const, text: JSON.stringify(response) },
             ],
           };
+        } finally {
+          connection.destroy();
+        }
+      },
+    );
+  }
+
+  // Register actions as MCP resources
+  for (const action of api.actions.actions) {
+    if (!action.mcp?.resource) continue;
+    const { uri, uriTemplate, mimeType } = action.mcp.resource;
+
+    const readCb = async (
+      mcpUri: URL,
+      variables: Record<string, string | string[]>,
+      extra: any,
+    ) => {
+      const authInfo = extra.authInfo;
+      const clientIp = (authInfo?.extra?.ip as string) || "unknown";
+      const mcpSessionId = extra.sessionId || "";
+      const connection = new Connection(
+        "mcp",
+        clientIp,
+        randomUUID(),
+        undefined,
+        authInfo?.token,
+      );
+
+      try {
+        if (authInfo?.extra?.userId) {
+          await connection.loadSession();
+          await connection.updateSession({ userId: authInfo.extra.userId });
+        }
+
+        const params: Record<string, unknown> = { ...variables };
+        const { response, error } = await connection.act(
+          action.name,
+          params,
+          "",
+          mcpSessionId,
+        );
+
+        if (error) {
+          throw new TypedError({
+            message: error.message,
+            type: error.type ?? ErrorType.CONNECTION_ACTION_RUN,
+          });
+        }
+
+        const content = response as {
+          text?: string;
+          blob?: string;
+          mimeType?: string;
+        };
+        const resolvedMimeType =
+          content.mimeType ?? mimeType ?? "application/json";
+
+        return {
+          contents: [
+            {
+              uri: mcpUri.toString(),
+              mimeType: resolvedMimeType,
+              ...(content.blob
+                ? { blob: content.blob }
+                : {
+                    text:
+                      typeof content.text === "string"
+                        ? content.text
+                        : JSON.stringify(response),
+                  }),
+            },
+          ],
+        };
+      } finally {
+        connection.destroy();
+      }
+    };
+
+    if (uriTemplate) {
+      mcpServer.registerResource(
+        formatToolName(action.name),
+        new ResourceTemplate(uriTemplate, { list: undefined }),
+        { description: action.description, mimeType },
+        readCb,
+      );
+    } else if (uri) {
+      mcpServer.registerResource(
+        formatToolName(action.name),
+        uri,
+        { description: action.description, mimeType },
+        (mcpUri: URL, extra: any) => readCb(mcpUri, {}, extra),
+      );
+    }
+  }
+
+  // Register actions as MCP prompts
+  for (const action of api.actions.actions) {
+    if (!action.mcp?.prompt) continue;
+    const { title } = action.mcp.prompt;
+
+    mcpServer.registerPrompt(
+      formatToolName(action.name),
+      {
+        title: title ?? action.name,
+        description: action.description,
+        // argsSchema expects a Record<string, ZodType> (the shape), not a z.object()
+        argsSchema: action.inputs
+          ? sanitizeSchemaForMcp(action.inputs)?.shape
+          : undefined,
+      },
+      async (args: any, extra: any) => {
+        const authInfo = extra.authInfo;
+        const clientIp = (authInfo?.extra?.ip as string) || "unknown";
+        const mcpSessionId = extra.sessionId || "";
+        const connection = new Connection(
+          "mcp",
+          clientIp,
+          randomUUID(),
+          undefined,
+          authInfo?.token,
+        );
+
+        try {
+          if (authInfo?.extra?.userId) {
+            await connection.loadSession();
+            await connection.updateSession({ userId: authInfo.extra.userId });
+          }
+
+          const params =
+            args && typeof args === "object"
+              ? (args as Record<string, unknown>)
+              : {};
+
+          const { response, error } = await connection.act(
+            action.name,
+            params,
+            "",
+            mcpSessionId,
+          );
+
+          if (error) {
+            throw new TypedError({
+              message: error.message,
+              type: error.type ?? ErrorType.CONNECTION_ACTION_RUN,
+            });
+          }
+
+          return response as any;
         } finally {
           connection.destroy();
         }

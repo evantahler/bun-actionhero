@@ -52,25 +52,116 @@ export class UserView extends Action {
 
 ## Controlling Exposure
 
-By default, all actions are exposed as MCP tools. To exclude an action:
+By default, all actions are exposed as MCP tools. To exclude an action from tool registration:
 
 ```ts
 export class InternalAction extends Action {
   name = "internal:cleanup";
-  mcp = { enabled: false };
+  mcp = { tool: false };
   // ...
 }
 ```
 
 The full `mcp` property is of type `McpActionConfig`:
 
-| Property         | Type      | Default | Description                                  |
-| ---------------- | --------- | ------- | -------------------------------------------- |
-| `enabled`        | `boolean` | `true`  | Whether to expose this action as an MCP tool |
-| `isLoginAction`  | `boolean` | —       | Tag as the login action for the OAuth flow   |
-| `isSignupAction` | `boolean` | —       | Tag as the signup action for the OAuth flow  |
+| Property         | Type      | Default | Description                                                               |
+| ---------------- | --------- | ------- | ------------------------------------------------------------------------- |
+| `tool`           | `boolean` | `true`  | Whether to expose this action as an MCP tool                              |
+| `isLoginAction`  | `boolean` | —       | Tag as the login action for the OAuth flow                                |
+| `isSignupAction` | `boolean` | —       | Tag as the signup action for the OAuth flow                               |
+| `resource`       | `object`  | —       | Expose this action as an MCP resource (see [Resources](#resources) below) |
+| `prompt`         | `object`  | —       | Expose this action as an MCP prompt (see [Prompts](#prompts) below)       |
 
 The `isLoginAction` and `isSignupAction` markers tell the OAuth system which actions to invoke when users authenticate through the MCP authorization page. These actions must return `OAuthActionResponse` (`{ user: { id: number } }`).
+
+## Resources
+
+MCP resources are URI-addressed, read-only data that AI clients can fetch for context. An action becomes an MCP resource by setting `mcp.resource`:
+
+```ts
+export class StatusResource implements Action {
+  name = "status:resource";
+  description = "Server status as an MCP resource";
+  mcp = {
+    tool: false, // don't also expose as a tool
+    resource: { uri: "keryx://status", mimeType: "application/json" },
+  };
+
+  async run() {
+    return {
+      text: JSON.stringify({ ok: true, uptime: api.uptime }),
+      mimeType: "application/json",
+    };
+  }
+}
+```
+
+The action's `run()` must return either `{ text: string; mimeType?: string }` or `{ blob: string; mimeType?: string }` (base64-encoded binary).
+
+### Resource Templates
+
+Use `uriTemplate` instead of `uri` to expose a parameterized resource. Variables in the template (e.g., `{userId}`) are passed as action params:
+
+```ts
+export class UserResource implements Action {
+  name = "user:resource";
+  description = "Fetch a user by ID as an MCP resource";
+  inputs = z.object({ userId: z.string() });
+  mcp = {
+    tool: false,
+    resource: {
+      uriTemplate: "keryx://users/{userId}",
+      mimeType: "application/json",
+    },
+  };
+
+  async run(params: ActionParams<UserResource>) {
+    const user = await fetchUser(params.userId);
+    return { text: JSON.stringify(user), mimeType: "application/json" };
+  }
+}
+```
+
+An action can be registered as both a tool and a resource by omitting `tool: false`.
+
+## Prompts
+
+MCP prompts are named templates that AI clients surface to users (e.g., as slash commands). An action becomes an MCP prompt by setting `mcp.prompt`. The action's `inputs` schema becomes the prompt's argument schema, and `run()` must return `{ description?: string; messages: PromptMessage[] }`:
+
+```ts
+export class GreetingPrompt implements Action {
+  name = "greeting:prompt";
+  description = "A greeting prompt";
+  inputs = z.object({ name: z.string().optional() });
+  mcp = {
+    tool: false,
+    prompt: { title: "Greeting" },
+  };
+
+  async run(params: ActionParams<GreetingPrompt>) {
+    return {
+      description: "A personalized greeting",
+      messages: [
+        {
+          role: "user" as const,
+          content: {
+            type: "text" as const,
+            text: `Hello, ${params.name ?? "world"}!`,
+          },
+        },
+      ],
+    };
+  }
+}
+```
+
+## Server Instructions
+
+The MCP server includes an `instructions` string that AI clients display to help users understand what the server provides. By default this is the package description from `package.json`, but you can override it:
+
+```bash
+MCP_SERVER_INSTRUCTIONS="This server provides access to the Acme API..."
+```
 
 ## Schema Sanitization
 
@@ -164,12 +255,13 @@ When messages are broadcast through the PubSub system (e.g., chat messages sent 
 
 ## Configuration Reference
 
-| Key              | Env Var                | Default   | Description                             |
-| ---------------- | ---------------------- | --------- | --------------------------------------- |
-| `enabled`        | `MCP_SERVER_ENABLED`   | `false`   | Enable the MCP server                   |
-| `route`          | `MCP_SERVER_ROUTE`     | `"/mcp"`  | URL path for the MCP endpoint           |
-| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL` | `2592000` | OAuth client registration TTL (seconds) |
-| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`   | `300`     | Authorization code TTL (seconds)        |
+| Key              | Env Var                   | Default             | Description                             |
+| ---------------- | ------------------------- | ------------------- | --------------------------------------- |
+| `enabled`        | `MCP_SERVER_ENABLED`      | `false`             | Enable the MCP server                   |
+| `route`          | `MCP_SERVER_ROUTE`        | `"/mcp"`            | URL path for the MCP endpoint           |
+| `instructions`   | `MCP_SERVER_INSTRUCTIONS` | package description | Instructions shown to MCP clients       |
+| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL`    | `2592000`           | OAuth client registration TTL (seconds) |
+| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`      | `300`               | Authorization code TTL (seconds)        |
 
 ## Testing
 

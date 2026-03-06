@@ -140,10 +140,12 @@ The [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server expos
 
 When enabled (`MCP_SERVER_ENABLED=true`), the MCP initializer:
 
-1. Registers every action (where `mcp.enabled !== false`) as an MCP tool
-2. Converts action names from `:` to `-` format (e.g., `user:create` → `user-create`)
-3. Converts Zod input schemas to JSON Schema for tool parameter definitions
-4. Handles Streamable HTTP transport at the configured route (default `/mcp`)
+1. Registers every action (where `mcp.tool !== false`) as an MCP tool
+2. Registers actions with `mcp.resource` as MCP resources (static URI or URI template)
+3. Registers actions with `mcp.prompt` as MCP prompts
+4. Converts action names from `:` to `-` format (e.g., `user:create` → `user-create`)
+5. Converts Zod input schemas to JSON Schema for tool/prompt parameter definitions
+6. Handles Streamable HTTP transport at the configured route (default `/mcp`)
 
 Each authenticated client gets its own `McpServer` instance, tracked by the `mcp-session-id` header.
 
@@ -162,6 +164,16 @@ MCP uses OAuth 2.1 with PKCE for authentication. The OAuth initializer (`backend
 
 The authorization page is rendered from Mustache templates in `backend/templates/`. Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` handle the actual authentication during the OAuth flow.
 
+### Configuration
+
+| Key              | Env Var                   | Default             |
+| ---------------- | ------------------------- | ------------------- |
+| `enabled`        | `MCP_SERVER_ENABLED`      | `false`             |
+| `route`          | `MCP_SERVER_ROUTE`        | `"/mcp"`            |
+| `instructions`   | `MCP_SERVER_INSTRUCTIONS` | package description |
+| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL`    | `2592000`           |
+| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`      | `300`               |
+
 ### Request Flow
 
 1. MCP client sends a POST to `/mcp` with `Authorization: Bearer <token>`
@@ -170,14 +182,5 @@ The authorization page is rendered from Mustache templates in `backend/templates
 4. Action params are extracted from the MCP tool call arguments
 5. `connection.act()` executes the action through the standard middleware pipeline
 6. The result is returned as an MCP tool response
-
-### Configuration
-
-| Key              | Env Var                | Default   |
-| ---------------- | ---------------------- | --------- |
-| `enabled`        | `MCP_SERVER_ENABLED`   | `false`   |
-| `route`          | `MCP_SERVER_ROUTE`     | `"/mcp"`  |
-| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL` | `2592000` |
-| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`   | `300`     |
 
 See the [MCP guide](/guide/mcp) for full usage details.
