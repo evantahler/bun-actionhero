@@ -111,9 +111,8 @@ export async function compressResponse(
     // Compress the buffered body
     const format: Bun.CompressionFormat = encoding === "br" ? "brotli" : "gzip";
     // @ts-ignore Bun supports "brotli" as CompressionFormat but DOM lib does not
-    const stream = new Blob([body])
-      .stream()
-      .pipeThrough(new CompressionStream(format));
+    const compressionStream = new CompressionStream(format);
+    const stream = new Blob([body]).stream().pipeThrough(compressionStream);
 
     const headers = new Headers(response.headers);
     headers.set("Content-Encoding", encoding);
@@ -129,7 +128,8 @@ export async function compressResponse(
   // Content-Length is present and above threshold — stream-compress
   const format: Bun.CompressionFormat = encoding === "br" ? "brotli" : "gzip";
   // @ts-ignore Bun supports "brotli" as CompressionFormat but DOM lib does not
-  const stream = response.body.pipeThrough(new CompressionStream(format));
+  const compressionStream = new CompressionStream(format);
+  const stream = response.body.pipeThrough(compressionStream);
 
   const headers = new Headers(response.headers);
   headers.set("Content-Encoding", encoding);
