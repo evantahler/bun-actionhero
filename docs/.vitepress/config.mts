@@ -111,7 +111,7 @@ export default defineConfig({
       },
       {
         text: "GitHub",
-        link: "https://github.com/evantahler/keryx",
+        link: "https://github.com/actionhero/keryx",
       },
     ],
     sidebar: {
@@ -212,7 +212,7 @@ export default defineConfig({
     socialLinks: [
       {
         icon: "github",
-        link: "https://github.com/evantahler/keryx",
+        link: "https://github.com/actionhero/keryx",
       },
     ],
     search: { provider: "local" },

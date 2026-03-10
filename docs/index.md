@@ -17,7 +17,7 @@ hero:
       link: /reference/actions
     - theme: alt
       text: View on GitHub
-      link: https://github.com/evantahler/keryx
+      link: https://github.com/actionhero/keryx
     - theme: sponsor
       text: LLMs.txt
       link: /llms.txt
