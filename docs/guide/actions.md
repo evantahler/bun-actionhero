@@ -133,7 +133,7 @@ Every action is automatically available as a CLI command. No extra configuration
 ./keryx.ts "user:create" --name evan --email "evan@example.com" --password secret -q | jq
 ```
 
-The `-q` flag suppresses server logs so you can pipe the JSON output cleanly. Use `--help` on any action to see its parameters.
+The `-q` flag suppresses server logs so you can pipe the JSON output cleanly. Use `--help` on any action to see its parameters. See the [CLI guide](/guide/cli#action-commands) for full details on flags, quiet mode, and error output.
 
 ## MCP Tools
 
