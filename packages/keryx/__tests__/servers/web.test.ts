@@ -79,7 +79,7 @@ describe("security headers", () => {
   test("API responses include security headers", async () => {
     const res = await fetch(url + "/api/status");
     expect(res.headers.get("Content-Security-Policy")).toBe(
-      "default-src 'self'",
+      "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:",
     );
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(res.headers.get("X-Frame-Options")).toBe("DENY");
@@ -94,7 +94,7 @@ describe("security headers", () => {
   test("static file responses include security headers", async () => {
     const res = await fetch(url + "/test.txt");
     expect(res.headers.get("Content-Security-Policy")).toBe(
-      "default-src 'self'",
+      "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:",
     );
     expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(res.headers.get("X-Frame-Options")).toBe("DENY");
