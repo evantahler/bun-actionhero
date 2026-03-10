@@ -5,7 +5,7 @@ const releases = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-const GITHUB_API = "https://api.github.com/repos/evantahler/keryx/releases";
+const GITHUB_API = "https://api.github.com/repos/actionhero/keryx/releases";
 
 onMounted(async () => {
   try {
@@ -36,7 +36,7 @@ function renderBody(body) {
       // PR links: move "#NNN" badge to front of each list item
       .replace(
         /^\* (.+?) by @\S+ in https:\/\/github\.com\/[^/]+\/[^/]+\/pull\/(\d+)$/gm,
-        '* <a href="https://github.com/evantahler/keryx/pull/$2" target="_blank" rel="noopener" class="pr-link">#$2</a> $1',
+        '* <a href="https://github.com/actionhero/keryx/pull/$2" target="_blank" rel="noopener" class="pr-link">#$2</a> $1',
       )
       // Full Changelog: render as a compact badge
       .replace(
@@ -65,7 +65,7 @@ function renderBody(body) {
       <p class="error-detail">{{ error }}</p>
       <p>
         <a
-          href="https://github.com/evantahler/keryx/releases"
+          href="https://github.com/actionhero/keryx/releases"
           target="_blank"
           rel="noopener"
         >

@@ -6,6 +6,6 @@ aside: false
 
 # Changelog
 
-All releases are published to [GitHub](https://github.com/evantahler/keryx/releases) and [npm](https://www.npmjs.com/package/keryx).
+All releases are published to [GitHub](https://github.com/actionhero/keryx/releases) and [npm](https://www.npmjs.com/package/keryx).
 
 <Changelog />

@@ -3,10 +3,10 @@
 <p align="center"><strong>The fullstack TypeScript framework for MCP and APIs.</strong></p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/evantahler/keryx/main/docs/public/images/horn.svg" alt="Keryx" width="200" />
+  <img src="https://raw.githubusercontent.com/actionhero/keryx/main/docs/public/images/horn.svg" alt="Keryx" width="200" />
 </p>
 
-[![Test](https://github.com/evantahler/keryx/actions/workflows/test.yaml/badge.svg)](https://github.com/evantahler/keryx/actions/workflows/test.yaml)
+[![Test](https://github.com/actionhero/keryx/actions/workflows/test.yaml/badge.svg)](https://github.com/actionhero/keryx/actions/workflows/test.yaml)
 
 ## What is this Project?
 
@@ -126,7 +126,7 @@ Requires Bun, PostgreSQL, and Redis. See the [Getting Started guide](https://ker
 If you're contributing to Keryx, clone the monorepo instead:
 
 ```bash
-git clone https://github.com/evantahler/keryx.git
+git clone https://github.com/actionhero/keryx.git
 cd keryx
 bun install
 cp example/backend/.env.example example/backend/.env
@@ -231,5 +231,5 @@ Full docs at [keryxjs.com](https://keryxjs.com), including:
 - [API Reference](https://keryxjs.com/reference/actions)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/evantahler/keryx/main/docs/public/images/lion-standing.svg" alt="Keryx lion" width="120" />
+  <img src="https://raw.githubusercontent.com/actionhero/keryx/main/docs/public/images/lion-standing.svg" alt="Keryx lion" width="120" />
 </p>
