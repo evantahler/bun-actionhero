@@ -368,6 +368,10 @@ export async function scaffoldProject(
     await write(filePath, content);
   }
 
+  // --- Static assets (API documentation) ---
+  const swaggerHtml = await loadTemplate("assets-index.html");
+  await write("assets/index.html", swaggerHtml);
+
   // --- Example: auth actions (when db) or hello action (when no db) ---
 
   if (options.includeExample) {

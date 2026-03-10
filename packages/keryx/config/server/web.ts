@@ -47,7 +47,7 @@ export const configServerWeb = {
   securityHeaders: {
     "Content-Security-Policy": await loadFromEnvIfSet(
       "WEB_SECURITY_CSP",
-      "default-src 'self'",
+      "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:",
     ),
     "X-Content-Type-Options": await loadFromEnvIfSet(
       "WEB_SECURITY_CONTENT_TYPE_OPTIONS",
