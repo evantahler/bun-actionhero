@@ -1072,6 +1072,17 @@ describe("mcp initializer (enabled)", () => {
       expect(jsonSchema).toHaveProperty("properties");
     });
 
+    test("empty object schemas get additionalProperties: false", () => {
+      const schema = z.object({});
+      const sanitized = api.mcp.sanitizeSchemaForMcp(schema);
+      const jsonSchema = z4mini.toJSONSchema(sanitized, {
+        target: "draft-7",
+        io: "input",
+      });
+      expect((jsonSchema as any).type).toBe("object");
+      expect((jsonSchema as any).additionalProperties).toBe(false);
+    });
+
     test("non-object schemas pass through", () => {
       expect(api.mcp.sanitizeSchemaForMcp(null)).toBeNull();
       expect(api.mcp.sanitizeSchemaForMcp(undefined)).toBeUndefined();
