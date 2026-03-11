@@ -373,9 +373,9 @@ function createMcpServer(): McpServer {
       toolConfig.description = action.description;
     }
 
-    if (action.inputs) {
-      toolConfig.inputSchema = sanitizeSchemaForMcp(action.inputs);
-    }
+    toolConfig.inputSchema = action.inputs
+      ? sanitizeSchemaForMcp(action.inputs)
+      : z4mini.strictObject({});
 
     mcpServer.registerTool(
       toolName,
@@ -599,6 +599,12 @@ function createMcpServer(): McpServer {
 function sanitizeSchemaForMcp(schema: any): any {
   if (!schema || typeof schema !== "object" || !("shape" in schema)) {
     return schema;
+  }
+
+  // Empty object schemas should use strictObject to produce
+  // { type: "object", additionalProperties: false } per MCP spec
+  if (Object.entries(schema.shape as Record<string, any>).length === 0) {
+    return z4mini.strictObject({});
   }
 
   const newShape: Record<string, any> = {};
