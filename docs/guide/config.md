@@ -249,7 +249,7 @@ All HTTP responses include these headers. Each is configurable:
 
 | Header                      | Env Var                             | Default                               |
 | --------------------------- | ----------------------------------- | ------------------------------------- |
-| `Content-Security-Policy`   | `WEB_SECURITY_CSP`                  | `default-src 'self'`                  |
+| `Content-Security-Policy`   | `WEB_SECURITY_CSP`                  | `default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:` |
 | `X-Content-Type-Options`    | `WEB_SECURITY_CONTENT_TYPE_OPTIONS` | `nosniff`                             |
 | `X-Frame-Options`           | `WEB_SECURITY_FRAME_OPTIONS`        | `DENY`                                |
 | `Strict-Transport-Security` | `WEB_SECURITY_HSTS`                 | `max-age=31536000; includeSubDomains` |

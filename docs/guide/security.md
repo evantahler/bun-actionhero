@@ -55,13 +55,13 @@ Every HTTP response includes security headers by default. Each is configurable v
 
 | Header                      | Env Var                             | Default                               |
 | --------------------------- | ----------------------------------- | ------------------------------------- |
-| `Content-Security-Policy`   | `WEB_SECURITY_CSP`                  | `default-src 'self'`                  |
+| `Content-Security-Policy`   | `WEB_SECURITY_CSP`                  | `default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:` |
 | `X-Content-Type-Options`    | `WEB_SECURITY_CONTENT_TYPE_OPTIONS` | `nosniff`                             |
 | `X-Frame-Options`           | `WEB_SECURITY_FRAME_OPTIONS`        | `DENY`                                |
 | `Strict-Transport-Security` | `WEB_SECURITY_HSTS`                 | `max-age=31536000; includeSubDomains` |
 | `Referrer-Policy`           | `WEB_SECURITY_REFERRER_POLICY`      | `strict-origin-when-cross-origin`     |
 
-These defaults are production-ready. The CSP may need loosening if your backend serves HTML with inline scripts or external resources — adjust via `WEB_SECURITY_CSP`.
+These defaults are production-ready. The CSP allows loading scripts, styles, and fonts from `cdn.jsdelivr.net` (used by the built-in Swagger UI and OAuth pages). Tighten or adjust via `WEB_SECURITY_CSP` for your needs.
 
 ## Cookie Security
 

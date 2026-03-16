@@ -24,6 +24,9 @@ abstract class Action {
   /** Middleware to run before/after this action */
   middleware?: ActionMiddleware[];
 
+  /** MCP exposure config — tool, resource, and/or prompt (default: { tool: true }) */
+  mcp?: McpActionConfig;
+
   /** HTTP routing — route can be a string with :params or a RegExp */
   web?: {
     route: RegExp | string;
