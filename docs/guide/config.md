@@ -136,12 +136,13 @@ DATABASE_POOL_CONNECT_TIMEOUT=5000
 
 ### Logger
 
-| Key                 | Env Var                  | Default  | Description                                                                |
-| ------------------- | ------------------------ | -------- | -------------------------------------------------------------------------- |
-| `level`             | `LOG_LEVEL`              | `"info"` | Minimum log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`)     |
-| `includeTimestamps` | `LOG_INCLUDE_TIMESTAMPS` | `true`   | Prepend ISO-8601 timestamp to each log line                                |
-| `colorize`          | `LOG_COLORIZE`           | `true`   | Apply ANSI color codes (text format only)                                  |
-| `format`            | `LOG_FORMAT`             | `"text"` | Output format: `"text"` for human-readable, `"json"` for structured NDJSON |
+| Key                 | Env Var                  | Default  | Description                                                                           |
+| ------------------- | ------------------------ | -------- | ------------------------------------------------------------------------------------- |
+| `level`             | `LOG_LEVEL`              | `"info"` | Minimum log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`)                |
+| `includeTimestamps` | `LOG_INCLUDE_TIMESTAMPS` | `true`   | Prepend ISO-8601 timestamp to each log line                                           |
+| `colorize`          | `LOG_COLORIZE`           | `true`   | Apply ANSI color codes (text format only)                                             |
+| `format`            | `LOG_FORMAT`             | `"text"` | Output format: `"text"` for human-readable, `"json"` for structured NDJSON            |
+| `maxParamLength`    | `LOG_MAX_PARAM_LENGTH`   | `100`    | Max length of individual param values in action logs before truncation (0 = no limit) |
 
 In JSON mode, each log line is a single JSON object with `timestamp`, `level`, `message`, and `pid` fields. Action and task logs include additional structured fields like `action`, `duration`, `status`, `method`, `url`, `correlationId`, `queue`, and `jobClass` — making them easy to parse with log aggregation systems (ELK, Datadog, CloudWatch, Loki, etc.).
 

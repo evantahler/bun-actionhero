@@ -11,7 +11,7 @@ We don't mock the server. That's a deliberate choice — if you're testing an AP
 Each test file boots and stops the full server in `beforeAll`/`afterAll`. Tests use dynamic port binding (`WEB_SERVER_PORT=0`) so each file gets a random available port — no conflicts when running multiple test files:
 
 ```ts
-import { api } from "../../api";
+import { api } from "keryx";
 import { serverUrl, HOOK_TIMEOUT } from "../setup";
 
 let url: string;

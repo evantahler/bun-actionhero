@@ -46,7 +46,7 @@ That's a fully functioning HTTP endpoint, CLI command, and WebSocket handler. Hi
 
 ## Input Validation
 
-Inputs use [Zod](https://zod.dev) schemas. If validation fails, the client gets a `422` with the validation errors — you don't need to write any error handling for bad inputs.
+Inputs use [Zod](https://zod.dev) schemas. If validation fails, the client gets a `406` with the validation errors — you don't need to write any error handling for bad inputs.
 
 ```ts
 inputs = z.object({
@@ -64,7 +64,7 @@ inputs = z.object({
 You can mark sensitive fields with the `secret()` wrapper so they're redacted as `[[secret]]` in logs. Don't log passwords — use this:
 
 ```ts
-import { secret } from "../util/zodMixins";
+import { secret } from "keryx";
 
 inputs = z.object({
   password: secret(z.string().min(8)),
@@ -194,11 +194,11 @@ import { ErrorType, TypedError } from "keryx";
 
 throw new TypedError({
   message: "User not found",
-  type: ErrorType.CONNECTION_ACTION_RUN, // → 400
+  type: ErrorType.CONNECTION_ACTION_RUN, // → 500
 });
 ```
 
-Some common mappings: `ACTION_VALIDATION` → 422, `CONNECTION_SESSION_NOT_FOUND` → 401, `CONNECTION_ACTION_NOT_FOUND` → 404.
+Some common mappings: `CONNECTION_ACTION_PARAM_VALIDATION` → 406, `CONNECTION_SESSION_NOT_FOUND` → 401, `CONNECTION_ACTION_NOT_FOUND` → 404, `CONNECTION_RATE_LIMITED` → 429.
 
 ## Registration
 

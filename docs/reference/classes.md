@@ -8,7 +8,7 @@ The remaining framework classes — the API singleton, connections, channels, se
 
 ## API
 
-Source: `backend/classes/API.ts`
+Source: `packages/keryx/classes/API.ts`
 
 The global singleton that manages the full server lifecycle. Stored on `globalThis` so it's accessible everywhere. Initializers attach their namespaces to it during boot.
 
@@ -45,7 +45,7 @@ The lifecycle is `initialize() → start() → [running] → stop()`. Calling `s
 
 ## Connection
 
-Source: `backend/classes/Connection.ts`
+Source: `packages/keryx/classes/Connection.ts`
 
 Represents a client connection — HTTP request, WebSocket, or CLI invocation. The connection handles action execution, session management, and channel subscriptions.
 
@@ -112,7 +112,7 @@ The generic `TMeta` parameter types request-scoped metadata that middleware and 
 
 ## Channel
 
-Source: `backend/classes/Channel.ts`
+Source: `packages/keryx/classes/Channel.ts`
 
 Defines a PubSub topic for WebSocket real-time messaging. Channels support exact-match names or RegExp patterns.
 
@@ -148,7 +148,7 @@ type ChannelMiddleware = {
 
 ## Server
 
-Source: `backend/classes/Server.ts`
+Source: `packages/keryx/classes/Server.ts`
 
 Base class for transport servers. The framework ships with a web server (`Bun.serve` for HTTP + WebSocket), but you could add others.
 
@@ -167,7 +167,7 @@ abstract class Server<T> {
 
 ## TypedError
 
-Source: `backend/classes/TypedError.ts`
+Source: `packages/keryx/classes/TypedError.ts`
 
 All action errors should use `TypedError` instead of generic `Error`. Each error type maps to an HTTP status code, so the framework knows what status to return to the client.
 
@@ -195,18 +195,29 @@ class TypedError extends Error {
 | `SERVER_START`                       | 500    | Initializer failed to start                |
 | `SERVER_STOP`                        | 500    | Initializer failed to stop                 |
 | `CONFIG_ERROR`                       | 500    | Invalid configuration                      |
+| `INITIALIZER_VALIDATION`             | 500    | Initializer definition is invalid          |
 | `ACTION_VALIDATION`                  | 500    | Action class definition is invalid         |
+| `TASK_VALIDATION`                    | 500    | Task definition is invalid                 |
+| `SERVER_VALIDATION`                  | 500    | Server definition is invalid               |
 | `CONNECTION_SESSION_NOT_FOUND`       | 401    | No session / not authenticated             |
+| `CONNECTION_SERVER_ERROR`            | 500    | Internal server error                      |
 | `CONNECTION_ACTION_NOT_FOUND`        | 404    | Unknown action name                        |
 | `CONNECTION_ACTION_PARAM_REQUIRED`   | 406    | Missing required input                     |
+| `CONNECTION_ACTION_PARAM_DEFAULT`    | 406    | Default value failed to apply              |
 | `CONNECTION_ACTION_PARAM_VALIDATION` | 406    | Input failed Zod validation                |
+| `CONNECTION_ACTION_PARAM_FORMATTING` | 406    | Input formatting error                     |
 | `CONNECTION_ACTION_RUN`              | 500    | Action threw during `run()`                |
+| `CONNECTION_TYPE_NOT_FOUND`          | 406    | Unknown connection type                    |
 | `CONNECTION_NOT_SUBSCRIBED`          | 406    | Tried to broadcast to unsubscribed channel |
 | `CONNECTION_CHANNEL_AUTHORIZATION`   | 403    | Channel subscription denied                |
+| `CONNECTION_CHANNEL_VALIDATION`      | 400    | Invalid channel name                       |
+| `CONNECTION_ACTION_TIMEOUT`          | 408    | Action exceeded its timeout                |
+| `CONNECTION_RATE_LIMITED`            | 429    | Client exceeded rate limit                 |
+| `CONNECTION_TASK_DEFINITION`         | 500    | Task definition error                      |
 
 ## Logger
 
-Source: `backend/classes/Logger.ts`
+Source: `packages/keryx/classes/Logger.ts`
 
 Simple logger that writes to stdout. No Winston, no Pino — just STDOUT and STDERR with optional colors and timestamps.
 

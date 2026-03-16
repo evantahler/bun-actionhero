@@ -42,7 +42,7 @@ export class SessionCreate implements Action {
   name = "session:create";
   description = "Sign in with email and password";
   web = { route: "/session", method: HTTP_METHOD.PUT };
-  mcp = { enabled: false, isLoginAction: true };
+  mcp = { tool: false, isLoginAction: true };
   middleware = [RateLimitMiddleware];
   inputs = z.object({
     email: z
@@ -125,12 +125,15 @@ See the [MCP guide](/guide/mcp#oauth-21-authentication) for the full OAuth flow 
 
 ## Session Configuration
 
-| Key          | Env Var               | Default        | Description                      |
-| ------------ | --------------------- | -------------- | -------------------------------- |
-| `cookieName` | `SESSION_COOKIE_NAME` | `"session_id"` | Cookie name for session tracking |
-| `ttl`        | `SESSION_TTL`         | `86400`        | Session TTL in seconds (1 day)   |
+| Key              | Env Var                    | Default       | Description                               |
+| ---------------- | -------------------------- | ------------- | ----------------------------------------- |
+| `ttl`            | `SESSION_TTL`              | `86400`       | Session TTL in seconds (1 day)            |
+| `cookieName`     | `SESSION_COOKIE_NAME`      | `"__session"` | Cookie name for session tracking          |
+| `cookieHttpOnly` | `SESSION_COOKIE_HTTP_ONLY` | `true`        | Prevent JavaScript access                 |
+| `cookieSecure`   | `SESSION_COOKIE_SECURE`    | `false`       | HTTPS-only cookies                        |
+| `cookieSameSite` | `SESSION_COOKIE_SAME_SITE` | `"Strict"`    | CSRF protection (`Strict`, `Lax`, `None`) |
 
-Cookie security settings (Secure, SameSite, HttpOnly) are configured in the web server config. See the [Security guide](/guide/security) for production recommendations.
+See the [Security guide](/guide/security) for production recommendations on cookie security settings.
 
 ## Testing with Sessions
 

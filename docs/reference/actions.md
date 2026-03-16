@@ -4,7 +4,7 @@ description: Action class definition, transport behavior across HTTP/WebSocket/C
 
 # Action
 
-Source: `backend/classes/Action.ts`
+Source: `packages/keryx/classes/Action.ts`
 
 The `Action` class is the foundation of Keryx. Every controller — whether it handles HTTP, WebSocket, CLI, or background tasks — is an action. You write the logic once, and the framework handles the transport plumbing.
 

@@ -90,7 +90,7 @@ By default, every action is exposed as an MCP tool. To hide an action from agent
 ```ts
 export class InternalCleanup implements Action {
   name = "internal:cleanup";
-  mcp = { enabled: false };
+  mcp = { tool: false };
   // ...
 }
 ```
@@ -102,7 +102,7 @@ Login and signup actions used in the OAuth flow are typically hidden too:
 ```ts
 export class SessionCreate implements Action {
   name = "session:create";
-  mcp = { enabled: false, isLoginAction: true };
+  mcp = { tool: false, isLoginAction: true };
   // ...
 }
 ```
@@ -213,7 +213,7 @@ When an agent calls `listTools`, it gets a clean list of your actions:
 - **Tool names** — action names with `:` replaced by `-` (e.g., `user:create` → `user-create`)
 - **Descriptions** — from your action's `description` property
 - **Input schemas** — JSON Schema generated from your Zod `inputs`, with field descriptions from `.describe()`
-- **Typed errors** — when a tool call fails, the agent receives a structured error with an `ErrorType` (e.g., `CONNECTION_INVALID`, `VALIDATION_ERROR`) instead of a generic failure message
+- **Typed errors** — when a tool call fails, the agent receives a structured error with an `ErrorType` (e.g., `CONNECTION_ACTION_PARAM_VALIDATION`, `CONNECTION_ACTION_RUN`) instead of a generic failure message
 
 The Zod-to-JSON-Schema conversion handles edge cases automatically. Types that can't be represented in JSON Schema (like `z.date()`) fall back to `z.string()`, so tool registration never fails.
 

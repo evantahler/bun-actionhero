@@ -4,14 +4,14 @@ description: Zod helper utilities for secret fields, ID-or-model resolution, and
 
 # Utilities
 
-Keryx provides several Zod helper utilities in `backend/util/zodMixins.ts` for common patterns.
+Keryx provides several Zod helper utilities in `packages/keryx/util/zodMixins.ts` for common patterns. App-specific helpers like `zUserIdOrModel()` and `zMessageIdOrModel()` live in `example/backend/util/zodMixins.ts`.
 
 ## `secret(schema)`
 
 Marks a Zod schema as secret so the field is redacted as `[[secret]]` in request logs. Uses Zod v4's native `.meta()` API.
 
 ```ts
-import { secret } from "../util/zodMixins";
+import { secret } from "keryx";
 
 inputs = z.object({
   email: z.string().email(),
@@ -26,7 +26,7 @@ When a request comes in with `password: "hunter2"`, the logs will show `password
 Check if a Zod schema has been marked as secret:
 
 ```ts
-import { isSecret } from "../util/zodMixins";
+import { isSecret } from "keryx";
 
 if (isSecret(schema)) {
   // redact this field in output
@@ -38,7 +38,7 @@ if (isSecret(schema)) {
 Creates a Zod schema that accepts both boolean and string values, transforming `"true"` and `"false"` strings into actual booleans. Useful for HTML form data where booleans arrive as strings.
 
 ```ts
-import { zBooleanFromString } from "../util/zodMixins";
+import { zBooleanFromString } from "keryx";
 
 inputs = z.object({
   active: zBooleanFromString(),
@@ -98,7 +98,7 @@ inputs = z.object({
 To create a resolver for a custom table, use the `zIdOrModel` factory directly:
 
 ```ts
-import { zIdOrModel } from "../util/zodMixins";
+import { zIdOrModel } from "keryx";
 import { createSchemaFactory } from "drizzle-zod";
 import { z } from "zod";
 import { projects, type Project } from "../schema/projects";
