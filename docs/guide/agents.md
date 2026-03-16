@@ -118,7 +118,8 @@ Consider user onboarding. You could expose three tools — `user-create`, `email
 ```ts
 export class UserOnboard implements Action {
   name = "user:onboard";
-  description = "Create a new user account, send welcome email, and set up default workspace";
+  description =
+    "Create a new user account, send welcome email, and set up default workspace";
   inputs = z.object({
     name: z.string().min(3).describe("Display name"),
     email: z.string().email().describe("Email address (used for login)"),
