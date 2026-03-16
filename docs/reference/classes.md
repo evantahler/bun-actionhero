@@ -131,6 +131,9 @@ abstract class Channel {
 
   /** Override for custom authorization logic. Throw TypedError to deny. */
   async authorize(channelName: string, connection: Connection): Promise<void>;
+
+  /** Returns the presence identifier for a connection. Override to use e.g. user ID. Defaults to connection.id. */
+  async presenceKey(connection: Connection): Promise<string>;
 }
 ```
 

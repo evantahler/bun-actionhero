@@ -39,6 +39,7 @@ Each initializer has three priority values. Lower numbers run first:
 | `mcp`           | 200           | MCP server — exposes actions as tools              |
 | `resque`        | 250           | Background task queue                              |
 | `servers`       | 800           | Auto-discovers and loads transport servers         |
+| `session`       | 1000          | Redis-backed session management                    |
 | `pubsub`        | 1000          | Redis PubSub for real-time messaging               |
 | `application`   | 1000          | App-specific setup (default user, etc.)            |
 
@@ -134,7 +135,7 @@ Each initializer declares which run modes it supports via `runModes`. Most initi
 
 The `swagger` initializer (priority 150) generates JSON Schema definitions for action response types using TypeScript AST parsing via [ts-morph](https://github.com/dsherret/ts-morph). It scans all action source files, finds the `run()` method return type, and converts it to JSON Schema.
 
-Schemas are cached in `backend/.cache/swagger-schemas.json` and regenerated when action source files change (detected via content hashing). These schemas are used by the web server to serve a Swagger/OpenAPI-compatible API description.
+Schemas are cached in `<rootDir>/.cache/swagger-schemas.json` and regenerated when action source files change (detected via content hashing). These schemas are used by the web server to serve a Swagger/OpenAPI-compatible API description.
 
 ## Process Lifecycle
 
@@ -153,4 +154,4 @@ Signal handlers are registered by the `signals` initializer:
 - **SIGINT** (Ctrl+C) — triggers graceful shutdown via `api.stop()`
 - **SIGTERM** — same graceful shutdown
 
-The shutdown process stops initializers in `stopPriority` order (highest first), so the web server stops accepting connections before the database pool is closed.
+The shutdown process stops initializers in `stopPriority` order (lowest first), so channels and the MCP server stop before the web server, which stops before the database pool and Redis are closed.

@@ -82,4 +82,4 @@ Core initializers use priorities below 1000 to ensure they run before applicatio
 | 200           | `redis`, `mcp`                              |
 | 250           | `resque`                                    |
 | 800           | `servers`                                   |
-| 1000          | `pubsub`, `application`, and your custom initializers |
+| 1000          | `session`, `pubsub`, `application`, and your custom initializers |
