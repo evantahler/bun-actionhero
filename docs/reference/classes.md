@@ -84,7 +84,7 @@ class Connection<
   /** Execute an action with the given params */
   async act(
     actionName: string | undefined,
-    params: FormData,
+    params: Record<string, unknown>,
     method?: string,
     url?: string,
   ): Promise<{ response: Object; error?: TypedError }>;
@@ -150,7 +150,7 @@ type ChannelMiddleware = {
 
 Source: `packages/keryx/classes/Server.ts`
 
-Base class for transport servers. The framework ships with a web server (`Bun.serve` for HTTP + WebSocket), but you could add others.
+Base class for transport servers. The framework ships with a web server (`Bun.serve` for HTTP + WebSocket), a CLI entry point, and an MCP server for AI agents. You could add others (gRPC, raw TCP, etc.) by extending the `Server` base class.
 
 ```ts
 abstract class Server<T> {

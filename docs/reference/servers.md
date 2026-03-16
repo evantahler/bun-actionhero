@@ -4,7 +4,7 @@ description: Server class and the built-in transports — HTTP, WebSocket, CLI, 
 
 # Servers
 
-Source: `backend/classes/Server.ts`, `backend/servers/web.ts`, `backend/initializers/mcp.ts`
+Source: `packages/keryx/classes/Server.ts`, `packages/keryx/servers/web.ts`, `packages/keryx/initializers/mcp.ts`
 
 Servers are the transport layer — they accept incoming connections and route them to actions. The framework ships with a web server (HTTP + WebSocket via `Bun.serve`), a CLI entry point, and an MCP server for AI agents. You could add others (gRPC, raw TCP, etc.) by extending the `Server` base class.
 
@@ -134,7 +134,7 @@ The server boots in `RUN_MODE.CLI`, which tells initializers to skip transport-s
 
 ## MCP Server
 
-Source: `backend/initializers/mcp.ts`, `backend/initializers/oauth.ts`
+Source: `packages/keryx/initializers/mcp.ts`, `packages/keryx/initializers/oauth.ts`
 
 The [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server exposes actions as tools for AI agents. Unlike the web server and CLI, MCP is implemented as an initializer rather than a `Server` subclass — but it follows the same pattern of accepting requests and routing them through `Connection → act()`.
 
@@ -151,7 +151,7 @@ Each authenticated client gets its own `McpServer` instance, tracked by the `mcp
 
 ### Authentication
 
-MCP uses OAuth 2.1 with PKCE for authentication. The OAuth initializer (`backend/initializers/oauth.ts`) provides the required endpoints:
+MCP uses OAuth 2.1 with PKCE for authentication. The OAuth initializer (`packages/keryx/initializers/oauth.ts`) provides the required endpoints:
 
 | Endpoint                                  | Method | Purpose                           |
 | ----------------------------------------- | ------ | --------------------------------- |
@@ -162,7 +162,7 @@ MCP uses OAuth 2.1 with PKCE for authentication. The OAuth initializer (`backend
 | `/oauth/authorize`                        | POST   | Process login/signup              |
 | `/oauth/token`                            | POST   | Exchange code for access token    |
 
-The authorization page is rendered from Mustache templates in `backend/templates/`. Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` handle the actual authentication during the OAuth flow.
+The authorization page is rendered from Mustache templates in `packages/keryx/templates/`. Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` handle the actual authentication during the OAuth flow.
 
 ### Configuration
 
