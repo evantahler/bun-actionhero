@@ -162,6 +162,8 @@ abstract class Server<T> {
   /** The underlying server object (e.g., Bun.Server) */
   server?: T;
 
+  constructor(name: string);
+
   abstract initialize(): Promise<void>;
   abstract start(): Promise<void>;
   abstract stop(): Promise<void>;
@@ -230,12 +232,12 @@ class Logger {
   colorize: boolean;
   includeTimestamps: boolean;
 
-  trace(message: string, object?: any): void;
-  debug(message: string, object?: any): void;
-  info(message: string, object?: any): void;
-  warn(message: string, object?: any): void;
-  error(message: string, object?: any): void;
-  fatal(message: string, object?: any): void;
+  trace(message: string, data?: any): void;
+  debug(message: string, data?: any): void;
+  info(message: string, data?: any): void;
+  warn(message: string, data?: any): void;
+  error(message: string, data?: any): void;
+  fatal(message: string, data?: any): void;
 }
 
 enum LogLevel {
