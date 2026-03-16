@@ -84,7 +84,7 @@ class Connection<
   /** Execute an action with the given params */
   async act(
     actionName: string | undefined,
-    params: FormData,
+    params: Record<string, unknown>,
     method?: string,
     url?: string,
   ): Promise<{ response: Object; error?: TypedError }>;
@@ -131,6 +131,9 @@ abstract class Channel {
 
   /** Override for custom authorization logic. Throw TypedError to deny. */
   async authorize(channelName: string, connection: Connection): Promise<void>;
+
+  /** Returns the presence identifier for a connection. Override to use e.g. user ID. Defaults to connection.id. */
+  async presenceKey(connection: Connection): Promise<string>;
 }
 ```
 
@@ -150,7 +153,7 @@ type ChannelMiddleware = {
 
 Source: `packages/keryx/classes/Server.ts`
 
-Base class for transport servers. The framework ships with a web server (`Bun.serve` for HTTP + WebSocket), but you could add others.
+Base class for transport servers. The framework ships with a web server (`Bun.serve` for HTTP + WebSocket), a CLI entry point, and an MCP server for AI agents. You could add others (gRPC, raw TCP, etc.) by extending the `Server` base class.
 
 ```ts
 abstract class Server<T> {
@@ -158,6 +161,8 @@ abstract class Server<T> {
 
   /** The underlying server object (e.g., Bun.Server) */
   server?: T;
+
+  constructor(name: string);
 
   abstract initialize(): Promise<void>;
   abstract start(): Promise<void>;
@@ -227,12 +232,12 @@ class Logger {
   colorize: boolean;
   includeTimestamps: boolean;
 
-  trace(message: string, object?: any): void;
-  debug(message: string, object?: any): void;
-  info(message: string, object?: any): void;
-  warn(message: string, object?: any): void;
-  error(message: string, object?: any): void;
-  fatal(message: string, object?: any): void;
+  trace(message: string, data?: any): void;
+  debug(message: string, data?: any): void;
+  info(message: string, data?: any): void;
+  warn(message: string, data?: any): void;
+  error(message: string, data?: any): void;
+  fatal(message: string, data?: any): void;
 }
 
 enum LogLevel {

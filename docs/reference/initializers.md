@@ -4,7 +4,7 @@ description: Initializer class definition and the module augmentation pattern.
 
 # Initializer
 
-Source: `backend/classes/Initializer.ts`
+Source: `packages/keryx/classes/Initializer.ts`
 
 Initializers are the lifecycle components that boot up your server. They run in priority order during `initialize → start → stop`, and each one attaches its namespace to the global `api` singleton.
 
@@ -71,9 +71,15 @@ The return type of `initialize()` becomes `api[namespace]` — autocomplete, typ
 
 Core initializers use priorities below 1000 to ensure they run before application code:
 
-| Priority | Initializers                                         |
-| -------- | ---------------------------------------------------- |
-| 100      | `actions`, `db`                                      |
-| 150      | `pubsub`, `swagger`                                  |
-| 250      | `resque`                                             |
-| 1000     | `redis`, `application`, and your custom initializers |
+| Load Priority | Initializers                                                     |
+| ------------- | ---------------------------------------------------------------- |
+| 1             | `connections`, `signals`                                         |
+| 2             | `process`                                                        |
+| 50            | `observability`                                                  |
+| 100           | `actions`, `db`, `channels`                                      |
+| 150           | `swagger`                                                        |
+| 175           | `oauth`                                                          |
+| 200           | `redis`, `mcp`                                                   |
+| 250           | `resque`                                                         |
+| 800           | `servers`                                                        |
+| 1000          | `session`, `pubsub`, `application`, and your custom initializers |

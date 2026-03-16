@@ -53,10 +53,10 @@ inputs = z.object({
 A generic factory that creates a Zod schema accepting either a numeric ID or a full model object. If an ID is provided, it resolves to the full model via a database lookup using an async Zod transform.
 
 ```ts
-function zIdOrModel<TTable, TModel>(
+function zIdOrModel<TTable extends TableWithId, TModel>(
   table: TTable, // Drizzle table definition (must have `id` column)
-  modelSchema: z.ZodType, // Zod schema for the model
-  isModel: (val) => bool, // Type guard function
+  modelSchema: z.ZodType<TModel>, // Zod schema for the model
+  isModel: (val: unknown) => val is TModel, // Type guard function
   entityName: string, // For error messages
 );
 ```
