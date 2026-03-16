@@ -209,8 +209,8 @@ ws.send(
 // Listen for broadcasts
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
-  if (data.channel) {
-    console.log(`Broadcast on ${data.channel}:`, data.message);
+  if (data.message?.channel) {
+    console.log(`Broadcast on ${data.message.channel}:`, data.message.message);
   }
 };
 
