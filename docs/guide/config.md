@@ -14,8 +14,10 @@ Config is split into modules:
 backend/config/
 ├── index.ts        # Aggregates everything into one `config` object
 ├── actions.ts      # Action timeout, fan-out batch size and TTL
+├── channels.ts     # Presence TTL and heartbeat interval
 ├── database.ts     # Database connection string, auto-migrate flag
 ├── logger.ts       # Log level, timestamps, colors, output format (text/JSON)
+├── observability.ts # OpenTelemetry metrics toggle, route, service name
 ├── process.ts      # Process name, shutdown timeout
 ├── rateLimit.ts    # Rate limiting windows and thresholds
 ├── redis.ts        # Redis connection string
@@ -254,6 +256,21 @@ All HTTP responses include these headers. Each is configurable:
 | `X-Frame-Options`           | `WEB_SECURITY_FRAME_OPTIONS`        | `DENY`                                |
 | `Strict-Transport-Security` | `WEB_SECURITY_HSTS`                 | `max-age=31536000; includeSubDomains` |
 | `Referrer-Policy`           | `WEB_SECURITY_REFERRER_POLICY`      | `strict-origin-when-cross-origin`     |
+
+### Channels
+
+| Key                        | Env Var                      | Default | Description                                       |
+| -------------------------- | ---------------------------- | ------- | ------------------------------------------------- |
+| `presenceTTL`              | `PRESENCE_TTL`               | `90`    | Presence key TTL in seconds                       |
+| `presenceHeartbeatInterval`| `PRESENCE_HEARTBEAT_INTERVAL`| `30`    | Heartbeat interval in seconds to refresh presence |
+
+### Observability
+
+| Key           | Env Var                | Default      | Description                                    |
+| ------------- | ---------------------- | ------------ | ---------------------------------------------- |
+| `enabled`     | `OTEL_METRICS_ENABLED` | `false`      | Enable OpenTelemetry metrics and /metrics route |
+| `metricsRoute`| `OTEL_METRICS_ROUTE`   | `"/metrics"` | URL path for Prometheus scrape endpoint        |
+| `serviceName` | `OTEL_SERVICE_NAME`    | `""`         | Service name in metric labels                  |
 
 ### Tasks
 
