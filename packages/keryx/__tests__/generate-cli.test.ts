@@ -60,7 +60,7 @@ describe("keryx generate action", () => {
     );
     expect(content).toContain('name = "greet"');
     expect(content).toContain("class Greet implements Action");
-    expect(content).toContain('route: "/api/greet"');
+    expect(content).toContain('route: "/greet"');
   });
 
   test("generates a namespaced action with nested directory", async () => {
@@ -76,7 +76,7 @@ describe("keryx generate action", () => {
     );
     expect(content).toContain('name = "user:delete"');
     expect(content).toContain("class UserDelete implements Action");
-    expect(content).toContain('route: "/api/user/delete"');
+    expect(content).toContain('route: "/user/delete"');
   });
 });
 

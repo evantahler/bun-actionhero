@@ -93,7 +93,7 @@ export class UserDelete implements Action {
   name = "user:delete";
   description = "TODO: describe this action";
   inputs = z.object({});
-  web = { route: "/api/user/delete", method: HTTP_METHOD.GET };
+  web = { route: "/user/delete", method: HTTP_METHOD.GET };
 
   async run(params: ActionParams<UserDelete>) {
     // TODO: implement

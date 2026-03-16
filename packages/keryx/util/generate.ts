@@ -75,7 +75,7 @@ function resolveTestPath(type: GeneratorType, name: string): string {
  * "hello" → "/api/hello", "user:delete" → "/api/user/delete"
  */
 function toRoute(name: string): string {
-  return "/api/" + name.replace(/:/g, "/");
+  return "/" + name.replace(/:/g, "/");
 }
 
 /**
