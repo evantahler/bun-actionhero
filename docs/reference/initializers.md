@@ -71,15 +71,15 @@ The return type of `initialize()` becomes `api[namespace]` — autocomplete, typ
 
 Core initializers use priorities below 1000 to ensure they run before application code:
 
-| Load Priority | Initializers                                |
-| ------------- | ------------------------------------------- |
-| 1             | `connections`, `signals`                    |
-| 2             | `process`                                   |
-| 50            | `observability`                             |
-| 100           | `actions`, `db`, `channels`                 |
-| 150           | `swagger`                                   |
-| 175           | `oauth`                                     |
-| 200           | `redis`, `mcp`                              |
-| 250           | `resque`                                    |
-| 800           | `servers`                                   |
+| Load Priority | Initializers                                                     |
+| ------------- | ---------------------------------------------------------------- |
+| 1             | `connections`, `signals`                                         |
+| 2             | `process`                                                        |
+| 50            | `observability`                                                  |
+| 100           | `actions`, `db`, `channels`                                      |
+| 150           | `swagger`                                                        |
+| 175           | `oauth`                                                          |
+| 200           | `redis`, `mcp`                                                   |
+| 250           | `resque`                                                         |
+| 800           | `servers`                                                        |
 | 1000          | `session`, `pubsub`, `application`, and your custom initializers |

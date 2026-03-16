@@ -249,28 +249,28 @@ See the [Security guide](/guide/security#correlation-ids) for details.
 
 All HTTP responses include these headers. Each is configurable:
 
-| Header                      | Env Var                             | Default                               |
-| --------------------------- | ----------------------------------- | ------------------------------------- |
+| Header                      | Env Var                             | Default                                                                                                                                                                                                                                       |
+| --------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Content-Security-Policy`   | `WEB_SECURITY_CSP`                  | `default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net data:; img-src 'self' data: blob:; connect-src 'self'; worker-src blob:` |
-| `X-Content-Type-Options`    | `WEB_SECURITY_CONTENT_TYPE_OPTIONS` | `nosniff`                             |
-| `X-Frame-Options`           | `WEB_SECURITY_FRAME_OPTIONS`        | `DENY`                                |
-| `Strict-Transport-Security` | `WEB_SECURITY_HSTS`                 | `max-age=31536000; includeSubDomains` |
-| `Referrer-Policy`           | `WEB_SECURITY_REFERRER_POLICY`      | `strict-origin-when-cross-origin`     |
+| `X-Content-Type-Options`    | `WEB_SECURITY_CONTENT_TYPE_OPTIONS` | `nosniff`                                                                                                                                                                                                                                     |
+| `X-Frame-Options`           | `WEB_SECURITY_FRAME_OPTIONS`        | `DENY`                                                                                                                                                                                                                                        |
+| `Strict-Transport-Security` | `WEB_SECURITY_HSTS`                 | `max-age=31536000; includeSubDomains`                                                                                                                                                                                                         |
+| `Referrer-Policy`           | `WEB_SECURITY_REFERRER_POLICY`      | `strict-origin-when-cross-origin`                                                                                                                                                                                                             |
 
 ### Channels
 
-| Key                        | Env Var                      | Default | Description                                       |
-| -------------------------- | ---------------------------- | ------- | ------------------------------------------------- |
-| `presenceTTL`              | `PRESENCE_TTL`               | `90`    | Presence key TTL in seconds                       |
-| `presenceHeartbeatInterval`| `PRESENCE_HEARTBEAT_INTERVAL`| `30`    | Heartbeat interval in seconds to refresh presence |
+| Key                         | Env Var                       | Default | Description                                       |
+| --------------------------- | ----------------------------- | ------- | ------------------------------------------------- |
+| `presenceTTL`               | `PRESENCE_TTL`                | `90`    | Presence key TTL in seconds                       |
+| `presenceHeartbeatInterval` | `PRESENCE_HEARTBEAT_INTERVAL` | `30`    | Heartbeat interval in seconds to refresh presence |
 
 ### Observability
 
-| Key           | Env Var                | Default      | Description                                    |
-| ------------- | ---------------------- | ------------ | ---------------------------------------------- |
-| `enabled`     | `OTEL_METRICS_ENABLED` | `false`      | Enable OpenTelemetry metrics and /metrics route |
-| `metricsRoute`| `OTEL_METRICS_ROUTE`   | `"/metrics"` | URL path for Prometheus scrape endpoint        |
-| `serviceName` | `OTEL_SERVICE_NAME`    | `""`         | Service name in metric labels                  |
+| Key            | Env Var                | Default      | Description                                     |
+| -------------- | ---------------------- | ------------ | ----------------------------------------------- |
+| `enabled`      | `OTEL_METRICS_ENABLED` | `false`      | Enable OpenTelemetry metrics and /metrics route |
+| `metricsRoute` | `OTEL_METRICS_ROUTE`   | `"/metrics"` | URL path for Prometheus scrape endpoint         |
+| `serviceName`  | `OTEL_SERVICE_NAME`    | `""`         | Service name in metric labels                   |
 
 ### Tasks
 

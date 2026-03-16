@@ -27,9 +27,9 @@ Each initializer has three priority values. Lower numbers run first:
 | Initializer     | Load Priority | What it does                                       |
 | --------------- | ------------- | -------------------------------------------------- |
 | `connections`   | 1             | Connection pool management                         |
-| `signals`       | 1             | SIGINT/SIGTERM graceful shutdown handlers           |
+| `signals`       | 1             | SIGINT/SIGTERM graceful shutdown handlers          |
 | `process`       | 2             | Process metadata (name, boot time)                 |
-| `observability` | 50            | OpenTelemetry metrics + Prometheus scrape endpoint  |
+| `observability` | 50            | OpenTelemetry metrics + Prometheus scrape endpoint |
 | `actions`       | 100           | Discovers and registers all actions                |
 | `channels`      | 100           | Discovers and registers PubSub channels            |
 | `db`            | 100           | Sets up Drizzle ORM + connection pool              |
