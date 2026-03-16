@@ -6,14 +6,13 @@ description: Deploying Keryx — Docker, production builds, reverse proxies, and
 
 Keryx is a backend API server. The included Vite + React frontend is a demo app — in production you'll bring your own client. This guide focuses on deploying the backend.
 
-## Production Build
+## Production Start
 
 ```bash
-# compile the backend
-cd backend && bun compile
+cd backend
 
 # set NODE_ENV=production in .env, then start
-bun start
+NODE_ENV=production bun start
 ```
 
 ## Docker
