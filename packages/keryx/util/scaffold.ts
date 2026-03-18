@@ -1,4 +1,4 @@
-import { Glob } from "bun";
+import { $, Glob } from "bun";
 import fs from "fs";
 import Mustache from "mustache";
 import path from "path";
@@ -221,13 +221,6 @@ export async function generateAuthScaffoldContents(): Promise<
     result.set(filePath, content);
   }
 
-  // Pre-generated migration for the users table so the project works out of the box
-  // Drizzle v1 uses timestamp-prefixed folders with migration.sql inside
-  result.set(
-    "drizzle/20240324235420_users/migration.sql",
-    `CREATE TABLE IF NOT EXISTS "users" (\n\t"id" serial PRIMARY KEY NOT NULL,\n\t"name" varchar(256) NOT NULL,\n\t"email" text NOT NULL,\n\t"password_hash" text NOT NULL,\n\t"created_at" timestamp DEFAULT now() NOT NULL,\n\t"updated_at" timestamp DEFAULT now() NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "users" ("name");--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "users" ("email");\n`,
-  );
-
   return result;
 }
 
@@ -358,6 +351,51 @@ export async function scaffoldProject(
       const authFiles = await generateAuthScaffoldContents();
       for (const [filePath, content] of authFiles) {
         await write(filePath, content);
+      }
+
+      // Install deps so drizzle-kit can resolve drizzle-orm/pg-core.
+      // Temporarily remove keryx from package.json since it may not be published yet.
+      const pkgJsonPath = path.join(targetDir, "package.json");
+      const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, "utf-8"));
+      const savedDeps = { ...pkgJson.dependencies };
+      delete pkgJson.dependencies.keryx;
+      await Bun.write(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
+      await $`bun install`.cwd(targetDir).quiet();
+      pkgJson.dependencies = savedDeps;
+      await Bun.write(pkgJsonPath, JSON.stringify(pkgJson, null, 2) + "\n");
+
+      // Generate the initial migration from the schema via drizzle-kit
+      const drizzleDir = path.join(targetDir, "drizzle");
+      fs.mkdirSync(drizzleDir, { recursive: true });
+      const drizzleConfig = {
+        dialect: "postgresql" as const,
+        schema: path.join(targetDir, "schema", "*"),
+        out: drizzleDir,
+      };
+      const tmpConfigPath = path.join(targetDir, "drizzle.config.tmp.ts");
+      try {
+        await Bun.write(
+          tmpConfigPath,
+          `export default ${JSON.stringify(drizzleConfig, null, 2)}`,
+        );
+        const { exitCode, stderr } =
+          await $`bun drizzle-kit generate --config ${tmpConfigPath}`.quiet();
+        if (exitCode !== 0) {
+          throw new Error(
+            `Failed to generate migrations: ${stderr.toString()}`,
+          );
+        }
+        // Add generated migration files to the created files list
+        const drizzleGlob = new Glob("**/*");
+        for await (const file of drizzleGlob.scan(drizzleDir)) {
+          if (!file.endsWith(".tmp.ts")) {
+            createdFiles.push(`drizzle/${file}`);
+          }
+        }
+      } finally {
+        if (await Bun.file(tmpConfigPath).exists()) {
+          fs.unlinkSync(tmpConfigPath);
+        }
       }
     } else {
       // No DB — fall back to the simple hello action
