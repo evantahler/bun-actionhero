@@ -13,3 +13,4 @@ dump.rdb
 docs/.vitepress/dist
 docs/.vitepress/cache
 docs/.vitepress/data
+packages/keryx/drizzle
