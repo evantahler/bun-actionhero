@@ -283,17 +283,19 @@ export async function scaffoldProject(
         },
         dependencies: {
           keryx: `^${keryxVersion}`,
-          zod: "^4.3.6",
+          zod: pkg.peerDependencies.zod,
           ...(options.includeDb
             ? {
-                "drizzle-orm": "^1.0.0-beta.18",
+                "drizzle-orm": pkg.peerDependencies["drizzle-orm"],
               }
             : {}),
         },
         devDependencies: {
           "@types/bun": "latest",
-          prettier: "^3.8.1",
-          ...(options.includeDb ? { "drizzle-kit": "^1.0.0-beta.18" } : {}),
+          prettier: pkg.devDependencies.prettier,
+          ...(options.includeDb
+            ? { "drizzle-kit": pkg.devDependencies["drizzle-kit"] }
+            : {}),
         },
       },
       null,
