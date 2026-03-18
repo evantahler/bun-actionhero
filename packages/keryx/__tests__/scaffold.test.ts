@@ -56,8 +56,7 @@ describe("scaffoldProject", () => {
     expect(files).toContain("actions/user.ts");
     expect(files).toContain("actions/session.ts");
     expect(files).toContain("actions/me.ts");
-    expect(files).toContain("drizzle/0000_users.sql");
-    expect(files).toContain("drizzle/meta/_journal.json");
+    expect(files).toContain("drizzle/20240324235420_users/migration.sql");
     expect(files).not.toContain("actions/hello.ts");
     expect(files).not.toContain("schema/.gitkeep");
 
@@ -83,7 +82,6 @@ describe("scaffoldProject", () => {
     expect(pkg.dependencies.keryx).toMatch(/^\^/);
     expect(pkg.dependencies.zod).toBeDefined();
     expect(pkg.dependencies["drizzle-orm"]).toBeDefined();
-    expect(pkg.dependencies["drizzle-zod"]).toBeDefined();
     expect(pkg.devDependencies["drizzle-kit"]).toBeDefined();
   });
 
@@ -103,7 +101,6 @@ describe("scaffoldProject", () => {
     );
     expect(pkg.dependencies.zod).toBeDefined();
     expect(pkg.dependencies["drizzle-orm"]).toBeUndefined();
-    expect(pkg.dependencies["drizzle-zod"]).toBeUndefined();
     expect(pkg.devDependencies["drizzle-kit"]).toBeUndefined();
     expect(pkg.scripts.migrations).toBeUndefined();
   });
@@ -122,7 +119,7 @@ describe("scaffoldProject", () => {
     expect(files).toContain("actions/swagger.ts");
     // schema and drizzle placeholders written when db included but no example
     expect(files).toContain("schema/.gitkeep");
-    expect(files).toContain("drizzle/meta/_journal.json");
+    expect(files).toContain("drizzle/.gitkeep");
   });
 
   test("uses hello action when includeDb is false and includeExample is true", async () => {

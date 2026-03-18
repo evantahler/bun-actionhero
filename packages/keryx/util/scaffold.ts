@@ -222,30 +222,10 @@ export async function generateAuthScaffoldContents(): Promise<
   }
 
   // Pre-generated migration for the users table so the project works out of the box
+  // Drizzle v1 uses timestamp-prefixed folders with migration.sql inside
   result.set(
-    "drizzle/0000_users.sql",
+    "drizzle/20240324235420_users/migration.sql",
     `CREATE TABLE IF NOT EXISTS "users" (\n\t"id" serial PRIMARY KEY NOT NULL,\n\t"name" varchar(256) NOT NULL,\n\t"email" text NOT NULL,\n\t"password_hash" text NOT NULL,\n\t"created_at" timestamp DEFAULT now() NOT NULL,\n\t"updated_at" timestamp DEFAULT now() NOT NULL\n);\n--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "name_idx" ON "users" ("name");--> statement-breakpoint\nCREATE UNIQUE INDEX IF NOT EXISTS "email_idx" ON "users" ("email");\n`,
-  );
-
-  result.set(
-    "drizzle/meta/_journal.json",
-    JSON.stringify(
-      {
-        version: "5",
-        dialect: "pg",
-        entries: [
-          {
-            idx: 0,
-            version: "5",
-            when: 1711324460394,
-            tag: "0000_users",
-            breakpoints: true,
-          },
-        ],
-      },
-      null,
-      2,
-    ) + "\n",
   );
 
   return result;
@@ -306,15 +286,14 @@ export async function scaffoldProject(
           zod: "^4.3.6",
           ...(options.includeDb
             ? {
-                "drizzle-orm": "^0.45.1",
-                "drizzle-zod": "^0.8.3",
+                "drizzle-orm": "^1.0.0-beta.18",
               }
             : {}),
         },
         devDependencies: {
           "@types/bun": "latest",
           prettier: "^3.8.1",
-          ...(options.includeDb ? { "drizzle-kit": "^0.20.18" } : {}),
+          ...(options.includeDb ? { "drizzle-kit": "^1.0.0-beta.18" } : {}),
         },
       },
       null,
@@ -349,10 +328,7 @@ export async function scaffoldProject(
     // only write placeholders when not including auth.
     if (!options.includeExample) {
       await write("schema/.gitkeep", "");
-      await write(
-        "drizzle/meta/_journal.json",
-        JSON.stringify({ entries: [] }),
-      );
+      await write("drizzle/.gitkeep", "");
     }
   }
 
