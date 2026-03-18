@@ -73,7 +73,7 @@ export class DB extends Initializer {
   async initialize() {
     const dbContainer = {} as {
       db: ReturnType<typeof drizzle>;
-      pool: Pool;
+      client: InstanceType<typeof SQL>;
     };
     return Object.assign(
       {
@@ -85,15 +85,15 @@ export class DB extends Initializer {
   }
 
   async start() {
-    api.db.pool = new Pool({
-      connectionString: config.database.connectionString,
+    api.db.client = new SQL({
+      url: config.database.connectionString,
     });
-    api.db.db = drizzle(api.db.pool);
+    api.db.db = drizzle(api.db.client);
     // migrations run here if configured...
   }
 
   async stop() {
-    await api.db.pool.end();
+    api.db.client.close();
   }
 }
 ```
@@ -105,7 +105,7 @@ The return value of `initialize()` becomes `api.db` — and that type flows ever
 The `api` object lives on `globalThis` and accumulates namespaces as initializers run:
 
 ```ts
-api.db; // Drizzle ORM + Postgres pool
+api.db; // Drizzle ORM + Bun SQL client
 api.redis; // Redis client
 api.actions; // Action registry + fan-out
 api.session; // Session manager

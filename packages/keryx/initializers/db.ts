@@ -1,12 +1,11 @@
-import { $ } from "bun";
+import { $, SQL } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { drizzle } from "drizzle-orm/bun-sql";
+import { migrate } from "drizzle-orm/bun-sql/migrator";
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
 import path from "path";
-import { Pool } from "pg";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -32,7 +31,7 @@ export class DB extends Initializer {
   async initialize() {
     const dbContainer = {} as {
       db: ReturnType<typeof drizzle>;
-      pool: InstanceType<typeof Pool>;
+      client: InstanceType<typeof SQL>;
     };
     return Object.assign(
       {
@@ -44,9 +43,13 @@ export class DB extends Initializer {
   }
 
   async start() {
-    api.db.pool = new Pool({
-      connectionString: config.database.connectionString,
-      ...config.database.pool,
+    api.db.client = new SQL({
+      url: config.database.connectionString,
+      max: config.database.pool.max,
+      idleTimeout: Math.floor(config.database.pool.idleTimeoutMillis / 1000),
+      connectionTimeout: config.database.pool.connectionTimeoutMillis
+        ? Math.floor(config.database.pool.connectionTimeoutMillis / 1000)
+        : 30,
     });
 
     class DrizzleLogger implements LogWriter {
@@ -55,7 +58,7 @@ export class DB extends Initializer {
       }
     }
 
-    api.db.db = drizzle(api.db.pool, {
+    api.db.db = drizzle(api.db.client, {
       logger: new DefaultLogger({ writer: new DrizzleLogger() }),
     });
 
@@ -97,9 +100,9 @@ export class DB extends Initializer {
   }
 
   async stop() {
-    if (api.db.db && api.db.pool) {
+    if (api.db.db && api.db.client) {
       try {
-        await api.db.pool.end();
+        api.db.client.close();
         logger.info("database connection closed");
       } catch (e) {
         logger.error("error closing database connection", e);
@@ -154,15 +157,17 @@ export class DB extends Initializer {
       });
     }
 
-    const { rows } = await api.db.db.execute(
+    const rows = await api.db.db.execute(
       sql`SELECT tablename FROM pg_tables WHERE schemaname = CURRENT_SCHEMA`,
     );
 
     for (const row of rows) {
-      logger.debug(`truncating table ${row.tablename}`);
+      logger.debug(
+        `truncating table ${(row as Record<string, string>).tablename}`,
+      );
       await api.db.db.execute(
         sql.raw(
-          `TRUNCATE TABLE "${row.tablename}" ${restartIdentity ? "RESTART IDENTITY" : ""} ${cascade ? "CASCADE" : ""} `,
+          `TRUNCATE TABLE "${(row as Record<string, string>).tablename}" ${restartIdentity ? "RESTART IDENTITY" : ""} ${cascade ? "CASCADE" : ""} `,
         ),
       );
     }

@@ -1,6 +1,6 @@
 {
   "name": "keryx",
-  "version": "0.15.4",
+  "version": "0.16.0",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
@@ -85,13 +85,11 @@
     "ioredis": "^5.9.2",
     "mustache": "^4.2.0",
     "node-resque": "^9.5.0",
-    "pg": "^8.18.0",
     "ts-morph": "^27.0.2",
     "typescript": "^5.9.3",
     "commander": "^12.1.0",
     "@types/cookie": "^0.6.0",
-    "@types/mustache": "^4.2.6",
-    "@types/pg": "^8.16.0"
+    "@types/mustache": "^4.2.6"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.45.1",

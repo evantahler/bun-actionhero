@@ -17,7 +17,7 @@ describe("db initializer", () => {
   test("db object is initialized", () => {
     expect(api.db).toBeDefined();
     expect(api.db.db).toBeDefined();
-    expect(api.db.pool).toBeDefined();
+    expect(api.db.client).toBeDefined();
   });
 
   test("db methods are available", () => {
@@ -28,8 +28,8 @@ describe("db initializer", () => {
   test("can execute queries", async () => {
     const result = await api.db.db.execute(sql`SELECT NOW()`);
     expect(result).toBeDefined();
-    expect(result.rows).toBeDefined();
-    expect(result.rows.length).toBeGreaterThan(0);
+    expect(Array.isArray(result)).toBe(true);
+    expect(result.length).toBeGreaterThan(0);
   });
 
   test("can query tables", async () => {
@@ -100,7 +100,7 @@ describe("db initializer", () => {
   test("database connection is active", async () => {
     // Test that we can perform a simple query
     const result = await api.db.db.execute(sql`SELECT 1 + 1 as result`);
-    expect(result.rows[0].result).toBe(2);
+    expect((result[0] as Record<string, number>).result).toBe(2);
   });
 
   test("can insert and query data", async () => {
@@ -141,8 +141,7 @@ describe("db initializer", () => {
     expect(users_result[0].email).toBe("transaction@example.com");
   });
 
-  test("pool is connected", () => {
-    expect(api.db.pool.totalCount).toBeGreaterThanOrEqual(0);
-    expect(api.db.pool.idleCount).toBeGreaterThanOrEqual(0);
+  test("client is connected", () => {
+    expect(api.db.client).toBeDefined();
   });
 });
