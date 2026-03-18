@@ -73,7 +73,7 @@ export class DB extends Initializer {
   async initialize() {
     const dbContainer = {} as {
       db: ReturnType<typeof drizzle>;
-      pool: Pool;
+      client: InstanceType<typeof SQL>;
     };
     return Object.assign(
       {
