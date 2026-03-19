@@ -1,12 +1,11 @@
 import { $ } from "bun";
-import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { drizzle } from "drizzle-orm/bun-sql";
+import { migrate } from "drizzle-orm/bun-sql/migrator";
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
 import path from "path";
-import { Pool } from "pg";
+import { SQL } from "bun";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -32,7 +31,7 @@ export class DB extends Initializer {
   async initialize() {
     const dbContainer = {} as {
       db: ReturnType<typeof drizzle>;
-      pool: InstanceType<typeof Pool>;
+      client: InstanceType<typeof SQL>;
     };
     return Object.assign(
       {
@@ -44,10 +43,7 @@ export class DB extends Initializer {
   }
 
   async start() {
-    api.db.pool = new Pool({
-      connectionString: config.database.connectionString,
-      ...config.database.pool,
-    });
+    api.db.client = new SQL(config.database.connectionString);
 
     class DrizzleLogger implements LogWriter {
       write(message: string) {
@@ -55,7 +51,8 @@ export class DB extends Initializer {
       }
     }
 
-    api.db.db = drizzle(api.db.pool, {
+    api.db.db = drizzle({
+      client: api.db.client,
       logger: new DefaultLogger({ writer: new DrizzleLogger() }),
     });
 
@@ -81,6 +78,9 @@ export class DB extends Initializer {
           fs.writeFileSync(journalPath, JSON.stringify({ entries: [] }));
           logger.info("created empty drizzle migrations journal");
         }
+        // Pass object with migrationsFolder property
+        // `migrate()` from drizzle-orm/bun-sql/migrator expects an object with migrationsFolder property,
+        // not just a string path, therefore: { migrationsFolder: migrationsFolder }
         await migrate(api.db.db, { migrationsFolder });
         logger.info("database migrated successfully");
       } catch (e) {
@@ -97,9 +97,9 @@ export class DB extends Initializer {
   }
 
   async stop() {
-    if (api.db.db && api.db.pool) {
+    if (api.db.db && api.db.client) {
       try {
-        await api.db.pool.end();
+        await api.db.client.close();
         logger.info("database connection closed");
       } catch (e) {
         logger.error("error closing database connection", e);
@@ -109,16 +109,19 @@ export class DB extends Initializer {
 
   /**
    * Generate migrations for the database schema.
-   * Learn more @ https://orm.drizzle.team/kit-docs/overview
    */
   async generateMigrations() {
-    const migrationConfig: DrizzleMigrateConfig = {
+    // Use `defineConfig` from `drizzle-kit` instead of the `Config` type
+    // - the `url` property isn't recognized in the `DrizzleMigrateConfig` type
+    // - a different approach is needed for Bun
+    const migrationConfig = {
       dialect: "postgresql" as const,
-      schema: path.join("schema", "*"),
+      schema: path.join(api.rootDir, "schema", "*"),
+      driver: "bun" as const, // ✅ Specify Bun driver
       dbCredentials: {
         url: config.database.connectionString,
       },
-      out: path.join("drizzle"),
+      out: path.join(api.rootDir, "drizzle"),
     };
 
     const fileContent = `export default ${JSON.stringify(migrationConfig, null, 2)}`;
@@ -144,7 +147,7 @@ export class DB extends Initializer {
   }
 
   /**
-   * Erase all the tables in the active database.  Will fail on production environments.
+   * Erase all the tables in the active database.
    */
   async clearDatabase(restartIdentity = true, cascade = true) {
     if (Bun.env.NODE_ENV === "production") {
@@ -154,11 +157,11 @@ export class DB extends Initializer {
       });
     }
 
-    const { rows } = await api.db.db.execute(
+    const result = await api.db.db.execute(
       sql`SELECT tablename FROM pg_tables WHERE schemaname = CURRENT_SCHEMA`,
     );
 
-    for (const row of rows) {
+    for (const row of result) {
       logger.debug(`truncating table ${row.tablename}`);
       await api.db.db.execute(
         sql.raw(
