@@ -261,6 +261,23 @@ describe("mcp initializer (enabled)", () => {
       }
     });
 
+    test("tool descriptions mention response format and _responseFormat parameter", async () => {
+      const result = await client.listTools();
+      const statusTool = result.tools.find((t) => t.name === "status");
+      expect(statusTool).toBeDefined();
+      expect(statusTool!.description).toContain("_responseFormat");
+      expect(statusTool!.description).toContain("json");
+
+      // inputSchema should include _responseFormat as an optional enum property
+      const schema = statusTool!.inputSchema as {
+        properties?: Record<string, any>;
+      };
+      expect(schema.properties?._responseFormat).toBeDefined();
+      expect(schema.properties!._responseFormat.enum ?? schema.properties!._responseFormat.anyOf?.find((s: any) => s.enum)?.enum).toEqual(
+        expect.arrayContaining(["json", "markdown"]),
+      );
+    });
+
     test("resources/list returns actions registered as MCP resources", async () => {
       const result = await client.listResources();
       const resourceUris = result.resources.map((r) => r.uri);
