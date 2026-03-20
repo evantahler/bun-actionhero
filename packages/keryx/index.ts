@@ -32,6 +32,7 @@ export type { WebServer } from "./servers/web";
 export { buildProgram } from "./util/cli";
 export { deepMerge, loadFromEnvIfSet } from "./util/config";
 export { globLoader } from "./util/glob";
+export { toMarkdown } from "./util/toMarkdown";
 export {
   isSecret,
   secret,

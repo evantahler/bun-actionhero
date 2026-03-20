@@ -46,6 +46,13 @@ export type McpActionConfig = {
     /** Human-readable display title for the prompt */
     title?: string;
   };
+  /**
+   * Default response format for MCP tool calls.
+   * `"json"` (default) returns `JSON.stringify(response)`.
+   * `"markdown"` returns a human-readable markdown rendering.
+   * Agents can override per-call via the `_responseFormat` tool parameter.
+   */
+  responseFormat?: "json" | "markdown";
 };
 
 export type ActionConstructorInputs = {

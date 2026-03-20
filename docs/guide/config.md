@@ -26,7 +26,7 @@ backend/config/
 └── server/
     ├── cli.ts      # CLI error display, quiet mode
     ├── web.ts      # Web server port, CORS, security headers, WS limits
-    └── mcp.ts      # MCP server toggle, route, OAuth TTLs
+    └── mcp.ts      # MCP server toggle, route, OAuth TTLs, markdown depth limit
 ```
 
 Everything rolls up into a single `config` object:
@@ -303,9 +303,10 @@ See the [Security guide](/guide/security) for details on how rate limiting works
 
 ### MCP Server
 
-| Key              | Env Var                | Default   |
-| ---------------- | ---------------------- | --------- |
-| `enabled`        | `MCP_SERVER_ENABLED`   | `false`   |
-| `route`          | `MCP_SERVER_ROUTE`     | `"/mcp"`  |
-| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL` | `2592000` |
-| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`   | `300`     |
+| Key                  | Env Var                    | Default   |
+| -------------------- | -------------------------- | --------- |
+| `enabled`            | `MCP_SERVER_ENABLED`       | `false`   |
+| `route`              | `MCP_SERVER_ROUTE`         | `"/mcp"`  |
+| `oauthClientTtl`     | `MCP_OAUTH_CLIENT_TTL`     | `2592000` |
+| `oauthCodeTtl`       | `MCP_OAUTH_CODE_TTL`       | `300`     |
+| `markdownDepthLimit` | `MCP_MARKDOWN_DEPTH_LIMIT` | `5`       |

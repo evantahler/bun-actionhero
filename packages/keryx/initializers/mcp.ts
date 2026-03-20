@@ -17,6 +17,7 @@ import {
   buildCorsHeaders,
   getExternalOrigin,
 } from "../util/http";
+import { toMarkdown } from "../util/toMarkdown";
 import type { PubSubMessage } from "./pubsub";
 
 type McpHandleRequest = (req: Request, ip: string) => Promise<Response>;
@@ -373,9 +374,16 @@ function createMcpServer(): McpServer {
       toolConfig.description = action.description;
     }
 
-    toolConfig.inputSchema = action.inputs
+    const baseSchema = action.inputs
       ? sanitizeSchemaForMcp(action.inputs)
       : z4mini.strictObject({});
+
+    // Inject _responseFormat param so agents can request markdown per-call
+    const schemaShape = "shape" in baseSchema ? (baseSchema as any).shape : {};
+    toolConfig.inputSchema = z4mini.object({
+      ...schemaShape,
+      _responseFormat: z4mini.optional(z4mini.enum(["json", "markdown"])),
+    });
 
     mcpServer.registerTool(
       toolName,
@@ -405,6 +413,13 @@ function createMcpServer(): McpServer {
               ? (args as Record<string, unknown>)
               : {};
 
+          // Extract and strip _responseFormat before passing to action
+          const requestedFormat = params._responseFormat as
+            | "json"
+            | "markdown"
+            | undefined;
+          delete params._responseFormat;
+
           const { response, error } = await connection.act(
             action.name,
             params,
@@ -412,6 +427,7 @@ function createMcpServer(): McpServer {
             mcpSessionId,
           );
 
+          // Errors always use JSON for programmatic handling
           if (error) {
             return {
               content: [
@@ -427,10 +443,18 @@ function createMcpServer(): McpServer {
             };
           }
 
+          // Priority: agent param > action config > json default
+          const format =
+            requestedFormat ?? action.mcp?.responseFormat ?? "json";
+          const text =
+            format === "markdown"
+              ? toMarkdown(response, {
+                  maxDepth: config.server.mcp.markdownDepthLimit,
+                })
+              : JSON.stringify(response);
+
           return {
-            content: [
-              { type: "text" as const, text: JSON.stringify(response) },
-            ],
+            content: [{ type: "text" as const, text }],
           };
         } finally {
           connection.destroy();

@@ -148,6 +148,7 @@ A few principles that hold up in practice:
 - **Bundle related side effects.** If operation A always requires operations B and C, make one tool that does all three. The agent doesn't know your business rules — your server does.
 - **Use `.describe()` on every Zod field.** These descriptions become the parameter documentation agents see. "Email address (used for login)" is more useful than just `z.string().email()`.
 - **Don't expose internal plumbing.** Admin actions, cleanup jobs, and migration tasks aren't useful to agents. Use `mcp = { tool: false }` liberally.
+- **Consider markdown responses for agent-facing tools.** Actions that return human-readable data (status, reports, search results) can set `mcp = { responseFormat: "markdown" }` so agents receive formatted markdown instead of raw JSON — saving tokens and avoiding re-formatting. Agents can also request markdown per-call via the `_responseFormat` parameter. See the [MCP response format guide](/guide/mcp#response-format) for details.
 
 For a deeper dive on tool design patterns for AI agents — including composition, batching, and context injection — see the [Arcade tool design patterns guide](https://www.arcade.dev/patterns).
 

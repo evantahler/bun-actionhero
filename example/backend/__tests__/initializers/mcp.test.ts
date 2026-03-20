@@ -399,6 +399,56 @@ describe("mcp initializer (enabled)", () => {
       expect(parsed2.data.userId).toBe(userId);
     });
 
+    test("tool invocation with _responseFormat=markdown returns markdown", async () => {
+      const result = await client.callTool({
+        name: "status",
+        arguments: { _responseFormat: "markdown" },
+      });
+      expect(result.isError).toBeFalsy();
+
+      const content = result.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      const text = content[0].text!;
+
+      // Should be markdown, not JSON
+      expect(text).toContain("**name**");
+      expect(text).toContain("**version**");
+      expect(text).toContain("**uptime**");
+      // Should NOT be parseable as a JSON object
+      expect(() => {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === "object") throw new Error("is JSON object");
+      }).toThrow();
+    });
+
+    test("tool invocation defaults to JSON when _responseFormat is omitted", async () => {
+      const result = await client.callTool({
+        name: "status",
+        arguments: {},
+      });
+      expect(result.isError).toBeFalsy();
+
+      const content = result.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      const parsed = JSON.parse(content[0].text!);
+      expect(parsed).toHaveProperty("name");
+      expect(typeof parsed).toBe("object");
+    });
+
+    test("_responseFormat parameter is stripped before reaching action", async () => {
+      // If _responseFormat leaked through, the action's Zod validation would
+      // reject it as an unknown key. The call should succeed.
+      const result = await client.callTool({
+        name: "status",
+        arguments: { _responseFormat: "json" },
+      });
+      expect(result.isError).toBeFalsy();
+    });
+
     test("tool invocation with missing required param returns isError", async () => {
       // user:edit requires authentication (SessionMiddleware) — tool name is "user-edit"
       const result = await client.callTool({
