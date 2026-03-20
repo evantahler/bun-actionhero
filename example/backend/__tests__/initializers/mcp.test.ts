@@ -273,9 +273,11 @@ describe("mcp initializer (enabled)", () => {
         properties?: Record<string, any>;
       };
       expect(schema.properties?._responseFormat).toBeDefined();
-      expect(schema.properties!._responseFormat.enum ?? schema.properties!._responseFormat.anyOf?.find((s: any) => s.enum)?.enum).toEqual(
-        expect.arrayContaining(["json", "markdown"]),
-      );
+      expect(
+        schema.properties!._responseFormat.enum ??
+          schema.properties!._responseFormat.anyOf?.find((s: any) => s.enum)
+            ?.enum,
+      ).toEqual(expect.arrayContaining(["json", "markdown"]));
     });
 
     test("resources/list returns actions registered as MCP resources", async () => {
