@@ -372,8 +372,7 @@ function createMcpServer(): McpServer {
 
     const responseDefault = action.mcp?.responseFormat ?? "json";
     if (action.description) {
-      toolConfig.description =
-        `${action.description} (Responds in ${responseDefault} by default. Set _responseFormat to override.)`;
+      toolConfig.description = `${action.description} (Responds in ${responseDefault} by default. Set _responseFormat to override.)`;
     }
 
     const baseSchema = action.inputs
