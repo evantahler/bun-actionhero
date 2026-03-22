@@ -69,7 +69,9 @@ export class Redis extends Initializer {
    */
   private instrumentRedisTracing(client: RedisClient) {
     const originalSendCommand = client.sendCommand.bind(client);
-    client.sendCommand = function (...args: Parameters<typeof originalSendCommand>) {
+    client.sendCommand = function (
+      ...args: Parameters<typeof originalSendCommand>
+    ) {
       const [command] = args;
       const commandName = (command as { name?: string }).name ?? "unknown";
       const span = api.observability.tracing.tracer.startSpan(

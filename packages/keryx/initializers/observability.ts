@@ -28,6 +28,7 @@ import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
+
 const namespace = "observability";
 
 declare module "../classes/API" {
@@ -129,14 +130,15 @@ export class Observability extends Initializer {
     // Resolve service name: env var > app package.json name > "keryx"
     let appPkgName: string | undefined;
     try {
-      const appPkg = await Bun.file(
+      const appPkg = (await Bun.file(
         path.join(api.rootDir, "package.json"),
-      ).json() as { name?: string };
+      ).json()) as { name?: string };
       appPkgName = appPkg.name;
     } catch {
       // ignore — api.rootDir may not have a package.json in tests
     }
-    const serviceName = config.observability.serviceName || appPkgName || "keryx";
+    const serviceName =
+      config.observability.serviceName || appPkgName || "keryx";
 
     if (config.observability.enabled) {
       this.startMetrics(serviceName);
@@ -368,8 +370,11 @@ export class Observability extends Initializer {
  */
 function createNoopTracer() {
   return {
-    startSpan: (_name: string, _options?: SpanOptions, _context?: Context): Span =>
-      noopSpan,
+    startSpan: (
+      _name: string,
+      _options?: SpanOptions,
+      _context?: Context,
+    ): Span => noopSpan,
     startActiveSpan: <F extends (span: Span) => ReturnType<F>>(
       _name: string,
       arg2: F | SpanOptions,
@@ -387,7 +392,10 @@ function createNoopTracer() {
  * only for its `collect()` method — actual export happens via our `/metrics` route.
  */
 class NoopMetricExporter {
-  export(_metrics: ResourceMetrics, resultCallback: (result: { code: number }) => void) {
+  export(
+    _metrics: ResourceMetrics,
+    resultCallback: (result: { code: number }) => void,
+  ) {
     resultCallback({ code: 0 });
   }
   async shutdown() {}
@@ -416,7 +424,12 @@ function serializeToPrometheus(resourceMetrics: ResourceMetrics): string {
         const labels = formatLabels(dp.attributes ?? {});
 
         if (type === "histogram") {
-          serializeHistogramDataPoint(lines, name, labels, dp as unknown as HistogramDataPoint);
+          serializeHistogramDataPoint(
+            lines,
+            name,
+            labels,
+            dp as unknown as HistogramDataPoint,
+          );
         } else {
           const value =
             typeof dp.value === "number" ? dp.value : Number(dp.value);
