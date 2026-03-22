@@ -85,9 +85,7 @@ export default defineConfig({
     "The fullstack TypeScript framework for MCP and APIs — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
   transformHead({ pageData }) {
     const mdUrl = "/" + pageData.relativePath;
-    return [
-      ["link", { rel: "alternate", type: "text/markdown", href: mdUrl }],
-    ];
+    return [["link", { rel: "alternate", type: "text/markdown", href: mdUrl }]];
   },
 
   head: [

@@ -1,6 +1,6 @@
 <script setup>
-import DefaultTheme from "vitepress/theme";
 import { useData } from "vitepress";
+import DefaultTheme from "vitepress/theme";
 import CliSnippet from "./CliSnippet.vue";
 import HomeContent from "./HomeContent.vue";
 import MarkdownLink from "./MarkdownLink.vue";

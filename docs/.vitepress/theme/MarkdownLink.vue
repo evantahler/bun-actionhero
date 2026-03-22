@@ -1,6 +1,6 @@
 <script setup>
-import { computed } from "vue";
 import { useData } from "vitepress";
+import { computed } from "vue";
 
 const { page } = useData();
 const mdUrl = computed(() => "/" + page.value.relativePath);
