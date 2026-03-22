@@ -10,6 +10,7 @@ import { api, logger } from "../api";
 import { MCP_RESPONSE_FORMAT } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
+import { StreamingResponse } from "../classes/StreamingResponse";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import pkg from "../package.json";
@@ -427,6 +428,35 @@ function createMcpServer(): McpServer {
                 },
               ],
               isError: true,
+            };
+          }
+
+          // For streaming responses, consume the stream and accumulate into a single result.
+          // Send incremental chunks as MCP logging messages for real-time visibility.
+          if (response instanceof StreamingResponse) {
+            const reader = response.stream.getReader();
+            const decoder = new TextDecoder();
+            let accumulated = "";
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                accumulated += chunk;
+                try {
+                  mcpServer.server.sendLoggingMessage({
+                    level: "info",
+                    data: chunk,
+                  });
+                } catch (_e) {
+                  // Logging message delivery is best-effort
+                }
+              }
+            } finally {
+              response.onClose?.();
+            }
+            return {
+              content: [{ type: "text" as const, text: accumulated }],
             };
           }
 

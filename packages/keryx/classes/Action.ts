@@ -81,6 +81,8 @@ export type ActionConstructorInputs = {
     route?: RegExp | string;
     /** HTTP method to bind the route to */
     method?: HTTP_METHOD;
+    /** When true, Swagger documents this endpoint as returning `text/event-stream` instead of JSON */
+    streaming?: boolean;
   };
 
   /** Per-action timeout in ms (overrides global `config.server.web.actionTimeout`; 0 disables) */
@@ -136,6 +138,7 @@ export abstract class Action {
   web?: {
     route: RegExp | string;
     method: HTTP_METHOD;
+    streaming?: boolean;
   };
   timeout?: number;
   task?: {
@@ -152,6 +155,7 @@ export abstract class Action {
     this.web = {
       route: args.web?.route ?? `/${this.name}`,
       method: args.web?.method ?? HTTP_METHOD.GET,
+      streaming: args.web?.streaming ?? false,
     };
     this.task = {
       frequency: args.task?.frequency,

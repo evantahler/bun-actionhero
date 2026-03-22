@@ -128,6 +128,7 @@ export default defineConfig({
           text: "Core Concepts",
           items: [
             { text: "Actions", link: "/guide/actions" },
+            { text: "Streaming", link: "/guide/streaming" },
             { text: "Initializers", link: "/guide/initializers" },
             { text: "Channels", link: "/guide/channels" },
             { text: "Tasks", link: "/guide/tasks" },
