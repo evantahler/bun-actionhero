@@ -199,6 +199,7 @@ export class Connection<
                   response = middlewareResponse.updatedResponse;
                 }
               }
+            }
           }
         }
       }

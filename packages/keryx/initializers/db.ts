@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
-import { trace } from "@opentelemetry/api";
+import { instrumentDrizzleClient } from "@kubiks/otel-drizzle";
 import { $ } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
@@ -52,12 +52,6 @@ export class DB extends Initializer {
 
     class DrizzleLogger implements LogWriter {
       write(message: string) {
-        // Drizzle's write() fires after query execution, so we can't wrap it
-        // in a timed span. Record it as an event on the currently active span instead.
-        trace.getActiveSpan()?.addEvent("db.query", {
-          "db.system": "postgresql",
-          "db.statement": message.slice(0, 1000),
-        });
         logger.debug(message);
       }
     }
@@ -65,6 +59,14 @@ export class DB extends Initializer {
     api.db.db = drizzle(api.db.pool, {
       logger: new DefaultLogger({ writer: new DrizzleLogger() }),
     });
+
+    if (config.observability.tracingEnabled) {
+      instrumentDrizzleClient(api.db.db, {
+        dbSystem: "postgresql",
+        captureQueryText: true,
+        maxQueryTextLength: 1000,
+      });
+    }
 
     try {
       await api.db.db.execute(sql`SELECT NOW()`);

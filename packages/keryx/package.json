@@ -77,6 +77,7 @@
     "prepublishOnly": "cp ../../README.md ."
   },
   "dependencies": {
+    "@kubiks/otel-drizzle": "^2.1.0",
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/context-async-hooks": "^2.0.0",
@@ -85,18 +86,18 @@
     "@opentelemetry/sdk-metrics": "^1.30.0",
     "@opentelemetry/sdk-trace-base": "^2.0.0",
     "@opentelemetry/semantic-conventions": "^1.34.0",
+    "@types/cookie": "^0.6.0",
+    "@types/mustache": "^4.2.6",
+    "@types/pg": "^8.16.0",
     "colors": "^1.4.0",
+    "commander": "^12.1.0",
     "cookie": "^0.6.0",
     "ioredis": "^5.9.2",
     "mustache": "^4.2.0",
     "node-resque": "^9.5.0",
     "pg": "^8.18.0",
     "ts-morph": "^27.0.2",
-    "typescript": "^5.9.3",
-    "commander": "^12.1.0",
-    "@types/cookie": "^0.6.0",
-    "@types/mustache": "^4.2.6",
-    "@types/pg": "^8.16.0"
+    "typescript": "^5.9.3"
   },
   "peerDependencies": {
     "drizzle-orm": "^0.45.1",
