@@ -322,6 +322,10 @@ export class Resque extends Initializer {
               )
             : {};
 
+        // Strip internal framework fields so they don't leak into action params
+        delete plainParams._traceParent;
+        delete plainParams._traceState;
+
         const fanOutId = plainParams._fanOutId as string | undefined;
 
         let response: Awaited<ReturnType<(typeof action)["run"]>>;

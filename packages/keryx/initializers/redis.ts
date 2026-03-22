@@ -81,7 +81,8 @@ export class Redis extends Initializer {
         },
       );
 
-      const result = originalSendCommand(command, ...rest) as any;
+      // @ts-expect-error ioredis overloads make the return type unresolvable here
+      const result = originalSendCommand(command, ...rest);
       if (result && typeof result.then === "function") {
         result.then(
           () => span.end(),

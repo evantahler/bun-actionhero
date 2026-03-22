@@ -165,7 +165,7 @@ Keryx automatically creates spans for:
 
 - **HTTP requests** — A parent `HTTP {METHOD}` span wraps each request with attributes `http.method`, `http.route`, `http.status_code`, and `url.full`.
 - **Action execution** — An `action:{name}` child span tracks the full action lifecycle (middleware, validation, run) with attributes `keryx.action`, `keryx.connection.type`, and `keryx.action.duration_ms`.
-- **Database queries** — A `db.query` span is created for each Drizzle query with `db.system` and `db.statement` attributes.
+- **Database queries** — A `db.query` event is added to the active span for each Drizzle query with `db.system` and `db.statement` attributes.
 - **Redis commands** — A `redis.{command}` span is created for each Redis command with `db.system` and `db.operation.name` attributes.
 
 ### W3C Trace Context Propagation

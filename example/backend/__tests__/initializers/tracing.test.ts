@@ -141,7 +141,7 @@ describe("tracing", () => {
     expect(api.observability.enabled).toBe(false);
   });
 
-  test("DB query spans are created", async () => {
+  test("DB query events are recorded on the active span", async () => {
     spanExporter.reset();
     const url = serverUrl();
     await fetch(`${url}/api/status`);
@@ -149,10 +149,13 @@ describe("tracing", () => {
     await Bun.sleep(100);
 
     const spans = spanExporter.getFinishedSpans();
-    const dbSpans = spans.filter((s) => s.name === "db.query");
-    // DB spans may or may not exist depending on whether the action hits the DB
-    for (const span of dbSpans) {
-      expect(span.attributes["db.system"]).toBe("postgresql");
+    // DB queries are recorded as events on the action span, not as separate spans
+    const dbEvents = spans.flatMap((s) =>
+      s.events.filter((e) => e.name === "db.query"),
+    );
+    // Events may or may not exist depending on whether the action hits the DB
+    for (const event of dbEvents) {
+      expect(event.attributes?.["db.system"]).toBe("postgresql");
     }
   });
 
