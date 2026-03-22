@@ -1,7 +1,7 @@
 <script setup>
 import DefaultTheme from "vitepress/theme";
-import HomeContent from "./HomeContent.vue";
 import CliSnippet from "./CliSnippet.vue";
+import HomeContent from "./HomeContent.vue";
 
 const { Layout } = DefaultTheme;
 </script>

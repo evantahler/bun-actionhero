@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { ErrorPayload } from "node-resque";
 import path from "path";
 import { api, logger } from "../api";
-import { DEFAULT_QUEUE, type Action } from "../classes/Action";
+import { type Action, DEFAULT_QUEUE } from "../classes/Action";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";

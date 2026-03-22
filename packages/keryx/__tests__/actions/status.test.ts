@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import type { Status } from "../../actions/status";
-import { api, type ActionResponse } from "../../api";
+import { type ActionResponse, api } from "../../api";
 import { HOOK_TIMEOUT, serverUrl } from "./../setup";
 
 let url: string;

@@ -298,8 +298,8 @@ export async function scaffoldProject(
           start: "bun keryx.ts start",
           dev: "bun --watch keryx.ts start",
           ...(options.includeDb ? { migrations: "bun run migrations.ts" } : {}),
-          lint: "tsc && prettier --check .",
-          format: "tsc && prettier --write .",
+          lint: "tsc && biome check .",
+          format: "tsc && biome check --write .",
         },
         dependencies: {
           keryx: `^${keryxVersion}`,
@@ -312,8 +312,8 @@ export async function scaffoldProject(
             : {}),
         },
         devDependencies: {
+          "@biomejs/biome": "^2.4.8",
           "@types/bun": "latest",
-          prettier: "^3.8.1",
           ...(options.includeDb ? { "drizzle-kit": "^0.20.18" } : {}),
         },
       },
@@ -323,6 +323,37 @@ export async function scaffoldProject(
   );
 
   await write("tsconfig.json", generateTsconfigContents());
+  await write(
+    "biome.json",
+    JSON.stringify(
+      {
+        $schema: "https://biomejs.dev/schemas/2.4.8/schema.json",
+        assist: { actions: { source: { organizeImports: "on" } } },
+        formatter: {
+          enabled: true,
+          indentStyle: "space",
+          indentWidth: 2,
+          lineWidth: 80,
+        },
+        linter: { enabled: false },
+        javascript: {
+          formatter: { quoteStyle: "double", trailingCommas: "all" },
+        },
+        files: {
+          includes: [
+            "**",
+            "!**/node_modules",
+            "!**/types/",
+            "!**/.cache/",
+            "!**/bun.lockb",
+            "!**/templates/**",
+          ],
+        },
+      },
+      null,
+      2,
+    ) + "\n",
+  );
 
   await writeTemplate("index.ts", "index.ts.mustache");
   await write("keryx.ts", await generateKeryxTsContents());

@@ -1,7 +1,7 @@
-import { defineConfig } from "vitepress";
 import { readFileSync } from "fs";
-import { resolve, dirname } from "path";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import { defineConfig } from "vitepress";
 import llmstxt from "vitepress-plugin-llms";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

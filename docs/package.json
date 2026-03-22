@@ -7,8 +7,8 @@
     "build": "bun run generate && vitepress build",
     "preview": "vitepress preview",
     "generate": "bun run scripts/generate-docs-data.ts",
-    "lint": "prettier --check .",
-    "format": "prettier --write .",
+    "lint": "biome check --files-ignore-unknown=true . && prettier --check \"**/*.md\"",
+    "format": "biome check --write --files-ignore-unknown=true . && prettier --write \"**/*.md\"",
     "test": "bun run build && bun test"
   },
   "dependencies": {
@@ -17,6 +17,7 @@
     "vitepress-plugin-llms": "^1.1.0"
   },
   "devDependencies": {
+    "prettier": "^3.8.1",
     "ts-morph": "^25.0.0"
   }
 }

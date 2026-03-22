@@ -24,7 +24,7 @@ Run from the repo root:
 bun lint
 ```
 
-This runs `tsc` type checking and `prettier --check` across all workspaces. Report any failures.
+This runs `tsc` type checking and `biome check` across all workspaces. Report any failures.
 
 ### 3. Test check
 

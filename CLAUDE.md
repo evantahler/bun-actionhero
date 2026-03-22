@@ -85,8 +85,8 @@ bun run start                      # Start server
 bun run migrations                 # Generate DB migrations from schema changes
 
 # Formatting (from root)
-bun lint                           # Check formatting (prettier)
-bun format                         # Fix formatting (prettier)
+bun lint                           # Check formatting (biome)
+bun format                         # Fix formatting (biome)
 ```
 
 ## Architecture
