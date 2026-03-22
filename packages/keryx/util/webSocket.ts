@@ -57,12 +57,16 @@ export async function handleWebsocketAction(
         );
       }
     } finally {
-      ws.send(
-        JSON.stringify({
-          messageId: formattedMessage.messageId,
-          streaming: false,
-        }),
-      );
+      try {
+        ws.send(
+          JSON.stringify({
+            messageId: formattedMessage.messageId,
+            streaming: false,
+          }),
+        );
+      } catch (_e) {
+        // Connection may already be closed (e.g., client disconnected mid-stream)
+      }
       response.onClose?.();
     }
   } else {
