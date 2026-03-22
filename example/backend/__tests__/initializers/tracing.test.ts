@@ -115,9 +115,8 @@ describe("tracing", () => {
     expect(actionSpan!.spanContext().traceId).toBe(
       httpSpan!.spanContext().traceId,
     );
-    // Action's parent is the HTTP span (SDK v2 uses parentSpanContext)
-    const readableAction = actionSpan as any;
-    expect(readableAction.parentSpanContext?.spanId).toBe(
+    // @ts-expect-error -- parentSpanContext exists on ReadableSpan in OTel SDK v2 but is not declared in the public type definitions
+    expect(actionSpan.parentSpanContext?.spanId).toBe(
       httpSpan!.spanContext().spanId,
     );
   });

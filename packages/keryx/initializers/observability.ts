@@ -1,9 +1,11 @@
+import path from "node:path";
 import {
   type Context,
   context,
   metrics,
   propagation,
   type Span,
+  type SpanOptions,
   trace,
 } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
@@ -11,8 +13,10 @@ import { W3CTraceContextPropagator } from "@opentelemetry/core";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import {
+  InstrumentType,
   MeterProvider,
   PeriodicExportingMetricReader,
+  type ResourceMetrics,
 } from "@opentelemetry/sdk-metrics";
 import {
   BasicTracerProvider,
@@ -24,8 +28,6 @@ import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
-import pkg from "../package.json";
-
 const namespace = "observability";
 
 declare module "../classes/API" {
@@ -124,8 +126,17 @@ export class Observability extends Initializer {
   }
 
   async start() {
-    // Resolve service name (shared by metrics and tracing): env var > package.json name > "keryx"
-    const serviceName = config.observability.serviceName || pkg.name || "keryx";
+    // Resolve service name: env var > app package.json name > "keryx"
+    let appPkgName: string | undefined;
+    try {
+      const appPkg = await Bun.file(
+        path.join(api.rootDir, "package.json"),
+      ).json() as { name?: string };
+      appPkgName = appPkg.name;
+    } catch {
+      // ignore — api.rootDir may not have a package.json in tests
+    }
+    const serviceName = config.observability.serviceName || appPkgName || "keryx";
 
     if (config.observability.enabled) {
       this.startMetrics(serviceName);
@@ -357,13 +368,15 @@ export class Observability extends Initializer {
  */
 function createNoopTracer() {
   return {
-    startSpan: (_name: string, _options?: any, _context?: any): Span =>
+    startSpan: (_name: string, _options?: SpanOptions, _context?: Context): Span =>
       noopSpan,
-    startActiveSpan: <F extends (span: Span) => unknown>(
+    startActiveSpan: <F extends (span: Span) => ReturnType<F>>(
       _name: string,
-      ...args: any[]
+      arg2: F | SpanOptions,
+      arg3?: F | Context,
+      arg4?: F,
     ): ReturnType<F> => {
-      const fn = args[args.length - 1] as F;
+      const fn = (arg4 ?? arg3 ?? arg2) as F;
       return fn(noopSpan) as ReturnType<F>;
     },
   };
@@ -374,7 +387,7 @@ function createNoopTracer() {
  * only for its `collect()` method — actual export happens via our `/metrics` route.
  */
 class NoopMetricExporter {
-  export(_metrics: any, resultCallback: (result: { code: number }) => void) {
+  export(_metrics: ResourceMetrics, resultCallback: (result: { code: number }) => void) {
     resultCallback({ code: 0 });
   }
   async shutdown() {}
@@ -387,7 +400,7 @@ class NoopMetricExporter {
  * Serialize OTel ResourceMetrics to Prometheus exposition format.
  * Supports Counter, Histogram, Gauge, and UpDownCounter metric types.
  */
-function serializeToPrometheus(resourceMetrics: any): string {
+function serializeToPrometheus(resourceMetrics: ResourceMetrics): string {
   const lines: string[] = [];
 
   for (const scopeMetrics of resourceMetrics?.scopeMetrics ?? []) {
@@ -403,7 +416,7 @@ function serializeToPrometheus(resourceMetrics: any): string {
         const labels = formatLabels(dp.attributes ?? {});
 
         if (type === "histogram") {
-          serializeHistogramDataPoint(lines, name, labels, dp);
+          serializeHistogramDataPoint(lines, name, labels, dp as unknown as HistogramDataPoint);
         } else {
           const value =
             typeof dp.value === "number" ? dp.value : Number(dp.value);
@@ -420,26 +433,19 @@ function sanitizeMetricName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_:]/g, "_");
 }
 
-// OTel DataPointType values (from @opentelemetry/sdk-metrics)
-const HISTOGRAM_TYPE = 0;
-const SUM_TYPE = 1;
-const GAUGE_TYPE = 2;
-const EXPONENTIAL_HISTOGRAM_TYPE = 3;
-
-function otelTypeToPrometheus(type: number): string {
+function otelTypeToPrometheus(type: InstrumentType): string {
   switch (type) {
-    case HISTOGRAM_TYPE:
-    case EXPONENTIAL_HISTOGRAM_TYPE:
+    case InstrumentType.HISTOGRAM:
       return "histogram";
-    case GAUGE_TYPE:
+    case InstrumentType.GAUGE:
+    case InstrumentType.OBSERVABLE_GAUGE:
       return "gauge";
-    case SUM_TYPE:
     default:
-      return "gauge"; // counters are exported as gauges in prometheus for simplicity; real distinction via _total suffix
+      return "gauge"; // counters/up-down counters exported as gauges; real distinction via _total suffix
   }
 }
 
-function formatLabels(attributes: Record<string, any>): string {
+function formatLabels(attributes: Record<string, unknown>): string {
   const entries = Object.entries(attributes);
   if (entries.length === 0) return "";
   const parts = entries.map(
@@ -449,11 +455,19 @@ function formatLabels(attributes: Record<string, any>): string {
   return `{${parts.join(",")}}`;
 }
 
+interface HistogramDataPoint {
+  value?: {
+    buckets?: { boundaries?: number[]; counts?: number[] };
+    sum?: number;
+    count?: number;
+  };
+}
+
 function serializeHistogramDataPoint(
   lines: string[],
   name: string,
   labels: string,
-  dp: any,
+  dp: HistogramDataPoint,
 ): void {
   const boundaries: number[] = dp.value?.buckets?.boundaries ?? [];
   const counts: number[] = dp.value?.buckets?.counts ?? [];

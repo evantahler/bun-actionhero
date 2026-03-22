@@ -77,7 +77,7 @@ export async function runWithSpan<T>(
  *
  * @param inputs - The task input object to enrich (mutated in place).
  */
-export function injectTraceToParams(inputs: Record<string, any>): void {
+export function injectTraceToParams(inputs: Record<string, unknown>): void {
   if (!api.observability.tracing.enabled) return;
   const carrier: Record<string, string> = {};
   api.observability.tracing.injectContext(carrier);
@@ -93,7 +93,7 @@ export function injectTraceToParams(inputs: Record<string, any>): void {
  * @returns An OTel `Context` or `undefined`.
  */
 export function extractTraceFromParams(
-  params: Record<string, any>,
+  params: Record<string, unknown>,
 ): Context | undefined {
   const traceParent = params._traceParent as string | undefined;
   const traceState = params._traceState as string | undefined;

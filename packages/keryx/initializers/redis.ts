@@ -69,8 +69,9 @@ export class Redis extends Initializer {
    */
   private instrumentRedisTracing(client: RedisClient) {
     const originalSendCommand = client.sendCommand.bind(client);
-    client.sendCommand = function (command: any, ...rest: any[]) {
-      const commandName = command?.name ?? "unknown";
+    client.sendCommand = function (...args: Parameters<typeof originalSendCommand>) {
+      const [command] = args;
+      const commandName = (command as { name?: string }).name ?? "unknown";
       const span = api.observability.tracing.tracer.startSpan(
         `redis.${commandName}`,
         {
@@ -82,7 +83,7 @@ export class Redis extends Initializer {
         },
       );
 
-      const result: unknown = originalSendCommand(command, ...rest);
+      const result: unknown = originalSendCommand(...args);
       if (result && typeof (result as Promise<unknown>).then === "function") {
         finalizeSpanOnPromise(span, result as Promise<unknown>);
       } else {
