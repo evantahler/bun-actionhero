@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import {
   loadOAuthTemplates,
-  renderSuccessPage,
   type OAuthTemplates,
+  renderSuccessPage,
 } from "../../util/oauthTemplates";
 
 const packageDir = import.meta.dir + "/../..";
