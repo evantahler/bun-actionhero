@@ -1,8 +1,8 @@
+import { parse } from "node:url";
 import type { ServerWebSocket } from "bun";
 import colors from "colors";
 import cookie from "cookie";
 import { randomUUID } from "crypto";
-import { parse } from "node:url";
 import { api, logger } from "../api";
 import { type HTTP_METHOD } from "../classes/Action";
 import { Connection } from "../classes/Connection";

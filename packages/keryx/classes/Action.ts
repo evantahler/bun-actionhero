@@ -3,17 +3,17 @@ import type { Connection } from "./Connection";
 import type { TypedError } from "./TypedError";
 
 export enum MCP_RESPONSE_FORMAT {
-  "JSON" = "json",
-  "MARKDOWN" = "markdown",
+  JSON = "json",
+  MARKDOWN = "markdown",
 }
 
 export enum HTTP_METHOD {
-  "GET" = "GET",
-  "POST" = "POST",
-  "PUT" = "PUT",
-  "DELETE" = "DELETE",
-  "PATCH" = "PATCH",
-  "OPTIONS" = "OPTIONS",
+  GET = "GET",
+  POST = "POST",
+  PUT = "PUT",
+  DELETE = "DELETE",
+  PATCH = "PATCH",
+  OPTIONS = "OPTIONS",
 }
 
 export const DEFAULT_QUEUE = "default";

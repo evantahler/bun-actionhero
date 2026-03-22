@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { api, type ActionResponse } from "keryx";
+import { type ActionResponse, api } from "keryx";
 import type {
   MessageCrete,
   MessagesList,

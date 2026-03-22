@@ -1,16 +1,16 @@
-import { Command } from "commander";
 import os from "node:os";
+import { Command } from "commander";
 import path from "path";
 import { Action, api, Connection, RUN_MODE } from "../api";
-import { config } from "../config";
 import { ExitCode } from "./../classes/ExitCode";
 import { TypedError } from "./../classes/TypedError";
+import { config } from "../config";
 import { generateComponent } from "./generate";
 import { globLoader } from "./glob";
 import {
   interactiveScaffold,
-  scaffoldProject,
   type ScaffoldOptions,
+  scaffoldProject,
 } from "./scaffold";
 import { upgradeProject } from "./upgrade";
 

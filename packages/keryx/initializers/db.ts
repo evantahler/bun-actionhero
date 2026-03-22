@@ -1,10 +1,10 @@
+import fs from "node:fs";
+import { unlink } from "node:fs/promises";
 import { $ } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
-import fs from "node:fs";
-import { unlink } from "node:fs/promises";
 import path from "path";
 import { Pool } from "pg";
 import { api, logger } from "../api";

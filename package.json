@@ -37,7 +37,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@types/bun": "^1.1.8",
-    "prettier": "^3.3.3"
+    "@biomejs/biome": "^2.4.8",
+    "@types/bun": "^1.1.8"
   }
 }
