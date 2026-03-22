@@ -261,23 +261,15 @@ describe("mcp initializer (enabled)", () => {
       }
     });
 
-    test("tool descriptions mention response format and _responseFormat parameter", async () => {
+    test("tool input schema does not include _responseFormat parameter", async () => {
       const result = await client.listTools();
       const statusTool = result.tools.find((t) => t.name === "status");
       expect(statusTool).toBeDefined();
-      expect(statusTool!.description).toContain("_responseFormat");
-      expect(statusTool!.description).toContain("json");
 
-      // inputSchema should include _responseFormat as an optional enum property
       const schema = statusTool!.inputSchema as {
         properties?: Record<string, any>;
       };
-      expect(schema.properties?._responseFormat).toBeDefined();
-      expect(
-        schema.properties!._responseFormat.enum ??
-          schema.properties!._responseFormat.anyOf?.find((s: any) => s.enum)
-            ?.enum,
-      ).toEqual(expect.arrayContaining(["json", "markdown"]));
+      expect(schema.properties?._responseFormat).toBeUndefined();
     });
 
     test("resources/list returns actions registered as MCP resources", async () => {
@@ -418,10 +410,10 @@ describe("mcp initializer (enabled)", () => {
       expect(parsed2.data.userId).toBe(userId);
     });
 
-    test("tool invocation with _responseFormat=markdown returns markdown", async () => {
+    test("action with responseFormat=markdown returns markdown", async () => {
       const result = await client.callTool({
-        name: "status",
-        arguments: { _responseFormat: "markdown" },
+        name: "status-markdown",
+        arguments: {},
       });
       expect(result.isError).toBeFalsy();
 
@@ -442,7 +434,7 @@ describe("mcp initializer (enabled)", () => {
       }).toThrow();
     });
 
-    test("tool invocation defaults to JSON when _responseFormat is omitted", async () => {
+    test("action without responseFormat defaults to JSON", async () => {
       const result = await client.callTool({
         name: "status",
         arguments: {},
@@ -456,16 +448,6 @@ describe("mcp initializer (enabled)", () => {
       const parsed = JSON.parse(content[0].text!);
       expect(parsed).toHaveProperty("name");
       expect(typeof parsed).toBe("object");
-    });
-
-    test("_responseFormat parameter is stripped before reaching action", async () => {
-      // If _responseFormat leaked through, the action's Zod validation would
-      // reject it as an unknown key. The call should succeed.
-      const result = await client.callTool({
-        name: "status",
-        arguments: { _responseFormat: "json" },
-      });
-      expect(result.isError).toBeFalsy();
     });
 
     test("tool invocation with missing required param returns isError", async () => {

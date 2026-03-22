@@ -370,21 +370,13 @@ function createMcpServer(): McpServer {
       inputSchema?: any;
     } = {};
 
-    const responseDefault = action.mcp?.responseFormat ?? "json";
     if (action.description) {
-      toolConfig.description = `${action.description} (Responds in ${responseDefault} by default. Set _responseFormat to override.)`;
+      toolConfig.description = action.description;
     }
 
-    const baseSchema = action.inputs
+    toolConfig.inputSchema = action.inputs
       ? sanitizeSchemaForMcp(action.inputs)
       : z4mini.strictObject({});
-
-    // Inject _responseFormat param so agents can request markdown per-call
-    const schemaShape = "shape" in baseSchema ? (baseSchema as any).shape : {};
-    toolConfig.inputSchema = z4mini.object({
-      ...schemaShape,
-      _responseFormat: z4mini.optional(z4mini.enum(["json", "markdown"])),
-    });
 
     mcpServer.registerTool(
       toolName,
@@ -414,13 +406,6 @@ function createMcpServer(): McpServer {
               ? (args as Record<string, unknown>)
               : {};
 
-          // Extract and strip _responseFormat before passing to action
-          const requestedFormat = params._responseFormat as
-            | "json"
-            | "markdown"
-            | undefined;
-          delete params._responseFormat;
-
           const { response, error } = await connection.act(
             action.name,
             params,
@@ -444,9 +429,7 @@ function createMcpServer(): McpServer {
             };
           }
 
-          // Priority: agent param > action config > json default
-          const format =
-            requestedFormat ?? action.mcp?.responseFormat ?? "json";
+          const format = action.mcp?.responseFormat ?? "json";
           const text =
             format === "markdown"
               ? toMarkdown(response, {

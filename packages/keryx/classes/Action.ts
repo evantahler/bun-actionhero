@@ -47,10 +47,9 @@ export type McpActionConfig = {
     title?: string;
   };
   /**
-   * Default response format for MCP tool calls.
+   * Response format for MCP tool calls.
    * `"json"` (default) returns `JSON.stringify(response)`.
-   * `"markdown"` returns a human-readable markdown rendering.
-   * Agents can override per-call via the `_responseFormat` tool parameter.
+   * `"markdown"` returns a human-readable markdown rendering via `toMarkdown()`.
    */
   responseFormat?: "json" | "markdown";
 };

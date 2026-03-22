@@ -64,14 +64,14 @@ export class InternalAction extends Action {
 
 The full `mcp` property is of type `McpActionConfig`:
 
-| Property         | Type                   | Default  | Description                                                                                |
-| ---------------- | ---------------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `tool`           | `boolean`              | `true`   | Whether to expose this action as an MCP tool                                               |
-| `isLoginAction`  | `boolean`              | —        | Tag as the login action for the OAuth flow                                                 |
-| `isSignupAction` | `boolean`              | —        | Tag as the signup action for the OAuth flow                                                |
-| `resource`       | `object`               | —        | Expose this action as an MCP resource (see [Resources](#resources) below)                  |
-| `prompt`         | `object`               | —        | Expose this action as an MCP prompt (see [Prompts](#prompts) below)                        |
-| `responseFormat` | `"json" \| "markdown"` | `"json"` | Default response format for MCP tool calls (see [Response Format](#response-format) below) |
+| Property         | Type                   | Default  | Description                                                                        |
+| ---------------- | ---------------------- | -------- | ---------------------------------------------------------------------------------- |
+| `tool`           | `boolean`              | `true`   | Whether to expose this action as an MCP tool                                       |
+| `isLoginAction`  | `boolean`              | —        | Tag as the login action for the OAuth flow                                         |
+| `isSignupAction` | `boolean`              | —        | Tag as the signup action for the OAuth flow                                        |
+| `resource`       | `object`               | —        | Expose this action as an MCP resource (see [Resources](#resources) below)          |
+| `prompt`         | `object`               | —        | Expose this action as an MCP prompt (see [Prompts](#prompts) below)                |
+| `responseFormat` | `"json" \| "markdown"` | `"json"` | Response format for MCP tool calls (see [Response Format](#response-format) below) |
 
 The `isLoginAction` and `isSignupAction` markers tell the OAuth system which actions to invoke when users authenticate through the MCP authorization page. These actions must return `OAuthActionResponse` (`{ user: { id: number } }`).
 
@@ -79,9 +79,7 @@ The `isLoginAction` and `isSignupAction` markers tell the OAuth system which act
 
 By default, MCP tool responses are JSON-serialized. You can configure actions to return human-readable markdown instead, which is more token-efficient for LLM consumers that don't need structured data.
 
-### Action-level default
-
-Set `mcp.responseFormat` on an action to change its default format:
+Set `mcp.responseFormat` on an action to change its format:
 
 ```ts
 export class StatusAction extends Action {
@@ -90,20 +88,6 @@ export class StatusAction extends Action {
   // ...
 }
 ```
-
-### Agent-requested format
-
-Every MCP tool automatically includes a `_responseFormat` parameter that agents can use to override the action's default per-call:
-
-```ts
-const result = await client.callTool({
-  name: "status",
-  arguments: { _responseFormat: "markdown" },
-});
-// result.content[0].text → "- **name**: keryx\n- **pid**: 1234\n..."
-```
-
-The priority chain is: **agent parameter** > **action config** > **json default**.
 
 ### Markdown rendering rules
 

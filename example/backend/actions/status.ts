@@ -22,3 +22,28 @@ export class Status implements Action {
     };
   }
 }
+
+/**
+ * Same as Status but configured to return markdown-formatted MCP responses.
+ * Used for testing `mcp.responseFormat`.
+ */
+export class StatusMarkdown implements Action {
+  name = "status:markdown";
+  description = "Returns server status formatted as markdown.";
+  inputs = z.object({});
+  mcp = { responseFormat: "markdown" as const };
+  web = { route: "/status/markdown", method: HTTP_METHOD.GET };
+
+  async run() {
+    const consumedMemoryMB =
+      Math.round((process.memoryUsage().heapUsed / 1024 / 1024) * 100) / 100;
+
+    return {
+      name: api.process.name,
+      pid: api.process.pid,
+      version: pkg.version,
+      uptime: new Date().getTime() - api.bootTime,
+      consumedMemoryMB,
+    };
+  }
+}
