@@ -41,6 +41,10 @@ keryx/
   docs/                    # VitePress documentation site
 ```
 
+## Development Environment
+
+This is a Bun-based project. Use `bun` instead of `npm` for all package management commands (install, run, test). Never use symlinks for node_modules resolution - just run `bun install`.
+
 ## Environment Setup
 
 Example backend requires an `.env` file. In a fresh clone or new git worktree:
@@ -87,128 +91,19 @@ bun format                         # Fix formatting (prettier)
 
 ## Architecture
 
-### Dual-Directory Loading
+The `api` singleton (`packages/keryx/api.ts`) manages the full lifecycle: initialize -> start -> stop. Actions are the universal controller. For detailed architecture, read the relevant doc:
 
-The framework uses `packageDir` (auto-resolved from `import.meta.path`) and `rootDir` (set by the user app). Initializers, actions, and servers are loaded from both directories:
-
-```typescript
-import { api } from "keryx";
-api.rootDir = import.meta.dir;  // User sets this before api.initialize()
-```
-
-### Global Singleton: `api`
-The `api` object (`packages/keryx/api.ts`) is a global singleton stored on `globalThis`. It manages the full lifecycle: initialize -> start -> stop. All initializers attach their namespaces to it (e.g., `api.db`, `api.actions`, `api.redis`).
-
-### Actions (`packages/keryx/classes/Action.ts`)
-Transport-agnostic controllers. Every action defines:
-- `inputs`: Zod schema for validation and type inference
-- `web`: `{ route, method }` for HTTP routing (routes are regex or string with `:param` path params, defined on the action itself)
-- `task`: `{ queue, frequency }` for background job scheduling
-- `middleware`: Array of `ActionMiddleware` (e.g., `SessionMiddleware` for auth)
-- `run(params, connection, abortSignal?)`: The handler. **Must throw `TypedError`** for errors. The `abortSignal` fires when the action exceeds its timeout.
-- `timeout`: Per-action timeout in ms (overrides global `config.actions.timeout`, default 300s). Set to `0` to disable.
-- `mcp`: `McpActionConfig` — `{ tool, isLoginAction, isSignupAction, resource?, prompt? }` (default `{ tool: true }`)
-
-Type helpers: `ActionParams<A>` infers input types, `ActionResponse<A>` infers return types.
-
-Framework actions live in `packages/keryx/actions/` (status, swagger). App actions live in `example/backend/actions/` and must be re-exported from `example/backend/actions/.index.ts` for frontend type sharing.
-
-### Initializers (`packages/keryx/classes/Initializer.ts`)
-Lifecycle components with priority-based ordering. Each initializer:
-1. Uses **module augmentation** to extend the `API` interface with its namespace
-2. Returns its namespace object from `initialize()`
-3. Connects to services in `start()`, cleans up in `stop()`
-
-Framework initializers use relative module augmentation:
-```typescript
-declare module "../classes/API" {
-  export interface API {
-    [namespace]: Awaited<ReturnType<MyInitializer["initialize"]>>;
-  }
-}
-```
-
-User/app initializers use package module augmentation:
-```typescript
-declare module "keryx" {
-  export interface API {
-    [namespace]: Awaited<ReturnType<MyInitializer["initialize"]>>;
-  }
-}
-```
-
-Key initializers and their priorities: `observability` (50), `actions` (100), `db` (100), `redis` (200), `pubsub` (150), `swagger` (150), `oauth` (175), `mcp` (200/560/90), `resque` (250), `application` (1000).
-
-### Fan-Out Tasks (`packages/keryx/initializers/actionts.ts`)
-A parent action can distribute work across many child jobs using `api.actions.fanOut()`. Child results are automatically collected in Redis via `_fanOutId` injection.
-
-```typescript
-// Single action: fan out same action with different inputs
-const result = await api.actions.fanOut("child:action", inputsArray, "worker", { batchSize: 100, resultTtl: 600 });
-
-// Multi action: fan out different actions in one batch
-const result = await api.actions.fanOut([
-  { action: "users:process", inputs: { userId: "1" } },
-  { action: "emails:send", inputs: { to: "a@b.com" }, queue: "priority" },
-], { resultTtl: 600 });
-
-// Query results
-const status = await api.actions.fanOutStatus(result.fanOutId);
-// → { total, completed, failed, results: [...], errors: [...] }
-```
-
-Redis keys: `fanout:{id}` (hash), `fanout:{id}:results` (list), `fanout:{id}:errors` (list). All keys have TTL (default 10 min, refreshed on each child completion).
-
-### Channels (`packages/keryx/classes/Channel.ts`)
-PubSub channels for WebSocket real-time messaging. Channels define a `name` (string or RegExp pattern) and optional `middleware` (ChannelMiddleware) for authorization on subscribe and cleanup on unsubscribe.
-
-### Connection (`packages/keryx/classes/Connection.ts`)
-Represents a client connection across all transports. Key properties:
-- `sessionId`: Session ID for Redis session lookup (defaults to connection `id`; differs for WebSocket connections with cookie-based sessions)
-- `correlationId`: Request ID for distributed tracing (from `X-Request-Id` header or auto-generated UUID). Configured via `config.server.web.correlationId`.
-
-### Servers (`packages/keryx/servers/web.ts`)
-WebServer uses `Bun.serve` for HTTP + WebSocket. The server logic is split into utility modules in `packages/keryx/util/`:
-- `webRouting.ts` — route matching and HTTP request routing
-- `webSocket.ts` — WebSocket message handling and connection lifecycle
-- `webCompression.ts` — HTTP compression (Brotli, gzip) with configurable threshold
-- `webResponse.ts` — response formatting and header management
-- `webStaticFiles.ts` — static file serving with ETag/304 caching and Cache-Control headers
-
-### MCP Server & OAuth (`packages/keryx/initializers/mcp.ts`, `packages/keryx/initializers/oauth.ts`)
-MCP (Model Context Protocol) server that exposes actions as tools for AI agents. Enabled via `MCP_SERVER_ENABLED=true`.
-
-- **Tool registration**: All actions with `mcp.tool !== false` are registered as tools. Actions with `mcp.resource` are registered as MCP resources (static URI or URI template). Actions with `mcp.prompt` are registered as MCP prompts. Names convert `:` → `-`. Zod schemas are sanitized for `zod/v4-mini` compatibility before JSON Schema conversion.
-- **OAuth 2.1 endpoints**: `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`, `/oauth/register`, `/oauth/authorize` (GET/POST), `/oauth/token`
-- **Login/signup markers**: Actions tagged with `mcp.isLoginAction` or `mcp.isSignupAction` are invoked during the OAuth authorization flow. Must return `OAuthActionResponse` (`{ user: { id: number } }`).
-- **Redis keys**: `oauth:client:{id}` (TTL 30d), `oauth:code:{code}` (TTL 5m), `oauth:token:{token}` (TTL = session TTL)
-- **Templates**: HTML pages for OAuth login/signup flow live in `packages/keryx/templates/`
-- **Per-session McpServer**: Each authenticated session creates its own `McpServer` instance, tracked via `mcp-session-id` header.
-
-### Config (`packages/keryx/config/`)
-Modular config with per-environment overrides via `loadFromEnvIfSet()` — checks `ENV_VAR_NODEENV` first, then `ENV_VAR`, then falls back to the default value. Type-aware (auto-parses booleans and numbers).
-
-Key config files:
-- `config/server/web.ts` — port, host, CORS, `staticFiles` (cacheControl, etag), `websocket` (drainTimeout, maxPayloadSize), `compression` (enabled, threshold, encodings), `correlationId` (header, trustProxy), security headers
-- `config/logger.ts` — log level (trace→fatal), format (`text` or `json` for structured NDJSON), colorize, timestamps
-- `config/observability.ts` — `OTEL_METRICS_ENABLED`, `OTEL_METRICS_ROUTE` (`/metrics`), `OTEL_SERVICE_NAME`
-- `config/actions.ts` — global action `timeout` (default 300s)
-
-### CLI Generators (`packages/keryx/util/generate.ts`)
-`keryx generate <type> <name>` scaffolds new files from Mustache templates in `packages/keryx/templates/generate/`. Supported types: `action`, `initializer`, `middleware`, `channel`, `ops`. Each also generates a corresponding test file.
-
-### Ops (`example/backend/ops/`)
-Business logic layer (e.g., `UserOps`, `MessageOps`) separating DB operations from actions.
-
-### Schemas (`example/backend/schema/`)
-Drizzle ORM table definitions. Migrations auto-apply on server start when `config.database.autoMigrate` is true.
-
-### Zod Helpers
-- **Framework** (`packages/keryx/util/zodMixins.ts`): `secret(schema)`, `isSecret()`, `zBooleanFromString()`, `zIdOrModel()` (generic factory)
-- **App** (`example/backend/util/zodMixins.ts`): `zUserIdOrModel()`, `zMessageIdOrModel()` — imports `zIdOrModel` from `"keryx"`
-
-### TypedError (`packages/keryx/classes/TypedError.ts`)
-All action errors must use `TypedError` with an `ErrorType` enum. Each error type maps to an HTTP status code via `ErrorStatusCodes`.
+- Actions: `docs/guide/actions.md` — inputs, web routes, tasks, middleware, MCP config
+- Initializers: `docs/guide/initializers.md` — priorities, module augmentation, lifecycle
+- Channels: `docs/guide/channels.md` — PubSub, WebSocket, pattern matching
+- MCP/OAuth: `docs/guide/mcp.md` — tool registration, OAuth 2.1, per-session servers
+- Config: `docs/guide/config.md` — modular config, loadFromEnvIfSet(), env overrides
+- Tasks/Fan-Out: `docs/guide/tasks.md` — background jobs, fanOut(), result collection
+- Testing: `docs/guide/testing.md` — test structure, helpers, real HTTP requests
+- CLI: `docs/guide/cli.md` — generators, start, upgrade
+- Servers: `docs/reference/servers.md` — WebServer, routing, compression, static files
+- Classes: `docs/reference/classes.md` — TypedError, Connection, ErrorType
+- Utilities: `docs/reference/utilities.md` — Zod helpers, secret(), globLoader
 
 ## Imports
 
@@ -232,45 +127,20 @@ import { SessionMiddleware } from "../middleware/session";
 - **Always `bunx`, never `npx`** — This is a Bun project. Use `bunx` for all package runner commands.
 - **JSDoc annotations on public APIs** — All public classes, methods, and types in `packages/keryx/` must have JSDoc annotations. Use `@param` for every parameter (with detailed prose explaining edge cases), `@returns` when non-obvious, and `@throws {TypedError}` where applicable. See `Action.run()` in `packages/keryx/classes/Action.ts` as the reference pattern. Keep simpler methods concise — don't over-document the obvious.
 
-## Testing Patterns
-
-Tests use Bun's built-in test runner. Each test file boots/stops the full server:
-
-```typescript
-// Example backend test
-import "../index";  // Sets api.rootDir
-import { api } from "keryx";
-import { HOOK_TIMEOUT, serverUrl } from "./../setup";
-
-beforeAll(async () => { await api.start(); }, HOOK_TIMEOUT);
-afterAll(async () => { await api.stop(); }, HOOK_TIMEOUT);
-
-test("...", async () => {
-  const res = await fetch(serverUrl() + "/api/status");
-  const body = (await res.json()) as ActionResponse<Status>;
-});
-```
-
-Tests make real HTTP requests via `fetch` - no mock server. Tests run non-concurrently to avoid port conflicts.
+## Testing
 
 **Every code change should include tests.** When adding features, fixing bugs, or modifying behavior, always write or update tests to cover the change. If a PR has no test changes, that's a red flag.
 
-### Auto-discovery
-Actions, initializers, and servers are auto-discovered via `globLoader` (`packages/keryx/util/glob.ts`), which scans directories for `*.ts` files and instantiates all exported classes. Files prefixed with `.` are skipped. The framework loads from both `packageDir` and `rootDir`.
+Tests make real HTTP requests via `fetch` — no mock server. Tests run non-concurrently to avoid port conflicts. See `docs/guide/testing.md` for patterns, helpers (`serverUrl()`, `HOOK_TIMEOUT`), and test file structure.
 
 ## Documentation Site (`docs/`)
 
-VitePress site deployed to `keryxjs.com` via GitHub Pages. Key commands:
+VitePress site at `keryxjs.com`. When modifying backend code, consider updating corresponding docs. Follow the editorial style guide at `docs/guide/style-guide.md`.
 
 ```bash
 bun docs:dev                       # Preview docs locally
 bun docs:build                     # Generate reference data + build static site
-cd docs && bun run generate        # Regenerate reference JSON from backend source
 ```
-
-**Important**: When modifying backend code (actions, initializers, config, classes), consider updating the corresponding documentation in `docs/guide/` or `docs/reference/`. When writing or editing documentation, follow the editorial style guide at `docs/guide/style-guide.md` — it covers voice, tone, capitalization, and formatting conventions. The reference pages (`docs/reference/actions.md`, `initializers.md`, `config.md`) are auto-generated from source via `docs/scripts/generate-docs-data.ts`, but the guide pages (`docs/guide/*.md`) are hand-written and need manual updates.
-
-The landing page (`docs/index.md`) has its own content — it no longer includes the README.
 
 ## Pull Requests
 
