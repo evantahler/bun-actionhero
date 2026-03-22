@@ -8,6 +8,7 @@ import type { RateLimitInfo } from "../middleware/rateLimit";
 import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { LogFormat } from "./Logger";
+import { StreamingResponse } from "./StreamingResponse";
 import { ErrorType, TypedError } from "./TypedError";
 
 /**
@@ -164,8 +165,15 @@ export class Connection<
               formattedParams,
               this,
             );
-            if (middlewareResponse && middlewareResponse?.updatedResponse)
-              response = middlewareResponse.updatedResponse;
+            if (middlewareResponse && middlewareResponse?.updatedResponse) {
+              if (response instanceof StreamingResponse) {
+                logger.warn(
+                  `Middleware cannot replace a StreamingResponse for action '${actionName}'`,
+                );
+              } else {
+                response = middlewareResponse.updatedResponse;
+              }
+            }
           }
         }
       }
