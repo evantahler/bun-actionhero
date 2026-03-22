@@ -22,11 +22,11 @@ import {
   TraceIdRatioBasedSampler,
 } from "@opentelemetry/sdk-trace-base";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
-import path from "path";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
+import pkg from "../package.json";
 
 const namespace = "observability";
 
@@ -126,17 +126,8 @@ export class Observability extends Initializer {
   }
 
   async start() {
-    // Resolve service name (shared by metrics and tracing): env var > app package.json name > "keryx"
-    let serviceName = config.observability.serviceName;
-    if (!serviceName) {
-      try {
-        const pkgPath = path.join(api.rootDir, "package.json");
-        const pkg = await Bun.file(pkgPath).json();
-        serviceName = pkg.name || "keryx";
-      } catch {
-        serviceName = "keryx";
-      }
-    }
+    // Resolve service name (shared by metrics and tracing): env var > package.json name > "keryx"
+    const serviceName = config.observability.serviceName || pkg.name || "keryx";
 
     if (config.observability.enabled) {
       this.startMetrics(serviceName);
