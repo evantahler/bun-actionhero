@@ -41,6 +41,7 @@ For example: \`/guide/actions.md\`, \`/reference/config.md\`
 - Authentication: /guide/authentication.md
 - Typed Clients: /guide/typed-clients.md
 - Building for AI Agents: /guide/agents.md
+- Caching: /guide/caching.md
 - Advanced Patterns: /guide/advanced-patterns.md
 - Deployment: /guide/deployment.md
 `;
@@ -82,8 +83,31 @@ export default defineConfig({
   title: "Keryx",
   description:
     "The fullstack TypeScript framework for MCP and APIs — transport-agnostic actions for HTTP, WebSocket, CLI, background tasks, and MCP, built on Bun.",
+  transformHead({ pageData }) {
+    const mdUrl = "/" + pageData.relativePath;
+    return [["link", { rel: "alternate", type: "text/markdown", href: mdUrl }]];
+  },
+
   head: [
     ["link", { rel: "icon", href: "/images/horn.svg" }],
+    [
+      "link",
+      {
+        rel: "alternate",
+        type: "text/plain",
+        href: "/llms.txt",
+        title: "LLM documentation index",
+      },
+    ],
+    [
+      "link",
+      {
+        rel: "alternate",
+        type: "text/plain",
+        href: "/llms-full.txt",
+        title: "Full LLM documentation",
+      },
+    ],
     [
       "script",
       {
@@ -148,6 +172,7 @@ export default defineConfig({
               text: "Building for AI Agents",
               link: "/guide/agents",
             },
+            { text: "Caching", link: "/guide/caching" },
             { text: "Security", link: "/guide/security" },
             { text: "Advanced Patterns", link: "/guide/advanced-patterns" },
             { text: "Observability", link: "/guide/observability" },
