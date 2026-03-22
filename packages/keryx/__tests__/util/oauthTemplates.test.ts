@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, test } from "bun:test";
 import {
   loadOAuthTemplates,
   renderSuccessPage,
@@ -15,7 +15,8 @@ describe("renderSuccessPage", () => {
   });
 
   test("HTML-escapes the redirectUrl in the meta tag", async () => {
-    const malicious = 'https://evil.com/callback?a=1"><script>alert(1)</script>';
+    const malicious =
+      'https://evil.com/callback?a=1"><script>alert(1)</script>';
     const response = renderSuccessPage(malicious, templates);
     const html = await response.text();
 
