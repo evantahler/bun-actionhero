@@ -24,6 +24,7 @@ export type { ChannelMiddleware } from "./classes/Channel";
 export { CHANNEL_NAME_PATTERN } from "./classes/Channel";
 export { Connection } from "./classes/Connection";
 export { LogLevel } from "./classes/Logger";
+export { SSEResponse, StreamingResponse } from "./classes/StreamingResponse";
 export { ErrorStatusCodes, ErrorType, TypedError } from "./classes/TypedError";
 export type { KeryxConfig } from "./config";
 export type { SessionData } from "./initializers/session";

@@ -24,7 +24,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.1.8",
     "drizzle-kit": "^0.31.9"
   }
 }
