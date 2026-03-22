@@ -99,7 +99,7 @@ To create a resolver for a custom table, use the `zIdOrModel` factory directly:
 
 ```ts
 import { zIdOrModel } from "keryx";
-import { createSchemaFactory } from "drizzle-zod";
+import { createSchemaFactory } from "drizzle-orm/zod";
 import { z } from "zod";
 import { projects, type Project } from "../schema/projects";
 
@@ -122,10 +122,10 @@ export function zProjectIdOrModel() {
 
 ## Auto-Generated Drizzle Schemas
 
-The Zod schemas for database models are auto-generated from Drizzle table definitions using `drizzle-zod`:
+The Zod schemas for database models are auto-generated from Drizzle table definitions using `drizzle-orm/zod`:
 
 ```ts
-import { createSchemaFactory } from "drizzle-zod";
+import { createSchemaFactory } from "drizzle-orm/zod";
 const { createSelectSchema } = createSchemaFactory({ zodInstance: z });
 
 export const zUserSchema = createSelectSchema(users);
