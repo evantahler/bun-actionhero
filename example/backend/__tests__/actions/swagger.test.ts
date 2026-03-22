@@ -152,7 +152,7 @@ describe("swagger", () => {
     const res = await fetch(url + "/api/swagger");
     const response = (await res.json()) as ActionResponse<Swagger>;
 
-    // messages:list is GET /messages/list with limit and offset inputs
+    // messages:list is GET /messages/list with page and limit inputs
     const messagesListOp = response.paths["/messages/list"]!.get!;
     expect(messagesListOp.parameters).toBeDefined();
 
@@ -162,11 +162,11 @@ describe("swagger", () => {
     expect(limitParam).toBeDefined();
     expect(limitParam!.in).toBe("query");
 
-    const offsetParam = messagesListOp.parameters!.find(
-      (p: any) => p.name === "offset",
+    const pageParam = messagesListOp.parameters!.find(
+      (p: any) => p.name === "page",
     );
-    expect(offsetParam).toBeDefined();
-    expect(offsetParam!.in).toBe("query");
+    expect(pageParam).toBeDefined();
+    expect(pageParam!.in).toBe("query");
 
     // GET actions should not have requestBody
     expect(messagesListOp.requestBody).toBeUndefined();
