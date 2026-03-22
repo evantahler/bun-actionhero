@@ -6,6 +6,7 @@ import { type Action, DEFAULT_QUEUE } from "../classes/Action";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
+import { formatLoadedMessage } from "../util/config";
 import { globLoader } from "../util/glob";
 
 const namespace = "actions";
@@ -634,14 +635,34 @@ export class Actions extends Initializer {
   };
 
   async initialize() {
-    const actions = await globLoader<Action>(path.join(api.rootDir, "actions"));
+    // Load plugin actions
+    const pluginActions: Action[] = [];
+    for (const plugin of config.plugins) {
+      if (plugin.actions) {
+        for (const ActionClass of plugin.actions) {
+          pluginActions.push(new ActionClass());
+        }
+      }
+    }
+
+    // Load user actions
+    const userActions = await globLoader<Action>(
+      path.join(api.rootDir, "actions"),
+    );
+
+    const actions = [...pluginActions, ...userActions];
 
     for (const a of actions) {
       if (!a.description) a.description = `An Action: ${a.name}`;
       a.mcp = { tool: true, ...a.mcp };
     }
 
-    logger.info(`loaded ${Object.keys(actions).length} actions`);
+    logger.info(
+      formatLoadedMessage("actions", {
+        plugin: pluginActions.length,
+        user: userActions.length,
+      }),
+    );
 
     return {
       actions,

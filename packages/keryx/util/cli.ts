@@ -5,7 +5,7 @@ import { Action, api, Connection, RUN_MODE } from "../api";
 import { ExitCode } from "./../classes/ExitCode";
 import { TypedError } from "./../classes/TypedError";
 import { config } from "../config";
-import { generateComponent } from "./generate";
+import { generateComponent, getValidTypes } from "./generate";
 import { globLoader } from "./glob";
 import {
   interactiveScaffold,
@@ -100,7 +100,7 @@ export async function buildProgram(opts: {
     .alias("g")
     .summary("Generate a new component")
     .description(
-      "Scaffold a new action, initializer, middleware, channel, or ops file.\n\n" +
+      `Scaffold a new component file.\n\nValid types: ${getValidTypes().join(", ")}\n\n` +
         "Examples:\n" +
         "  keryx generate action user:delete\n" +
         "  keryx generate initializer cache\n" +
