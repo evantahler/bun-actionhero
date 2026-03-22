@@ -47,8 +47,10 @@ export class Connection<
   correlationId?: string;
   /** OpenTelemetry trace context extracted from incoming request headers or propagated from a parent task. Used to create child spans that participate in the same distributed trace. */
   _traceContext?: Context;
-  /** App-defined request-scoped metadata. Reset to `{}` at the start of each `act()` call so that long-lived connections (e.g., WebSockets) don't leak state between actions. */
+  /** App-defined request-scoped metadata. Reset to `{}` at the start of each top-level `act()` call so that long-lived connections (e.g., WebSockets) don't leak state between actions. Preserved across nested `act()` calls so that middleware state (e.g., an open transaction) propagates to sub-actions. */
   metadata: Partial<TMeta>;
+  /** @internal Tracks nested `act()` depth so metadata is only reset on the outermost call. */
+  private _actDepth = 0;
 
   /**
    * Create a new connection and register it in `api.connections`.
@@ -107,7 +109,11 @@ export class Connection<
       },
       this._traceContext,
       async (span) => {
-        this.metadata = {};
+        // Only reset metadata on the outermost act() call. Nested calls (action
+        // chaining) preserve the parent's metadata so middleware state like an
+        // open database transaction propagates to sub-actions.
+        if (this._actDepth === 0) this.metadata = {};
+        this._actDepth++;
         const reqStartTime = new Date().getTime();
         let loggerResponsePrefix: "OK" | "ERROR" = "OK";
         let response: Object = {};
@@ -177,6 +183,7 @@ export class Connection<
                 const middlewareResponse = await middleware.runAfter(
                   formattedParams,
                   this,
+                  error,
                 );
                 if (middlewareResponse && middlewareResponse?.updatedResponse) {
                   if (response instanceof StreamingResponse) {
@@ -190,6 +197,7 @@ export class Connection<
               }
             }
           }
+          this._actDepth--;
         }
 
         const duration = new Date().getTime() - reqStartTime;

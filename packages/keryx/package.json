@@ -1,6 +1,6 @@
 {
   "name": "keryx",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "module": "index.ts",
   "type": "module",
   "license": "MIT",
@@ -105,7 +105,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.1.8",
     "@types/formidable": "^3.4.6",
     "drizzle-kit": "^0.31.9",
     "drizzle-zod": "^0.8.3"
