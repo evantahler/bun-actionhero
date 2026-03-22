@@ -18,7 +18,7 @@ import "./initializers/signals";
 import "./initializers/swagger";
 
 export * from "./api";
-export { HTTP_METHOD } from "./classes/Action";
+export { HTTP_METHOD, MCP_RESPONSE_FORMAT } from "./classes/Action";
 export type { ActionMiddleware } from "./classes/Action";
 export { CHANNEL_NAME_PATTERN } from "./classes/Channel";
 export type { ChannelMiddleware } from "./classes/Channel";
@@ -32,6 +32,7 @@ export type { WebServer } from "./servers/web";
 export { buildProgram } from "./util/cli";
 export { deepMerge, loadFromEnvIfSet } from "./util/config";
 export { globLoader } from "./util/glob";
+export { toMarkdown } from "./util/toMarkdown";
 export {
   isSecret,
   secret,

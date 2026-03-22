@@ -7,6 +7,7 @@ import colors from "colors";
 import { randomUUID } from "crypto";
 import * as z4mini from "zod/v4-mini";
 import { api, logger } from "../api";
+import { MCP_RESPONSE_FORMAT } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
@@ -17,6 +18,7 @@ import {
   buildCorsHeaders,
   getExternalOrigin,
 } from "../util/http";
+import { toMarkdown } from "../util/toMarkdown";
 import type { PubSubMessage } from "./pubsub";
 
 type McpHandleRequest = (req: Request, ip: string) => Promise<Response>;
@@ -412,6 +414,7 @@ function createMcpServer(): McpServer {
             mcpSessionId,
           );
 
+          // Errors always use JSON for programmatic handling
           if (error) {
             return {
               content: [
@@ -427,10 +430,16 @@ function createMcpServer(): McpServer {
             };
           }
 
+          const format = action.mcp?.responseFormat ?? MCP_RESPONSE_FORMAT.JSON;
+          const text =
+            format === MCP_RESPONSE_FORMAT.MARKDOWN
+              ? toMarkdown(response, {
+                  maxDepth: config.server.mcp.markdownDepthLimit,
+                })
+              : JSON.stringify(response);
+
           return {
-            content: [
-              { type: "text" as const, text: JSON.stringify(response) },
-            ],
+            content: [{ type: "text" as const, text }],
           };
         } finally {
           connection.destroy();
