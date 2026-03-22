@@ -399,6 +399,46 @@ describe("mcp initializer (enabled)", () => {
       expect(parsed2.data.userId).toBe(userId);
     });
 
+    test("action with responseFormat=markdown returns markdown", async () => {
+      const result = await client.callTool({
+        name: "status-markdown",
+        arguments: {},
+      });
+      expect(result.isError).toBeFalsy();
+
+      const content = result.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      const text = content[0].text!;
+
+      // Should be markdown, not JSON
+      expect(text).toContain("**name**");
+      expect(text).toContain("**version**");
+      expect(text).toContain("**uptime**");
+      // Should NOT be parseable as a JSON object
+      expect(() => {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === "object") throw new Error("is JSON object");
+      }).toThrow();
+    });
+
+    test("action without responseFormat defaults to JSON", async () => {
+      const result = await client.callTool({
+        name: "status",
+        arguments: {},
+      });
+      expect(result.isError).toBeFalsy();
+
+      const content = result.content as Array<{
+        type: string;
+        text?: string;
+      }>;
+      const parsed = JSON.parse(content[0].text!);
+      expect(parsed).toHaveProperty("name");
+      expect(typeof parsed).toBe("object");
+    });
+
     test("tool invocation with missing required param returns isError", async () => {
       // user:edit requires authentication (SessionMiddleware) — tool name is "user-edit"
       const result = await client.callTool({

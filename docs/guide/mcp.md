@@ -64,15 +64,50 @@ export class InternalAction extends Action {
 
 The full `mcp` property is of type `McpActionConfig`:
 
-| Property         | Type      | Default | Description                                                               |
-| ---------------- | --------- | ------- | ------------------------------------------------------------------------- |
-| `tool`           | `boolean` | `true`  | Whether to expose this action as an MCP tool                              |
-| `isLoginAction`  | `boolean` | —       | Tag as the login action for the OAuth flow                                |
-| `isSignupAction` | `boolean` | —       | Tag as the signup action for the OAuth flow                               |
-| `resource`       | `object`  | —       | Expose this action as an MCP resource (see [Resources](#resources) below) |
-| `prompt`         | `object`  | —       | Expose this action as an MCP prompt (see [Prompts](#prompts) below)       |
+| Property         | Type                  | Default | Description                                                                        |
+| ---------------- | --------------------- | ------- | ---------------------------------------------------------------------------------- |
+| `tool`           | `boolean`             | `true`  | Whether to expose this action as an MCP tool                                       |
+| `isLoginAction`  | `boolean`             | —       | Tag as the login action for the OAuth flow                                         |
+| `isSignupAction` | `boolean`             | —       | Tag as the signup action for the OAuth flow                                        |
+| `resource`       | `object`              | —       | Expose this action as an MCP resource (see [Resources](#resources) below)          |
+| `prompt`         | `object`              | —       | Expose this action as an MCP prompt (see [Prompts](#prompts) below)                |
+| `responseFormat` | `MCP_RESPONSE_FORMAT` | `JSON`  | Response format for MCP tool calls (see [Response Format](#response-format) below) |
 
 The `isLoginAction` and `isSignupAction` markers tell the OAuth system which actions to invoke when users authenticate through the MCP authorization page. These actions must return `OAuthActionResponse` (`{ user: { id: number } }`).
+
+## Response Format
+
+By default, MCP tool responses are JSON-serialized. You can configure actions to return human-readable markdown instead, which is more token-efficient for LLM consumers that don't need structured data.
+
+Set `mcp.responseFormat` on an action to change its format:
+
+```ts
+import { Action, MCP_RESPONSE_FORMAT } from "keryx";
+
+export class StatusAction extends Action {
+  name = "status";
+  mcp = { responseFormat: MCP_RESPONSE_FORMAT.MARKDOWN };
+  // ...
+}
+```
+
+### Markdown rendering rules
+
+The automatic markdown serializer converts action return values based on their shape:
+
+| Data shape               | Rendered as             |
+| ------------------------ | ----------------------- |
+| Flat object              | Bulleted key-value list |
+| Nested object            | Headings + recursion    |
+| Array of uniform objects | Markdown table          |
+| Array of primitives      | Bulleted list           |
+| Beyond depth limit       | JSON code block         |
+
+The depth limit controls how many levels of nesting are rendered as markdown before falling back to a JSON code block. Configure it with `MCP_MARKDOWN_DEPTH_LIMIT` (default: `5`).
+
+::: tip
+Error responses always use JSON regardless of the requested format, so agents can reliably parse error details programmatically.
+:::
 
 ## Resources
 
@@ -255,13 +290,14 @@ When messages are broadcast through the PubSub system (e.g., chat messages sent 
 
 ## Configuration Reference
 
-| Key              | Env Var                   | Default             | Description                             |
-| ---------------- | ------------------------- | ------------------- | --------------------------------------- |
-| `enabled`        | `MCP_SERVER_ENABLED`      | `false`             | Enable the MCP server                   |
-| `route`          | `MCP_SERVER_ROUTE`        | `"/mcp"`            | URL path for the MCP endpoint           |
-| `instructions`   | `MCP_SERVER_INSTRUCTIONS` | package description | Instructions shown to MCP clients       |
-| `oauthClientTtl` | `MCP_OAUTH_CLIENT_TTL`    | `2592000`           | OAuth client registration TTL (seconds) |
-| `oauthCodeTtl`   | `MCP_OAUTH_CODE_TTL`      | `300`               | Authorization code TTL (seconds)        |
+| Key                  | Env Var                    | Default             | Description                              |
+| -------------------- | -------------------------- | ------------------- | ---------------------------------------- |
+| `enabled`            | `MCP_SERVER_ENABLED`       | `false`             | Enable the MCP server                    |
+| `route`              | `MCP_SERVER_ROUTE`         | `"/mcp"`            | URL path for the MCP endpoint            |
+| `instructions`       | `MCP_SERVER_INSTRUCTIONS`  | package description | Instructions shown to MCP clients        |
+| `oauthClientTtl`     | `MCP_OAUTH_CLIENT_TTL`     | `2592000`           | OAuth client registration TTL (seconds)  |
+| `oauthCodeTtl`       | `MCP_OAUTH_CODE_TTL`       | `300`               | Authorization code TTL (seconds)         |
+| `markdownDepthLimit` | `MCP_MARKDOWN_DEPTH_LIMIT` | `5`                 | Max nesting depth for markdown rendering |
 
 ## Testing
 
