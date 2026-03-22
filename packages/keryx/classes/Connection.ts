@@ -1,10 +1,4 @@
-import {
-  type Context,
-  context,
-  SpanKind,
-  SpanStatusCode,
-  trace,
-} from "@opentelemetry/api";
+import { type Context, SpanKind } from "@opentelemetry/api";
 import colors from "colors";
 import { randomUUID } from "crypto";
 import { api, logger } from "../api";
@@ -12,6 +6,7 @@ import { config } from "../config";
 import type { PubSubMessage } from "../initializers/pubsub";
 import type { SessionData } from "../initializers/session";
 import type { RateLimitInfo } from "../middleware/rateLimit";
+import { finalizeSpan, runWithSpan } from "../util/tracing";
 import { isSecret } from "../util/zodMixins";
 import type { Action, ActionParams } from "./Action";
 import { LogFormat } from "./Logger";
@@ -103,145 +98,129 @@ export class Connection<
     method: Request["method"] = "",
     url: string = "",
   ): Promise<{ response: Object; error?: TypedError }> {
-    const parentContext = this._traceContext ?? context.active();
-    const span = api.observability.tracing.tracer.startSpan(
+    return runWithSpan(
       `action:${actionName ?? "unknown"}`,
+      SpanKind.INTERNAL,
       {
-        kind: SpanKind.INTERNAL,
-        attributes: {
-          "keryx.action": actionName ?? "unknown",
-          "keryx.connection.type": this.type,
-        },
+        "keryx.action": actionName ?? "unknown",
+        "keryx.connection.type": this.type,
       },
-      parentContext,
-    );
+      this._traceContext,
+      async (span) => {
+        this.metadata = {};
+        const reqStartTime = new Date().getTime();
+        let loggerResponsePrefix: "OK" | "ERROR" = "OK";
+        let response: Object = {};
+        let error: TypedError | undefined;
 
-    // Run the action body within the span's context so child spans inherit it
-    const spanContext = trace.setSpan(parentContext, span);
-    return context.with(spanContext, async () => {
-      this.metadata = {};
-      const reqStartTime = new Date().getTime();
-      let loggerResponsePrefix: "OK" | "ERROR" = "OK";
-      let response: Object = {};
-      let error: TypedError | undefined;
-
-      let action: Action | undefined;
-      let formattedParams: Record<string, unknown> | undefined;
-      try {
-        action = this.findAction(actionName);
-        if (!action) {
-          throw new TypedError({
-            message: `Action not found${actionName ? `: ${actionName}` : ""}`,
-            type: ErrorType.CONNECTION_ACTION_NOT_FOUND,
-          });
-        }
-
-        // load the session once, if it hasn't been loaded yet
-        if (!this.sessionLoaded) await this.loadSession();
-
-        formattedParams = await this.formatParams(params, action);
-
-        for (const middleware of action.middleware ?? []) {
-          if (middleware.runBefore) {
-            const middlewareResponse = await middleware.runBefore(
-              formattedParams,
-              this,
-            );
-            if (middlewareResponse && middlewareResponse?.updatedParams)
-              formattedParams = middlewareResponse.updatedParams;
+        let action: Action | undefined;
+        let formattedParams: Record<string, unknown> | undefined;
+        try {
+          action = this.findAction(actionName);
+          if (!action) {
+            throw new TypedError({
+              message: `Action not found${actionName ? `: ${actionName}` : ""}`,
+              type: ErrorType.CONNECTION_ACTION_NOT_FOUND,
+            });
           }
-        }
 
-        const timeoutMs = action.timeout ?? config.actions.timeout;
-        if (timeoutMs > 0) {
-          const controller = new AbortController();
-          const timeoutError = new TypedError({
-            message: `Action '${action.name}' timed out after ${timeoutMs}ms`,
-            type: ErrorType.CONNECTION_ACTION_TIMEOUT,
-          });
-          const timeoutPromise = new Promise<never>((_, reject) => {
-            setTimeout(() => {
-              controller.abort();
-              reject(timeoutError);
-            }, timeoutMs);
-          });
-          response = await Promise.race([
-            action.run(formattedParams, this, controller.signal),
-            timeoutPromise,
-          ]);
-        } else {
-          response = await action.run(formattedParams, this);
-        }
-      } catch (e) {
-        loggerResponsePrefix = "ERROR";
-        error =
-          e instanceof TypedError
-            ? e
-            : new TypedError({
-                message: `${e}`,
-                type: ErrorType.CONNECTION_ACTION_RUN,
-                originalError: e,
-              });
-      } finally {
-        if (action && formattedParams) {
+          // load the session once, if it hasn't been loaded yet
+          if (!this.sessionLoaded) await this.loadSession();
+
+          formattedParams = await this.formatParams(params, action);
+
           for (const middleware of action.middleware ?? []) {
-            if (middleware.runAfter) {
-              const middlewareResponse = await middleware.runAfter(
+            if (middleware.runBefore) {
+              const middlewareResponse = await middleware.runBefore(
                 formattedParams,
                 this,
               );
-              if (middlewareResponse && middlewareResponse?.updatedResponse) {
-                if (response instanceof StreamingResponse) {
-                  logger.warn(
-                    `Middleware cannot replace a StreamingResponse for action '${actionName}'`,
-                  );
-                } else {
-                  response = middlewareResponse.updatedResponse;
+              if (middlewareResponse && middlewareResponse?.updatedParams)
+                formattedParams = middlewareResponse.updatedParams;
+            }
+          }
+
+          const timeoutMs = action.timeout ?? config.actions.timeout;
+          if (timeoutMs > 0) {
+            const controller = new AbortController();
+            const timeoutError = new TypedError({
+              message: `Action '${action.name}' timed out after ${timeoutMs}ms`,
+              type: ErrorType.CONNECTION_ACTION_TIMEOUT,
+            });
+            const timeoutPromise = new Promise<never>((_, reject) => {
+              setTimeout(() => {
+                controller.abort();
+                reject(timeoutError);
+              }, timeoutMs);
+            });
+            response = await Promise.race([
+              action.run(formattedParams, this, controller.signal),
+              timeoutPromise,
+            ]);
+          } else {
+            response = await action.run(formattedParams, this);
+          }
+        } catch (e) {
+          loggerResponsePrefix = "ERROR";
+          error =
+            e instanceof TypedError
+              ? e
+              : new TypedError({
+                  message: `${e}`,
+                  type: ErrorType.CONNECTION_ACTION_RUN,
+                  originalError: e,
+                });
+        } finally {
+          if (action && formattedParams) {
+            for (const middleware of action.middleware ?? []) {
+              if (middleware.runAfter) {
+                const middlewareResponse = await middleware.runAfter(
+                  formattedParams,
+                  this,
+                );
+                if (middlewareResponse && middlewareResponse?.updatedResponse) {
+                  if (response instanceof StreamingResponse) {
+                    logger.warn(
+                      `Middleware cannot replace a StreamingResponse for action '${actionName}'`,
+                    );
+                  } else {
+                    response = middlewareResponse.updatedResponse;
+                  }
                 }
               }
             }
           }
         }
-      }
 
-      const duration = new Date().getTime() - reqStartTime;
+        const duration = new Date().getTime() - reqStartTime;
 
-      // Record tracing span attributes
-      span.setAttribute("keryx.action.duration_ms", duration);
-      if (error) {
-        span.recordException(error);
-        span.setStatus({
-          code: SpanStatusCode.ERROR,
-          message: error.message,
+        span.setAttribute("keryx.action.duration_ms", duration);
+        finalizeSpan(span, error);
+
+        api.observability.action.executionsTotal.add(1, {
+          action: actionName ?? "unknown",
+          status: loggerResponsePrefix === "OK" ? "success" : "error",
         });
-      } else {
-        span.setStatus({ code: SpanStatusCode.OK });
-      }
-      span.end();
+        api.observability.action.duration.record(duration, {
+          action: actionName ?? "unknown",
+        });
 
-      api.observability.action.executionsTotal.add(1, {
-        action: actionName ?? "unknown",
-        status: loggerResponsePrefix === "OK" ? "success" : "error",
-      });
-      api.observability.action.duration.record(duration, {
-        action: actionName ?? "unknown",
-      });
+        logAction({
+          actionName,
+          connectionType: this.type,
+          status: loggerResponsePrefix,
+          duration,
+          params: sanitizeParams(params, action),
+          method,
+          url,
+          identifier: this.identifier,
+          correlationId: this.correlationId,
+          error,
+        });
 
-      logAction({
-        actionName,
-        connectionType: this.type,
-        status: loggerResponsePrefix,
-        duration,
-        params: sanitizeParams(params, action),
-        method,
-        url,
-        identifier: this.identifier,
-        correlationId: this.correlationId,
-        error,
-      });
-
-      return { response, error };
-    });
+        return { response, error };
+      },
+    );
   }
 
   /**

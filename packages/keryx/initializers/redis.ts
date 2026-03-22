@@ -1,10 +1,11 @@
-import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
+import { SpanKind } from "@opentelemetry/api";
 import { Redis as RedisClient } from "ioredis";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import { formatConnectionStringForLogging } from "../util/connectionString";
+import { finalizeSpanOnPromise } from "../util/tracing";
 
 const namespace = "redis";
 const testKey = `__keryx_test_key:${config.process.name}`;
@@ -75,7 +76,7 @@ export class Redis extends Initializer {
         {
           kind: SpanKind.CLIENT,
           attributes: {
-            "db.system": "redis",
+            "db.system.name": "redis",
             "db.operation.name": commandName,
           },
         },
@@ -83,17 +84,7 @@ export class Redis extends Initializer {
 
       const result: unknown = originalSendCommand(command, ...rest);
       if (result && typeof (result as Promise<unknown>).then === "function") {
-        (result as Promise<unknown>).then(
-          () => span.end(),
-          (e: Error) => {
-            span.recordException(e);
-            span.setStatus({
-              code: SpanStatusCode.ERROR,
-              message: e.message,
-            });
-            span.end();
-          },
-        );
+        finalizeSpanOnPromise(span, result as Promise<unknown>);
       } else {
         span.end();
       }

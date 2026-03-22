@@ -163,10 +163,10 @@ OTEL_TRACING_ENABLED=true bun run start
 
 Keryx automatically creates spans for:
 
-- **HTTP requests** — A parent `HTTP {METHOD}` span wraps each request with attributes `http.method`, `http.route`, `http.status_code`, and `url.full`.
+- **HTTP requests** — A `{METHOD} {route}` span (e.g. `GET status`) wraps each request with attributes `http.request.method`, `http.route`, `http.response.status_code`, and `url.full` (stable OTel semconv v1.20+).
 - **Action execution** — An `action:{name}` child span tracks the full action lifecycle (middleware, validation, run) with attributes `keryx.action`, `keryx.connection.type`, and `keryx.action.duration_ms`.
 - **Database queries** — A `drizzle.{operation}` child span is created for each Drizzle query (via [`@kubiks/otel-drizzle`](https://www.npmjs.com/package/@kubiks/otel-drizzle)) with `db.system`, `db.statement`, and `db.operation` attributes including full timing data.
-- **Redis commands** — A `redis.{command}` span is created for each Redis command with `db.system` and `db.operation.name` attributes.
+- **Redis commands** — A `redis.{command}` span is created for each Redis command with `db.system.name` and `db.operation.name` attributes.
 
 ### W3C Trace Context Propagation
 
@@ -192,4 +192,11 @@ Point spans at your collector:
 OTEL_TRACING_ENABLED=true OTEL_EXPORTER_OTLP_ENDPOINT=https://your-collector:4318 bun run start
 ```
 
-Spans are exported via OTLP/HTTP to `{endpoint}/v1/traces` using `BatchSpanProcessor` for efficient batching.
+Spans are exported via OTLP/HTTP to `{endpoint}/v1/traces` using `BatchSpanProcessor` for efficient batching. Tune the batch processor with:
+
+| Env Var | Default | Description |
+|---------|---------|-------------|
+| `OTEL_SPAN_QUEUE_SIZE` | 2048 | Max spans queued before dropping |
+| `OTEL_SPAN_BATCH_SIZE` | 512 | Max spans per export batch |
+| `OTEL_SPAN_EXPORT_DELAY_MS` | 5000 | Delay between scheduled exports |
+| `OTEL_SPAN_SHUTDOWN_TIMEOUT_MS` | 5000 | Timeout for flushing spans on shutdown |

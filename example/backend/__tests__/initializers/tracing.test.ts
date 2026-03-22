@@ -60,7 +60,7 @@ describe("tracing", () => {
     expect(actionSpan!.attributes["keryx.action.duration_ms"]).toBeDefined();
   });
 
-  test("HTTP request creates parent span", async () => {
+  test("HTTP request creates parent span with stable semconv attributes", async () => {
     spanExporter.reset();
     const url = serverUrl();
     const res = await fetch(`${url}/api/status`);
@@ -69,10 +69,11 @@ describe("tracing", () => {
     await Bun.sleep(100);
 
     const spans = spanExporter.getFinishedSpans();
-    const httpSpan = spans.find((s) => s.name === "HTTP GET");
+    // Span name is updated to include route after resolution
+    const httpSpan = spans.find((s) => s.name === "GET status");
     expect(httpSpan).toBeDefined();
-    expect(httpSpan!.attributes["http.method"]).toBe("GET");
-    expect(httpSpan!.attributes["http.status_code"]).toBe(200);
+    expect(httpSpan!.attributes["http.request.method"]).toBe("GET");
+    expect(httpSpan!.attributes["http.response.status_code"]).toBe(200);
     expect(httpSpan!.attributes["http.route"]).toBe("status");
   });
 
@@ -91,7 +92,7 @@ describe("tracing", () => {
     await Bun.sleep(100);
 
     const spans = spanExporter.getFinishedSpans();
-    const httpSpan = spans.find((s) => s.name === "HTTP GET");
+    const httpSpan = spans.find((s) => s.name.startsWith("GET"));
     expect(httpSpan).toBeDefined();
     // The span's trace ID should match the incoming traceparent
     expect(httpSpan!.spanContext().traceId).toBe(traceId);
@@ -105,7 +106,7 @@ describe("tracing", () => {
     await Bun.sleep(100);
 
     const spans = spanExporter.getFinishedSpans();
-    const httpSpan = spans.find((s) => s.name === "HTTP GET");
+    const httpSpan = spans.find((s) => s.name === "GET status");
     const actionSpan = spans.find((s) => s.name === "action:status");
 
     expect(httpSpan).toBeDefined();
@@ -130,9 +131,9 @@ describe("tracing", () => {
     await Bun.sleep(100);
 
     const spans = spanExporter.getFinishedSpans();
-    const httpSpan = spans.find((s) => s.name.startsWith("HTTP"));
+    const httpSpan = spans.find((s) => s.name.startsWith("GET"));
     expect(httpSpan).toBeDefined();
-    expect(httpSpan!.attributes["http.status_code"]).toBe(404);
+    expect(httpSpan!.attributes["http.response.status_code"]).toBe(404);
   });
 
   test("tracing and metrics flags are independent", () => {
@@ -144,24 +145,30 @@ describe("tracing", () => {
   test("DB queries create spans with timing via @kubiks/otel-drizzle", async () => {
     spanExporter.reset();
     const url = serverUrl();
-    // userCreate hits the DB, giving us drizzle spans
-    await fetch(`${url}/api/status`);
+    // Create a user to force a real DB INSERT
+    await fetch(`${url}/api/user`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "tracing-test-user",
+        email: `tracing-${Date.now()}@test.com`,
+        password: "password123",
+      }),
+    });
 
     await Bun.sleep(200);
 
     const spans = spanExporter.getFinishedSpans();
     const drizzleSpans = spans.filter((s) => s.name.startsWith("drizzle."));
-    // The status action issues at least one DB query (SELECT NOW() during startup,
-    // but we need an action that actually queries). Drizzle spans may exist from
-    // the instrumentation — verify attributes when present.
+    // @kubiks/otel-drizzle creates spans for each DB operation; verify
+    // attributes when present (span count depends on instrumentation timing).
     for (const span of drizzleSpans) {
       expect(span.attributes["db.system"]).toBe("postgresql");
-      // Spans have real duration (start and end times differ)
       expect(span.endTime).toBeDefined();
     }
   });
 
-  test("Redis command spans are created", async () => {
+  test("Redis command spans use stable semconv attributes", async () => {
     spanExporter.reset();
     const url = serverUrl();
     await fetch(`${url}/api/status`);
@@ -171,9 +178,25 @@ describe("tracing", () => {
     const spans = spanExporter.getFinishedSpans();
     const redisSpans = spans.filter((s) => s.name.startsWith("redis."));
     for (const span of redisSpans) {
-      expect(span.attributes["db.system"]).toBe("redis");
+      expect(span.attributes["db.system.name"]).toBe("redis");
       expect(span.attributes["db.operation.name"]).toBeDefined();
     }
+  });
+
+  test("Redis spans exist alongside action spans in the same request", async () => {
+    spanExporter.reset();
+    const url = serverUrl();
+    await fetch(`${url}/api/status`);
+
+    await Bun.sleep(100);
+
+    const spans = spanExporter.getFinishedSpans();
+    const actionSpan = spans.find((s) => s.name === "action:status");
+    const redisSpans = spans.filter((s) => s.name.startsWith("redis."));
+
+    expect(actionSpan).toBeDefined();
+    // Redis spans should exist (session load, etc.)
+    expect(redisSpans.length).toBeGreaterThan(0);
   });
 
   test("injectContext produces valid traceparent within an active span", () => {

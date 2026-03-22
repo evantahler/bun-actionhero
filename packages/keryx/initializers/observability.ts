@@ -4,8 +4,6 @@ import {
   metrics,
   propagation,
   type Span,
-  SpanKind,
-  SpanStatusCode,
   trace,
 } from "@opentelemetry/api";
 import { AsyncLocalStorageContextManager } from "@opentelemetry/context-async-hooks";
@@ -264,7 +262,13 @@ export class Observability extends Initializer {
     this.tracerProvider = new BasicTracerProvider({
       resource,
       sampler,
-      spanProcessors: [new BatchSpanProcessor(exporter)],
+      spanProcessors: [
+        new BatchSpanProcessor(exporter, {
+          maxQueueSize: config.observability.spanQueueSize,
+          maxExportBatchSize: config.observability.spanBatchSize,
+          scheduledDelayMillis: config.observability.spanExportDelayMs,
+        }),
+      ],
     });
 
     // Register AsyncLocalStorage-based context manager so spans propagate
@@ -329,7 +333,19 @@ export class Observability extends Initializer {
     ns.tracing.injectContext = () => {};
 
     if (this.tracerProvider) {
-      await this.tracerProvider.shutdown();
+      try {
+        await Promise.race([
+          this.tracerProvider.shutdown(),
+          new Promise<void>((_, reject) =>
+            setTimeout(
+              () => reject(new Error("Span export timed out on shutdown")),
+              config.observability.spanShutdownTimeoutMs,
+            ),
+          ),
+        ]);
+      } catch (e) {
+        logger.warn(`Error flushing spans on shutdown: ${e}`);
+      }
       this.tracerProvider = undefined;
     }
   }
@@ -352,9 +368,6 @@ function createNoopTracer() {
     },
   };
 }
-
-// --- Re-exports for convenience at instrumentation sites ---
-export { context, SpanKind, SpanStatusCode };
 
 /**
  * A no-op exporter that discards all data. We use PeriodicExportingMetricReader

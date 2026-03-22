@@ -17,6 +17,7 @@ import {
 import { Initializer } from "../classes/Initializer";
 import { LogFormat } from "../classes/Logger";
 import { TypedError } from "../classes/TypedError";
+import { extractTraceFromParams } from "../util/tracing";
 
 const namespace = "resque";
 
@@ -303,15 +304,7 @@ export class Resque extends Initializer {
         }
 
         // Restore trace context from propagated W3C headers
-        const traceParent = params._traceParent as string | undefined;
-        const traceState = params._traceState as string | undefined;
-        if (traceParent) {
-          const headers = new Headers();
-          headers.set("traceparent", traceParent);
-          if (traceState) headers.set("tracestate", traceState);
-          connection._traceContext =
-            api.observability.tracing.extractContext(headers);
-        }
+        connection._traceContext = extractTraceFromParams(params);
 
         const plainParams: Record<string, unknown> =
           typeof params === "object" && params !== null
