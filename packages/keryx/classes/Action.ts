@@ -2,6 +2,11 @@ import { z } from "zod";
 import type { Connection } from "./Connection";
 import type { TypedError } from "./TypedError";
 
+export enum MCP_RESPONSE_FORMAT {
+  "JSON" = "json",
+  "MARKDOWN" = "markdown",
+}
+
 export enum HTTP_METHOD {
   "GET" = "GET",
   "POST" = "POST",
@@ -48,10 +53,10 @@ export type McpActionConfig = {
   };
   /**
    * Response format for MCP tool calls.
-   * `"json"` (default) returns `JSON.stringify(response)`.
-   * `"markdown"` returns a human-readable markdown rendering via `toMarkdown()`.
+   * `MCP_RESPONSE_FORMAT.JSON` (default) returns `JSON.stringify(response)`.
+   * `MCP_RESPONSE_FORMAT.MARKDOWN` returns a human-readable markdown rendering via `toMarkdown()`.
    */
-  responseFormat?: "json" | "markdown";
+  responseFormat?: MCP_RESPONSE_FORMAT;
 };
 
 export type ActionConstructorInputs = {

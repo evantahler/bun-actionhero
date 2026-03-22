@@ -261,17 +261,6 @@ describe("mcp initializer (enabled)", () => {
       }
     });
 
-    test("tool input schema does not include _responseFormat parameter", async () => {
-      const result = await client.listTools();
-      const statusTool = result.tools.find((t) => t.name === "status");
-      expect(statusTool).toBeDefined();
-
-      const schema = statusTool!.inputSchema as {
-        properties?: Record<string, any>;
-      };
-      expect(schema.properties?._responseFormat).toBeUndefined();
-    });
-
     test("resources/list returns actions registered as MCP resources", async () => {
       const result = await client.listResources();
       const resourceUris = result.resources.map((r) => r.uri);

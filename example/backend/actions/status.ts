@@ -1,4 +1,4 @@
-import { Action, api, HTTP_METHOD } from "keryx";
+import { Action, api, HTTP_METHOD, MCP_RESPONSE_FORMAT } from "keryx";
 import { z } from "zod";
 import pkg from "../package.json";
 
@@ -31,7 +31,7 @@ export class StatusMarkdown implements Action {
   name = "status:markdown";
   description = "Returns server status formatted as markdown.";
   inputs = z.object({});
-  mcp = { responseFormat: "markdown" as const };
+  mcp = { responseFormat: MCP_RESPONSE_FORMAT.MARKDOWN };
   web = { route: "/status/markdown", method: HTTP_METHOD.GET };
 
   async run() {
