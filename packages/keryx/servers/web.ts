@@ -1,4 +1,5 @@
 import { parse } from "node:url";
+import { context, SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import type { ServerWebSocket } from "bun";
 import colors from "colors";
 import cookie from "cookie";
@@ -373,62 +374,109 @@ export class WebServer extends Server<ReturnType<typeof Bun.serve>> {
     let errorStatusCode = 500;
     const httpMethod = req.method?.toUpperCase() as HTTP_METHOD;
 
-    api.observability.http.activeConnections.add(1);
-    const connection = new Connection("web", ip, id);
+    // Extract W3C trace context from incoming request headers
+    const traceContext = api.observability.tracing.extractContext(req.headers);
 
-    if (
-      config.server.web.correlationId.header &&
-      config.server.web.correlationId.trustProxy
-    ) {
-      const incomingId = req.headers.get(
-        config.server.web.correlationId.header,
+    // Start an HTTP span wrapping the full request lifecycle
+    const httpSpan = api.observability.tracing.tracer.startSpan(
+      `HTTP ${httpMethod}`,
+      {
+        kind: SpanKind.SERVER,
+        attributes: {
+          "http.method": httpMethod,
+          "url.full": req.url,
+        },
+      },
+      traceContext,
+    );
+    const httpSpanContext = trace.setSpan(traceContext, httpSpan);
+
+    return context.with(httpSpanContext, async () => {
+      api.observability.http.activeConnections.add(1);
+      const connection = new Connection("web", ip, id);
+      connection._traceContext = httpSpanContext;
+
+      if (
+        config.server.web.correlationId.header &&
+        config.server.web.correlationId.trustProxy
+      ) {
+        const incomingId = req.headers.get(
+          config.server.web.correlationId.header,
+        );
+        if (incomingId) connection.correlationId = incomingId;
+      }
+
+      const requestOrigin = req.headers.get("origin") ?? undefined;
+
+      // Handle OPTIONS requests.
+      // As we don't really know what action the client wants (HTTP Method is always OPTIONS), we just return a 200 response.
+      if (httpMethod === "OPTIONS") {
+        httpSpan.setAttribute("http.status_code", 200);
+        httpSpan.setStatus({ code: SpanStatusCode.OK });
+        httpSpan.end();
+        return buildResponse(connection, {}, 200, requestOrigin);
+      }
+
+      const { actionName, pathParams } = await determineActionName(
+        url,
+        httpMethod,
       );
-      if (incomingId) connection.correlationId = incomingId;
-    }
+      if (!actionName) errorStatusCode = 404;
 
-    const requestOrigin = req.headers.get("origin") ?? undefined;
+      httpSpan.setAttribute("http.route", actionName ?? "unknown");
 
-    // Handle OPTIONS requests.
-    // As we don't really know what action the client wants (HTTP Method is always OPTIONS), we just return a 200 response.
-    if (httpMethod === "OPTIONS")
-      return buildResponse(connection, {}, 200, requestOrigin);
+      const params = await parseRequestParams(
+        req,
+        url,
+        pathParams ?? undefined,
+      );
 
-    const { actionName, pathParams } = await determineActionName(
-      url,
-      httpMethod,
-    );
-    if (!actionName) errorStatusCode = 404;
+      const { response, error } = await connection.act(
+        actionName!,
+        params,
+        httpMethod,
+        req.url,
+      );
 
-    const params = await parseRequestParams(req, url, pathParams ?? undefined);
+      connection.destroy();
+      api.observability.http.activeConnections.add(-1);
 
-    const { response, error } = await connection.act(
-      actionName!,
-      params,
-      httpMethod,
-      req.url,
-    );
+      if (error && ErrorStatusCodes[error.type]) {
+        errorStatusCode = ErrorStatusCodes[error.type];
+      }
 
-    connection.destroy();
-    api.observability.http.activeConnections.add(-1);
+      const statusCode = error ? errorStatusCode : 200;
 
-    if (error && ErrorStatusCodes[error.type]) {
-      errorStatusCode = ErrorStatusCodes[error.type];
-    }
+      // Finalize HTTP span
+      httpSpan.setAttribute("http.status_code", statusCode);
+      if (error) {
+        httpSpan.recordException(error);
+        httpSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error.message,
+        });
+      } else {
+        httpSpan.setStatus({ code: SpanStatusCode.OK });
+      }
+      httpSpan.end();
 
-    const statusCode = error ? errorStatusCode : 200;
-    api.observability.http.requestsTotal.add(1, {
-      method: httpMethod,
-      route: actionName ?? "unknown",
-      status: String(statusCode),
+      api.observability.http.requestsTotal.add(1, {
+        method: httpMethod,
+        route: actionName ?? "unknown",
+        status: String(statusCode),
+      });
+      api.observability.http.requestDuration.record(
+        Date.now() - httpStartTime,
+        {
+          method: httpMethod,
+          route: actionName ?? "unknown",
+          status: String(statusCode),
+        },
+      );
+
+      return error
+        ? buildError(connection, error, errorStatusCode, requestOrigin)
+        : buildResponse(connection, response, 200, requestOrigin);
     });
-    api.observability.http.requestDuration.record(Date.now() - httpStartTime, {
-      method: httpMethod,
-      route: actionName ?? "unknown",
-      status: String(statusCode),
-    });
-
-    return error
-      ? buildError(connection, error, errorStatusCode, requestOrigin)
-      : buildResponse(connection, response, 200, requestOrigin);
   }
 }

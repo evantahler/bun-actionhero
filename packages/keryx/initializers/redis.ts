@@ -1,3 +1,4 @@
+import { SpanKind, SpanStatusCode } from "@opentelemetry/api";
 import { Redis as RedisClient } from "ioredis";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
@@ -51,9 +52,53 @@ export class Redis extends Initializer {
       });
     }
 
+    // Instrument the main Redis client with tracing spans.
+    // Only the general-purpose client is instrumented (not the subscription client,
+    // which uses a different command flow for SUBSCRIBE/PSUBSCRIBE).
+    this.instrumentRedisTracing(api.redis.redis);
+
     logger.info(
       `redis connections established (${formatConnectionStringForLogging(config.redis.connectionString)})`,
     );
+  }
+
+  /**
+   * Wrap ioredis `sendCommand` to create an OTel span for each Redis command.
+   * No-ops when tracing is disabled (the tracer returns no-op spans).
+   */
+  private instrumentRedisTracing(client: RedisClient) {
+    const originalSendCommand = client.sendCommand.bind(client);
+    client.sendCommand = function (command: any, ...rest: any[]) {
+      const commandName = command?.name ?? "unknown";
+      const span = api.observability.tracing.tracer.startSpan(
+        `redis.${commandName}`,
+        {
+          kind: SpanKind.CLIENT,
+          attributes: {
+            "db.system": "redis",
+            "db.operation.name": commandName,
+          },
+        },
+      );
+
+      const result = originalSendCommand(command, ...rest) as any;
+      if (result && typeof result.then === "function") {
+        result.then(
+          () => span.end(),
+          (e: Error) => {
+            span.recordException(e);
+            span.setStatus({
+              code: SpanStatusCode.ERROR,
+              message: e.message,
+            });
+            span.end();
+          },
+        );
+      } else {
+        span.end();
+      }
+      return result;
+    } as typeof client.sendCommand;
   }
 
   async stop() {

@@ -93,6 +93,15 @@ export class Actions extends Initializer {
       });
     }
     queue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+
+    // Propagate trace context into task params for distributed tracing
+    if (api.observability.tracing.enabled) {
+      const carrier: Record<string, string> = {};
+      api.observability.tracing.injectContext(carrier);
+      if (carrier.traceparent) inputs._traceParent = carrier.traceparent;
+      if (carrier.tracestate) inputs._traceState = carrier.tracestate;
+    }
+
     api.observability.task.enqueuedTotal.add(1, {
       action: actionName,
       queue,

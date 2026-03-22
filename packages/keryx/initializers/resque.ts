@@ -302,6 +302,17 @@ export class Resque extends Initializer {
           connection.correlationId = propagatedCorrelationId;
         }
 
+        // Restore trace context from propagated W3C headers
+        const traceParent = params._traceParent as string | undefined;
+        const traceState = params._traceState as string | undefined;
+        if (traceParent) {
+          const headers = new Headers();
+          headers.set("traceparent", traceParent);
+          if (traceState) headers.set("tracestate", traceState);
+          connection._traceContext =
+            api.observability.tracing.extractContext(headers);
+        }
+
         const plainParams: Record<string, unknown> =
           typeof params === "object" && params !== null
             ? Object.fromEntries(

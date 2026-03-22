@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
+import { SpanKind } from "@opentelemetry/api";
 import { $ } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
@@ -51,6 +52,14 @@ export class DB extends Initializer {
 
     class DrizzleLogger implements LogWriter {
       write(message: string) {
+        const span = api.observability.tracing.tracer.startSpan("db.query", {
+          kind: SpanKind.CLIENT,
+          attributes: {
+            "db.system": "postgresql",
+            "db.statement": message.slice(0, 1000),
+          },
+        });
+        span.end();
         logger.debug(message);
       }
     }
