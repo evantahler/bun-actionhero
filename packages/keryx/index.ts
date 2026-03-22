@@ -34,11 +34,13 @@ export type { WebServer } from "./servers/web";
 export { buildProgram } from "./util/cli";
 export { deepMerge, loadFromEnvIfSet } from "./util/config";
 export { globLoader } from "./util/glob";
+export { type PaginatedResult, paginate } from "./util/pagination";
 export { toMarkdown } from "./util/toMarkdown";
 export type { DbOrTransaction, Transaction } from "./util/transaction";
 export { withTransaction } from "./util/transaction";
 export {
   isSecret,
+  paginationInputs,
   secret,
   zBooleanFromString,
   zIdOrModel,
