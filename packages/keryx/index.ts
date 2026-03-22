@@ -28,11 +28,14 @@ export { ErrorStatusCodes, ErrorType, TypedError } from "./classes/TypedError";
 export type { KeryxConfig } from "./config";
 export type { SessionData } from "./initializers/session";
 export { checkRateLimit, RateLimitMiddleware } from "./middleware/rateLimit";
+export { TransactionMiddleware } from "./middleware/transaction";
 export type { WebServer } from "./servers/web";
 export { buildProgram } from "./util/cli";
 export { deepMerge, loadFromEnvIfSet } from "./util/config";
 export { globLoader } from "./util/glob";
 export { toMarkdown } from "./util/toMarkdown";
+export type { DbOrTransaction, Transaction } from "./util/transaction";
+export { withTransaction } from "./util/transaction";
 export {
   isSecret,
   secret,

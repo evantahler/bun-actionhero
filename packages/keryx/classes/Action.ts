@@ -114,11 +114,19 @@ export type ActionMiddleware = {
     connection: Connection,
   ) => Promise<ActionMiddlewareResponse | void>;
   /**
-   * Runs after the action's `run()` method. Can replace the response by returning `{ updatedResponse }`.
+   * Runs after the action's `run()` method (in a `finally` block, so it always runs).
+   * Can replace the response by returning `{ updatedResponse }`.
+   *
+   * @param params - The validated action inputs (same object passed to `run()`).
+   * @param connection - The connection that initiated this action.
+   * @param error - The `TypedError` from the action's `run()`, or `undefined` on success.
+   *   Useful for middleware that needs to react to success/failure (e.g., committing or
+   *   rolling back a database transaction).
    */
   runAfter?: (
     params: ActionParams<Action>,
     connection: Connection,
+    error?: TypedError,
   ) => Promise<ActionMiddlewareResponse | void>;
 };
 
