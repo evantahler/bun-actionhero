@@ -385,7 +385,7 @@ export async function handleToken(req: Request): Promise<Response> {
   await api.redis.redis.del(`oauth:code:${code}`);
 
   // Validate client_id matches
-  if (clientId && clientId !== codeData.clientId) {
+  if (clientId !== codeData.clientId) {
     return new Response(
       JSON.stringify({
         error: "invalid_grant",

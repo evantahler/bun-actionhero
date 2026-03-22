@@ -297,6 +297,36 @@ describe("oauth initializer", () => {
       expect(body.error_description).toContain("client_id mismatch");
     });
 
+    test("rejects missing client_id", async () => {
+      const codeData = {
+        clientId: "original-client",
+        userId: 1,
+        codeChallenge: "test-challenge",
+        redirectUri: "http://localhost:9999/callback",
+      };
+      await api.redis.redis.set(
+        "oauth:code:test-code-client-missing",
+        JSON.stringify(codeData),
+        "EX",
+        300,
+      );
+
+      const res = await oauthRequest("/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: "test-code-client-missing",
+          code_verifier: "test-verifier",
+        }).toString(),
+      });
+      expect(res).not.toBeNull();
+      expect(res!.status).toBe(400);
+
+      const body = (await res!.json()) as { error_description: string };
+      expect(body.error_description).toContain("client_id mismatch");
+    });
+
     test("rejects mismatched redirect_uri", async () => {
       const codeData = {
         clientId: "test-client",
