@@ -39,6 +39,7 @@ For example: \`/guide/actions.md\`, \`/reference/config.md\`
 - Configuration: /guide/config.md
 - CLI: /guide/cli.md
 - Authentication: /guide/authentication.md
+- Typed Clients: /guide/typed-clients.md
 - Building for AI Agents: /guide/agents.md
 - Advanced Patterns: /guide/advanced-patterns.md
 - Deployment: /guide/deployment.md
@@ -142,6 +143,7 @@ export default defineConfig({
           items: [
             { text: "CLI", link: "/guide/cli" },
             { text: "Authentication", link: "/guide/authentication" },
+            { text: "Typed Clients", link: "/guide/typed-clients" },
             {
               text: "Building for AI Agents",
               link: "/guide/agents",
