@@ -38,11 +38,12 @@ type ActionMiddleware = {
   runAfter?: (
     params: ActionParams<Action>,
     connection: Connection,
+    error?: TypedError,
   ) => Promise<ActionMiddlewareResponse | void>;
 };
 ```
 
-Both methods are optional. You can have middleware that only runs before (auth), only runs after (logging), or both. Middleware can also modify params and responses by returning an `ActionMiddlewareResponse`:
+Both methods are optional. You can have middleware that only runs before (auth), only runs after (logging), or both. `runAfter` always executes (even when the action throws) and receives the error as an optional third parameter — useful for cleanup like rolling back a transaction. Middleware can also modify params and responses by returning an `ActionMiddlewareResponse`:
 
 ```ts
 type ActionMiddlewareResponse = {
@@ -120,6 +121,35 @@ export class ApiEndpoint implements Action {
 When a client exceeds the limit, the middleware throws a `CONNECTION_RATE_LIMITED` error (HTTP 429). Rate limit info is attached to the connection and included in response headers automatically.
 
 See the [Security guide](/guide/security) for configuration options and custom limit overrides.
+
+### Database Transactions
+
+The built-in `TransactionMiddleware` wraps the entire action lifecycle in a database transaction. It opens a transaction in `runBefore`, stores it on `connection.metadata.transaction`, and commits or rolls back in `runAfter` based on whether the action succeeded:
+
+```ts
+import { TransactionMiddleware, type Transaction } from "keryx";
+
+export class TransferFunds extends Action {
+  constructor() {
+    super({
+      name: "transfer:funds",
+      middleware: [SessionMiddleware, TransactionMiddleware],
+      web: { route: "/transfer", method: HTTP_METHOD.POST },
+      inputs: z.object({ fromId: z.number(), toId: z.number(), amount: z.number() }),
+    });
+  }
+
+  async run(params: ActionParams<TransferFunds>, connection?: Connection) {
+    const tx = connection!.metadata.transaction as Transaction;
+    // Both updates happen atomically — if either fails, both roll back
+    await tx.update(accounts).set({ ... }).where(eq(accounts.id, params.fromId));
+    await tx.update(accounts).set({ ... }).where(eq(accounts.id, params.toId));
+    return { success: true };
+  }
+}
+```
+
+For one-off transactions outside the middleware lifecycle, use the `withTransaction()` utility. See the [Advanced Patterns guide](/guide/advanced-patterns) for more details.
 
 ### Passing Data Between Middleware and Actions
 
