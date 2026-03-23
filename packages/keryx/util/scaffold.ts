@@ -103,6 +103,10 @@ export async function generateConfigFileContents(): Promise<
       /from ["']\.\.\/classes\/Logger["']/g,
       'from "keryx"',
     );
+    content = content.replace(
+      /from ["']\.\.\/classes\/Plugin["']/g,
+      'from "keryx"',
+    );
 
     // In index.ts, change `export const config` to `export default`
     // and remove the KeryxConfig interface export (it comes from the package)
@@ -111,6 +115,11 @@ export async function generateConfigFileContents(): Promise<
       content = content.replace(
         /\nexport interface KeryxConfig \{[\s\S]*?\}\n/,
         "\n",
+      );
+      // Remove the KeryxPlugin import (only used by the stripped KeryxConfig interface)
+      content = content.replace(
+        /import type \{ KeryxPlugin \} from ["']keryx["'];\n/,
+        "",
       );
     }
 

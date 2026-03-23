@@ -12,7 +12,7 @@ import {
   TypedError,
   withTransaction,
 } from "keryx";
-import { users } from "../../schema/users";
+import { type User, users } from "../../schema/users";
 import { HOOK_TIMEOUT } from "../setup";
 
 beforeAll(async () => {
@@ -438,7 +438,7 @@ describe("Transaction chaining across sub-actions", () => {
       // Both users committed atomically
       const allUsers = await api.db.db.select().from(users);
       expect(allUsers.length).toBe(2);
-      expect(allUsers.map((u) => u.email).sort()).toEqual([
+      expect(allUsers.map((u: User) => u.email).sort()).toEqual([
         "child@example.com",
         "parent@example.com",
       ]);

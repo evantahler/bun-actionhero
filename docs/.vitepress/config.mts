@@ -37,6 +37,7 @@ For example: \`/guide/actions.md\`, \`/reference/config.md\`
 - Middleware: /guide/middleware.md
 - MCP: /guide/mcp.md
 - Configuration: /guide/config.md
+- Plugins: /guide/plugins.md
 - CLI: /guide/cli.md
 - Authentication: /guide/authentication.md
 - Typed Clients: /guide/typed-clients.md
@@ -160,6 +161,7 @@ export default defineConfig({
             { text: "Middleware", link: "/guide/middleware" },
             { text: "MCP", link: "/guide/mcp" },
             { text: "Configuration", link: "/guide/config" },
+            { text: "Plugins", link: "/guide/plugins" },
           ],
         },
         {
