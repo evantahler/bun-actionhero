@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { api } from "../api";
-import type { OAuthActionResponse } from "../classes/Action";
+import type { Action, OAuthActionResponse } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { config } from "../config";
 import {
@@ -180,8 +180,10 @@ export function handleAuthorizeGet(
   };
 
   return renderAuthPage(params, templates, {
-    loginAction: api.actions.actions.find((a) => a.mcp?.isLoginAction),
-    signupAction: api.actions.actions.find((a) => a.mcp?.isSignupAction),
+    loginAction: api.actions.actions.find((a: Action) => a.mcp?.isLoginAction),
+    signupAction: api.actions.actions.find(
+      (a: Action) => a.mcp?.isSignupAction,
+    ),
   });
 }
 
@@ -227,8 +229,10 @@ export async function handleAuthorizePost(
   };
 
   const authActions = {
-    loginAction: api.actions.actions.find((a) => a.mcp?.isLoginAction),
-    signupAction: api.actions.actions.find((a) => a.mcp?.isSignupAction),
+    loginAction: api.actions.actions.find((a: Action) => a.mcp?.isLoginAction),
+    signupAction: api.actions.actions.find(
+      (a: Action) => a.mcp?.isSignupAction,
+    ),
   };
 
   // Validate client
@@ -263,7 +267,9 @@ export async function handleAuthorizePost(
   let userId: number;
 
   if (mode === "signup") {
-    const signupAction = api.actions.actions.find((a) => a.mcp?.isSignupAction);
+    const signupAction = api.actions.actions.find(
+      (a: Action) => a.mcp?.isSignupAction,
+    );
     if (!signupAction) {
       oauthParams.error = "No signup action configured";
       return renderAuthPage(oauthParams, templates, authActions);
@@ -283,7 +289,9 @@ export async function handleAuthorizePost(
       connection.destroy();
     }
   } else {
-    const loginAction = api.actions.actions.find((a) => a.mcp?.isLoginAction);
+    const loginAction = api.actions.actions.find(
+      (a: Action) => a.mcp?.isLoginAction,
+    );
     if (!loginAction) {
       oauthParams.error = "No login action configured";
       return renderAuthPage(oauthParams, templates, authActions);

@@ -7,6 +7,7 @@ import colors from "colors";
 import { randomUUID } from "crypto";
 import * as z4mini from "zod/v4-mini";
 import { api, logger } from "../api";
+import type { Action } from "../classes/Action";
 import { MCP_RESPONSE_FORMAT } from "../classes/Action";
 import { Connection } from "../classes/Connection";
 import { Initializer } from "../classes/Initializer";
@@ -46,7 +47,7 @@ function formatToolName(actionName: string): string {
 function parseToolName(toolName: string): string {
   // Reverse lookup against registered actions
   const action = api.actions.actions.find(
-    (a) => formatToolName(a.name) === toolName,
+    (a: Action) => formatToolName(a.name) === toolName,
   );
   return action ? action.name : toolName;
 }

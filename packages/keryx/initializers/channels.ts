@@ -36,7 +36,7 @@ export class Channels extends Initializer {
    * Returns undefined if no matching channel is found.
    */
   findChannel = (channelName: string): Channel | undefined => {
-    return api.channels.channels.find((c) => c.matches(channelName));
+    return api.channels.channels.find((c: Channel) => c.matches(channelName));
   };
 
   /**
