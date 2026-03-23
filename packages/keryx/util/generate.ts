@@ -10,6 +10,7 @@ const VALID_TYPES = [
   "middleware",
   "channel",
   "ops",
+  "plugin",
 ] as const;
 type GeneratorType = (typeof VALID_TYPES)[number];
 
@@ -77,6 +78,7 @@ function resolveFilePath(type: GeneratorType, name: string): string {
     middleware: "middleware",
     channel: "channels",
     ops: "ops",
+    plugin: "plugins",
   };
 
   const baseDir = dirMap[type];
@@ -173,6 +175,7 @@ export async function generateComponent(
   let className = toClassName(name);
   if (type === "middleware") className += "Middleware";
   if (type === "channel") className += "Channel";
+  if (type === "plugin") className += "Plugin";
 
   const view: Record<string, string> = { name, className };
   if (type === "action") {
@@ -191,6 +194,7 @@ export async function generateComponent(
       middleware: "action-middleware.ts.mustache",
       channel: "channel.ts.mustache",
       ops: "ops.ts.mustache",
+      plugin: "plugin.ts.mustache",
     };
     const template = await loadTemplate(templateMap[type as GeneratorType]);
     content = Mustache.render(template, view);

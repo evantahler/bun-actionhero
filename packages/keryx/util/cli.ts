@@ -107,6 +107,7 @@ export async function buildProgram(opts: {
         "  keryx generate middleware auth\n" +
         "  keryx generate channel notifications\n" +
         "  keryx generate ops UserOps\n" +
+        "  keryx generate plugin analytics\n" +
         "  keryx g action hello",
     )
     .option("--dry-run", "Show what would be generated without writing files")
