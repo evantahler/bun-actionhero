@@ -37,7 +37,7 @@ const noopSpan: Span = {
  * Create a no-op tracer that returns no-op spans. Used when tracing is disabled
  * so callers don't need to check `enabled` before creating spans.
  */
-export function createNoopTracer() {
+function createNoopTracer() {
   return {
     startSpan: (
       _name: string,
