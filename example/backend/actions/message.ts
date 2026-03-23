@@ -12,7 +12,7 @@ import {
 import { z } from "zod";
 import { SessionMiddleware } from "../middleware/session";
 import { serializeMessage } from "../ops/MessageOps";
-import { messages } from "../schema/messages";
+import { type Message, messages } from "../schema/messages";
 import { users } from "../schema/users";
 import { zMessageIdOrModel } from "../util/zodMixins";
 import type { SessionImpl } from "./session";
@@ -88,8 +88,8 @@ export class MessagesList implements Action {
     );
 
     return {
-      messages: result.data.map((m) =>
-        serializeMessage(m, m.user_name ? m.user_name : undefined),
+      messages: (result.data as (Message & { user_name: string | null })[]).map(
+        (m) => serializeMessage(m, m.user_name ? m.user_name : undefined),
       ),
       pagination: result.pagination,
     };

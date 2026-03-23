@@ -202,8 +202,8 @@ export class SwaggerInitializer extends Initializer {
       try {
         const cached = await cacheFileHandle.json();
         if (cached.hash === hash) {
-          logger.info(
-            `Loaded ${Object.keys(cached.responseSchemas).length} response schemas from cache`,
+          logger.debug(
+            `Loaded ${Object.keys(cached.responseSchemas).length} OpenAPI response schemas from cache`,
           );
           return { responseSchemas: cached.responseSchemas };
         }

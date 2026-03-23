@@ -5,7 +5,7 @@ import { Action, api, Connection, RUN_MODE } from "../api";
 import { ExitCode } from "./../classes/ExitCode";
 import { TypedError } from "./../classes/TypedError";
 import { config } from "../config";
-import { generateComponent } from "./generate";
+import { generateComponent, getValidTypes } from "./generate";
 import { globLoader } from "./glob";
 import {
   interactiveScaffold,
@@ -100,13 +100,14 @@ export async function buildProgram(opts: {
     .alias("g")
     .summary("Generate a new component")
     .description(
-      "Scaffold a new action, initializer, middleware, channel, or ops file.\n\n" +
+      `Scaffold a new component file.\n\nValid types: ${getValidTypes().join(", ")}\n\n` +
         "Examples:\n" +
         "  keryx generate action user:delete\n" +
         "  keryx generate initializer cache\n" +
         "  keryx generate middleware auth\n" +
         "  keryx generate channel notifications\n" +
         "  keryx generate ops UserOps\n" +
+        "  keryx generate plugin analytics\n" +
         "  keryx g action hello",
     )
     .option("--dry-run", "Show what would be generated without writing files")
@@ -232,7 +233,7 @@ async function runActionViaCLI(options: Record<string, string>, command: any) {
 
   await api.initialize();
 
-  const action = api.actions.actions.find((a) => a.name === actionName);
+  const action = api.actions.actions.find((a: Action) => a.name === actionName);
   if (!action) {
     exitWithError(`Action "${actionName}" not found`);
   }
