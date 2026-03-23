@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { unlink } from "node:fs/promises";
+import { instrumentDrizzleClient } from "@kubiks/otel-drizzle";
 import { $ } from "bun";
 import { type Config as DrizzleMigrateConfig } from "drizzle-kit";
 import { DefaultLogger, type LogWriter, sql } from "drizzle-orm";
@@ -58,6 +59,14 @@ export class DB extends Initializer {
     api.db.db = drizzle(api.db.pool, {
       logger: new DefaultLogger({ writer: new DrizzleLogger() }),
     });
+
+    if (config.observability.tracingEnabled) {
+      instrumentDrizzleClient(api.db.db, {
+        dbSystem: "postgresql",
+        captureQueryText: true,
+        maxQueryTextLength: 1000,
+      });
+    }
 
     try {
       await api.db.db.execute(sql`SELECT NOW()`);

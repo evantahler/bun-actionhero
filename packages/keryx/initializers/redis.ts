@@ -1,9 +1,11 @@
+import { SpanKind } from "@opentelemetry/api";
 import { Redis as RedisClient } from "ioredis";
 import { api, logger } from "../api";
 import { Initializer } from "../classes/Initializer";
 import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import { formatConnectionStringForLogging } from "../util/connectionString";
+import { finalizeSpanOnPromise } from "../util/tracing";
 
 const namespace = "redis";
 const testKey = `__keryx_test_key:${config.process.name}`;
@@ -51,9 +53,46 @@ export class Redis extends Initializer {
       });
     }
 
+    // Instrument the main Redis client with tracing spans.
+    // Only the general-purpose client is instrumented (not the subscription client,
+    // which uses a different command flow for SUBSCRIBE/PSUBSCRIBE).
+    this.instrumentRedisTracing(api.redis.redis);
+
     logger.info(
       `redis connections established (${formatConnectionStringForLogging(config.redis.connectionString)})`,
     );
+  }
+
+  /**
+   * Wrap ioredis `sendCommand` to create an OTel span for each Redis command.
+   * No-ops when tracing is disabled (the tracer returns no-op spans).
+   */
+  private instrumentRedisTracing(client: RedisClient) {
+    const originalSendCommand = client.sendCommand.bind(client);
+    client.sendCommand = function (
+      ...args: Parameters<typeof originalSendCommand>
+    ) {
+      const [command] = args;
+      const commandName = (command as { name?: string }).name ?? "unknown";
+      const span = api.observability.tracing.tracer.startSpan(
+        `redis.${commandName}`,
+        {
+          kind: SpanKind.CLIENT,
+          attributes: {
+            "db.system.name": "redis",
+            "db.operation.name": commandName,
+          },
+        },
+      );
+
+      const result: unknown = originalSendCommand(...args);
+      if (result && typeof (result as Promise<unknown>).then === "function") {
+        finalizeSpanOnPromise(span, result as Promise<unknown>);
+      } else {
+        span.end();
+      }
+      return result;
+    } as typeof client.sendCommand;
   }
 
   async stop() {

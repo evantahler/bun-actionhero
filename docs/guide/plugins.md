@@ -6,16 +6,22 @@ description: Plugins let third-party packages contribute actions, initializers, 
 
 Plugins package reusable functionality — initializers, actions, channels, servers, and config defaults — into npm modules that any Keryx app can install and register. If you've built an initializer or a set of actions that would be useful across projects, a plugin is how you distribute it.
 
+## First-Party Plugins
+
+| Package | Description |
+|---------|-------------|
+| [`@keryxjs/observability`](/guide/observability) | OpenTelemetry metrics (Prometheus) and distributed tracing |
+
 ## Using a Plugin
 
 Install the plugin package, then add it to your config:
 
 ```ts
 // config/plugins.ts
-import { resqueAdminPlugin } from "@keryxjs/resque-admin";
+import { observabilityPlugin } from "@keryxjs/observability";
 
 export default {
-  plugins: [resqueAdminPlugin],
+  plugins: [observabilityPlugin],
 };
 ```
 

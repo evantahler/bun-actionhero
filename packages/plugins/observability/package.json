@@ -1,0 +1,54 @@
+{
+  "name": "@keryxjs/observability",
+  "version": "0.1.0",
+  "module": "index.ts",
+  "type": "module",
+  "license": "MIT",
+  "description": "OpenTelemetry metrics and distributed tracing plugin for Keryx",
+  "author": "Evan Tahler <evan@evantahler.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/actionhero/keryx.git",
+    "directory": "packages/plugins/observability"
+  },
+  "homepage": "https://keryxjs.com",
+  "bugs": {
+    "url": "https://github.com/actionhero/keryx/issues"
+  },
+  "keywords": [
+    "keryx",
+    "plugin",
+    "opentelemetry",
+    "otel",
+    "metrics",
+    "tracing",
+    "prometheus",
+    "observability"
+  ],
+  "files": [
+    "index.ts",
+    "initializer.ts",
+    "tsconfig.json"
+  ],
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "test": "bun test",
+    "lint": "tsc && biome check .",
+    "format": "tsc && biome check --write ."
+  },
+  "dependencies": {
+    "@opentelemetry/context-async-hooks": "^2.0.0",
+    "@opentelemetry/core": "^1.30.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.200.0",
+    "@opentelemetry/resources": "^2.0.0",
+    "@opentelemetry/sdk-metrics": "^1.30.0",
+    "@opentelemetry/sdk-trace-base": "^2.0.0",
+    "@opentelemetry/semantic-conventions": "^1.34.0"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "keryx": "workspace:*"
+  }
+}

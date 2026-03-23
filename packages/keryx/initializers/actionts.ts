@@ -8,6 +8,7 @@ import { ErrorType, TypedError } from "../classes/TypedError";
 import { config } from "../config";
 import { formatLoadedMessage } from "../util/config";
 import { globLoader } from "../util/glob";
+import { injectTraceToParams } from "../util/tracing";
 
 const namespace = "actions";
 
@@ -96,6 +97,10 @@ export class Actions extends Initializer {
       });
     }
     queue = queue ?? action?.task?.queue ?? DEFAULT_QUEUE;
+
+    // Propagate trace context into task params for distributed tracing
+    injectTraceToParams(inputs);
+
     api.observability.task.enqueuedTotal.add(1, {
       action: actionName,
       queue,

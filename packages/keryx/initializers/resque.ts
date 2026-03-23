@@ -18,6 +18,7 @@ import {
 import { Initializer } from "../classes/Initializer";
 import { LogFormat } from "../classes/Logger";
 import { TypedError } from "../classes/TypedError";
+import { extractTraceFromParams } from "../util/tracing";
 
 const namespace = "resque";
 
@@ -303,6 +304,9 @@ export class Resque extends Initializer {
           connection.correlationId = propagatedCorrelationId;
         }
 
+        // Restore trace context from propagated W3C headers
+        connection._traceContext = extractTraceFromParams(params);
+
         const plainParams: Record<string, unknown> =
           typeof params === "object" && params !== null
             ? Object.fromEntries(
@@ -311,6 +315,10 @@ export class Resque extends Initializer {
                   : Object.entries(params),
               )
             : {};
+
+        // Strip internal framework fields so they don't leak into action params
+        delete plainParams._traceParent;
+        delete plainParams._traceState;
 
         const fanOutId = plainParams._fanOutId as string | undefined;
 
