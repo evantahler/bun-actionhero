@@ -45,6 +45,7 @@ bunx keryx generate <type> <name>
 | `middleware`  | `middleware/`   | `keryx g middleware auth`       |
 | `channel`     | `channels/`     | `keryx g channel notifications` |
 | `ops`         | `ops/`          | `keryx g ops UserOps`           |
+| `plugin`      | `plugins/`      | `keryx g plugin analytics`      |
 
 #### Naming Conventions
 
