@@ -17,6 +17,7 @@
     "format": "tsc && biome check --write ."
   },
   "dependencies": {
+    "@keryxjs/observability": "workspace:*",
     "keryx": "workspace:*",
     "commander": "^12.1.0",
     "drizzle-orm": "^0.45.1",

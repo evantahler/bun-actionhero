@@ -4,7 +4,25 @@ description: OpenTelemetry-based metrics and distributed tracing for HTTP reques
 
 # Observability
 
-Keryx includes built-in OpenTelemetry instrumentation that provides **metrics** and **distributed tracing** for HTTP requests, WebSocket connections, action executions, and background tasks. Both are disabled by default and controlled independently.
+The `@keryxjs/observability` plugin provides **OpenTelemetry metrics** and **distributed tracing** for HTTP requests, WebSocket connections, action executions, and background tasks. Both are disabled by default and controlled independently via environment variables.
+
+## Installation
+
+Install the plugin:
+
+```bash
+bun add @keryxjs/observability
+```
+
+Register it in `config/plugins.ts`:
+
+```ts
+import { observabilityPlugin } from "@keryxjs/observability";
+
+export default {
+  plugins: [observabilityPlugin],
+};
+```
 
 ## Quick Start
 
